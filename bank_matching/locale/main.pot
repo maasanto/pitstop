@@ -1,0 +1,351 @@
+# Translations template for Bank Matching.
+# Copyright (C) 2026 Antoine Maas
+# This file is distributed under the same license as the Bank Matching project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Bank Matching VERSION\n"
+"Report-Msgid-Bugs-To: antoine.maas@gmail.com\n"
+"POT-Creation-Date: 2026-10-05 11:58+0009\n"
+"PO-Revision-Date: 2026-10-05 11:58+0009\n"
+"Last-Translator: antoine.maas@gmail.com\n"
+"Language-Team: antoine.maas@gmail.com\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+
+#: frontend/src/App.vue:160
+msgid "1 line reconciled"
+msgstr ""
+
+#: frontend/src/App.vue:308
+msgid "1 line still needs a document of your choice."
+msgstr ""
+
+#: frontend/src/App.vue:410
+msgid "1 payment will be created"
+msgstr ""
+
+#: frontend/src/App.vue:407
+msgid "1 pre-approved"
+msgstr ""
+
+#: frontend/src/App.vue:287
+msgid "1. Check each pairing: the icons say what matched. 2. Click a line to pre-approve it. 3. Validate them all at once; invoices get their payment created."
+msgstr ""
+
+#: bank_matching/pairing.py:213
+msgid "A bank line is reconciled with documents of a single type, got {0}"
+msgstr ""
+
+#: frontend/src/App.vue:85
+msgid "Already reconciled"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:42
+#: frontend/src/components/ReconciledTab.vue:60
+msgid "Back"
+msgstr ""
+
+#: bank_matching/api.py:116
+msgid "Bank Transaction {0} is not submitted"
+msgstr ""
+
+#: frontend/src/App.vue:252
+msgid "Bank account"
+msgstr ""
+
+#: frontend/src/App.vue:251
+msgid "Bank reconciliation"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:59
+#: frontend/src/components/ReconciledTab.vue:117
+msgid "Cancel the payment"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:57
+msgid "Cancel {0}?"
+msgstr ""
+
+#: frontend/src/App.vue:413
+msgid "Clear selection"
+msgstr ""
+
+#: bank_matching/pairing.py:141
+msgid "Consecutive payments"
+msgstr ""
+
+#: frontend/src/App.vue:378
+msgid "Create a payment"
+msgstr ""
+
+#: frontend/src/App.vue:286
+msgid "Dokos already paired your bank lines"
+msgstr ""
+
+#: frontend/src/App.vue:368
+msgid "Dokos found nothing convincing for these lines. Search a document, or record what the money is."
+msgstr ""
+
+#: frontend/src/App.vue:382
+msgid "Every line has a proposal"
+msgstr ""
+
+#: frontend/src/components/DocumentCard.vue:57
+msgid "Gap between the bank line and the document"
+msgstr ""
+
+#: frontend/src/components/LevelBadge.vue:9
+msgctxt "Confidence"
+msgid "High"
+msgstr ""
+
+#: frontend/src/App.vue:257
+msgid "Keyboard shortcuts"
+msgstr ""
+
+#: frontend/src/App.vue:67
+msgid "Likely right, but not certain. Compare with the other leads before approving."
+msgstr ""
+
+#: frontend/src/components/LevelBadge.vue:11
+msgctxt "Confidence"
+msgid "Low"
+msgstr ""
+
+#: frontend/src/components/LevelBadge.vue:10
+msgctxt "Confidence"
+msgid "Medium"
+msgstr ""
+
+#: frontend/src/App.vue:204
+msgid "Next line"
+msgstr ""
+
+#: frontend/src/components/SearchDialog.vue:43
+msgid "No open document matches"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:83
+msgid "No reconciled line over this period"
+msgstr ""
+
+#: frontend/src/components/PairingRow.vue:118
+msgid "Not this one? Search another document"
+msgstr ""
+
+#: frontend/src/App.vue:303
+msgid "Nothing left to review over this period"
+msgstr ""
+
+#: frontend/src/components/SearchDialog.vue:35
+msgid "Number, party or amount"
+msgstr ""
+
+#: frontend/src/App.vue:278
+msgid "Only the latest lines of the period are shown: narrow the period to see the others."
+msgstr ""
+
+#: frontend/src/App.vue:72
+msgid "Only weak signals. Open the preview, or search the right document."
+msgstr ""
+
+#: frontend/src/components/PreviewDialog.vue:24
+msgid "Open in Dokos"
+msgstr ""
+
+#: frontend/src/App.vue:267
+msgid "Open the classic page"
+msgstr ""
+
+#: frontend/src/components/PairingRow.vue:110
+msgid "Other leads ({0})"
+msgstr ""
+
+#: frontend/src/components/PairingRow.vue:96
+msgid "Payment created on validation"
+msgstr ""
+
+#: frontend/src/components/PairingRow.vue:35
+msgid "Pre-approve"
+msgstr ""
+
+#: frontend/src/App.vue:206
+msgid "Pre-approve or release"
+msgstr ""
+
+#: frontend/src/App.vue:341
+msgid "Pre-approve these {0}"
+msgstr ""
+
+#: frontend/src/components/PairingRow.vue:35
+msgid "Pre-approved"
+msgstr ""
+
+#: frontend/src/App.vue:404
+msgid "Pre-approved pairings"
+msgstr ""
+
+#: frontend/src/App.vue:322
+msgid "Pre-approved: {0} of {1}"
+msgstr ""
+
+#: frontend/src/components/DocumentCard.vue:36
+#: frontend/src/components/DocumentCard.vue:76
+#: frontend/src/components/DocumentCard.vue:77
+msgid "Preview"
+msgstr ""
+
+#: frontend/src/App.vue:207
+msgid "Preview the document"
+msgstr ""
+
+#: frontend/src/App.vue:205
+msgid "Previous line"
+msgstr ""
+
+#: frontend/src/App.vue:83
+msgid "Proposals"
+msgstr ""
+
+#: frontend/src/App.vue:61
+msgid "Ready to validate"
+msgstr ""
+
+#: frontend/src/App.vue:260
+msgid "Review without the mouse"
+msgstr ""
+
+#: bank_matching/pairing.py:141
+msgid "Same days, same mode of payment"
+msgstr ""
+
+#: frontend/src/App.vue:377 frontend/src/components/SearchDialog.vue:28
+msgid "Search a document"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:78
+msgid "Search a label, document or party"
+msgstr ""
+
+#: frontend/src/App.vue:209
+msgid "Search another document"
+msgstr ""
+
+#: frontend/src/App.vue:313
+msgid "See the lines without proposal"
+msgstr ""
+
+#: frontend/src/App.vue:62
+msgid "Several signals agree and no other party comes close. A glance is enough."
+msgstr ""
+
+#: frontend/src/App.vue:208
+msgid "Show the other leads"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:40
+msgid "The bank line goes back to the lines to reconcile. {0} itself is kept."
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:58
+msgid "The payment is cancelled, the invoices it paid are open again and the bank line goes back to the lines to reconcile."
+msgstr ""
+
+#: frontend/src/App.vue:66
+msgid "To check"
+msgstr ""
+
+#: bank_matching/pairing.py:136
+msgid "Total less card fees"
+msgstr ""
+
+#: bank_matching/pairing.py:136
+msgid "Total of the payments"
+msgstr ""
+
+#: frontend/src/App.vue:71
+msgid "Uncertain"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:41
+#: frontend/src/components/ReconciledTab.vue:111
+msgid "Unlink"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:39
+msgid "Unlink {0}?"
+msgstr ""
+
+#: frontend/src/components/PairingRow.vue:135
+#: frontend/src/components/SearchDialog.vue:52
+msgid "Use this one"
+msgstr ""
+
+#: frontend/src/App.vue:418
+msgid "Validate 1 reconciliation"
+msgstr ""
+
+#: frontend/src/App.vue:210
+msgid "Validate the pre-approved"
+msgstr ""
+
+#: frontend/src/App.vue:418
+msgid "Validate {0} reconciliations"
+msgstr ""
+
+#: frontend/src/App.vue:84
+msgid "Without proposal"
+msgstr ""
+
+#: bank_matching/www/bank_matching.py:10
+msgid "You need read access to Bank Transactions to reconcile them"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:108
+msgid "created by the reconciliation"
+msgstr ""
+
+#: frontend/src/components/DocumentCard.vue:68
+msgid "due {0}"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:64
+msgid "{0} cancelled"
+msgstr ""
+
+#: bank_matching/pairing.py:223
+msgid "{0} is no longer open for reconciliation: reload the page"
+msgstr ""
+
+#: frontend/src/components/PairingRow.vue:101
+msgid "{0} less than the payments, likely card fees: it stays open on the last payment"
+msgstr ""
+
+#: frontend/src/App.vue:160
+msgid "{0} lines reconciled"
+msgstr ""
+
+#: frontend/src/App.vue:309
+msgid "{0} lines still need a document of your choice."
+msgstr ""
+
+#: frontend/src/components/PairingRow.vue:66
+msgid "{0} payments settled at once"
+msgstr ""
+
+#: frontend/src/App.vue:410
+msgid "{0} payments will be created"
+msgstr ""
+
+#: frontend/src/App.vue:407
+msgid "{0} pre-approved"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:50
+msgid "{0} unlinked"
+msgstr ""
+

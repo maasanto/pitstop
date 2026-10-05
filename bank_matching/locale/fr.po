@@ -1,0 +1,255 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Bank Matching VERSION\n"
+"Report-Msgid-Bugs-To: antoine.maas@gmail.com\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "1. Check each pairing: the icons say what matched. 2. Click a line to pre-approve it. 3. Validate them all at once; invoices get their payment created."
+msgstr "1. Vérifiez chaque proposition : les icônes disent ce qui correspond. 2. Cliquez sur une ligne pour la pré-approuver. 3. Validez-les toutes d'un coup ; les factures reçoivent leur paiement."
+
+msgid "A bank line is reconciled with documents of a single type, got {0}"
+msgstr "Une ligne bancaire se rapproche avec des documents d'un seul type, reçu {0}"
+
+msgid "Already reconciled"
+msgstr "Déjà rapprochées"
+
+msgid "Bank Transaction {0} is not submitted"
+msgstr "La transaction bancaire {0} n'est pas validée"
+
+msgid "Bank account"
+msgstr "Compte bancaire"
+
+msgid "Bank reconciliation"
+msgstr "Rapprochement bancaire"
+
+msgid "Cancel the payment"
+msgstr "Annuler le paiement"
+
+msgid "Cancel {0}?"
+msgstr "Annuler {0} ?"
+
+msgid "Clear selection"
+msgstr "Tout désélectionner"
+
+msgid "Consecutive payments"
+msgstr "Paiements consécutifs"
+
+msgid "Create a payment"
+msgstr "Créer un paiement"
+
+msgid "Dokos already paired your bank lines"
+msgstr "Dokos a déjà rapproché vos lignes bancaires"
+
+msgid "Dokos found nothing convincing for these lines. Search a document, or record what the money is."
+msgstr "Dokos n'a rien trouvé de convaincant pour ces lignes. Recherchez un document, ou enregistrez ce que représente ce montant."
+
+msgid "Every line has a proposal"
+msgstr "Chaque ligne a une proposition"
+
+msgid "Gap between the bank line and the document"
+msgstr "Écart entre la ligne bancaire et le document"
+
+msgctxt "Confidence"
+msgid "High"
+msgstr "Élevée"
+
+msgid "Keyboard shortcuts"
+msgstr "Raccourcis clavier"
+
+msgid "Likely right, but not certain. Compare with the other leads before approving."
+msgstr "Probablement juste, mais pas certain. Comparez avec les autres pistes avant d'approuver."
+
+msgctxt "Confidence"
+msgid "Low"
+msgstr "Faible"
+
+msgctxt "Confidence"
+msgid "Medium"
+msgstr "Moyenne"
+
+msgid "Next line"
+msgstr "Ligne suivante"
+
+msgid "No open document matches"
+msgstr "Aucun document ouvert ne correspond"
+
+msgid "No reconciled line over this period"
+msgstr "Aucune ligne rapprochée sur cette période"
+
+msgid "Not this one? Search another document"
+msgstr "Pas celui-ci ? Rechercher un autre document"
+
+msgid "Nothing left to review over this period"
+msgstr "Plus rien à vérifier sur cette période"
+
+msgid "Number, party or amount"
+msgstr "Numéro, tiers ou montant"
+
+msgid "Only the latest lines of the period are shown: narrow the period to see the others."
+msgstr "Seules les lignes les plus récentes de la période sont affichées : réduisez la période pour voir les autres."
+
+msgid "Only weak signals. Open the preview, or search the right document."
+msgstr "Seulement des indices faibles. Ouvrez l'aperçu, ou recherchez le bon document."
+
+msgid "Open in Dokos"
+msgstr "Ouvrir dans Dokos"
+
+msgid "Open the classic page"
+msgstr "Ouvrir la page classique"
+
+msgid "Other leads ({0})"
+msgstr "Autres pistes ({0})"
+
+msgid "Payment created on validation"
+msgstr "Paiement créé à la validation"
+
+msgid "Pre-approve"
+msgstr "Pré-approuver"
+
+msgid "Pre-approve or release"
+msgstr "Pré-approuver ou relâcher"
+
+msgid "Pre-approve these {0}"
+msgstr "Pré-approuver ces {0}"
+
+msgid "Pre-approved"
+msgstr "Pré-approuvée"
+
+msgid "Pre-approved pairings"
+msgstr "Rapprochements pré-approuvés"
+
+msgid "Preview"
+msgstr "Aperçu"
+
+msgid "Preview the document"
+msgstr "Aperçu du document"
+
+msgid "Previous line"
+msgstr "Ligne précédente"
+
+msgid "Proposals"
+msgstr "Propositions"
+
+msgid "Ready to validate"
+msgstr "Prêtes à valider"
+
+msgid "Review without the mouse"
+msgstr "Tout faire au clavier"
+
+msgid "Same days, same mode of payment"
+msgstr "Mêmes jours, même mode de paiement"
+
+msgid "Search a document"
+msgstr "Rechercher un document"
+
+msgid "Search a label, document or party"
+msgstr "Rechercher un libellé, un document ou un tiers"
+
+msgid "Search another document"
+msgstr "Rechercher un autre document"
+
+msgid "See the lines without proposal"
+msgstr "Voir les lignes sans proposition"
+
+msgid "Several signals agree and no other party comes close. A glance is enough."
+msgstr "Plusieurs indices concordent et aucun autre tiers n'approche. Un coup d'œil suffit."
+
+msgid "Show the other leads"
+msgstr "Voir les autres pistes"
+
+msgid "The bank line goes back to the lines to reconcile. {0} itself is kept."
+msgstr "La ligne bancaire retourne parmi les lignes à rapprocher. {0} est conservé."
+
+msgid "The payment is cancelled, the invoices it paid are open again and the bank line goes back to the lines to reconcile."
+msgstr "Le paiement est annulé, les factures qu'il réglait sont de nouveau ouvertes et la ligne bancaire retourne parmi les lignes à rapprocher."
+
+msgid "To check"
+msgstr "À vérifier"
+
+msgid "Total less card fees"
+msgstr "Total moins les frais de carte"
+
+msgid "Total of the payments"
+msgstr "Total des paiements"
+
+msgid "Uncertain"
+msgstr "Incertaines"
+
+msgid "Unlink"
+msgstr "Délier"
+
+msgid "Unlink {0}?"
+msgstr "Délier {0} ?"
+
+msgid "Use this one"
+msgstr "Choisir celui-ci"
+
+msgid "Validate the pre-approved"
+msgstr "Valider les pré-approuvées"
+
+msgid "Validate {0} reconciliations"
+msgstr "Valider {0} rapprochements"
+
+msgid "Without proposal"
+msgstr "Sans proposition"
+
+msgid "You need read access to Bank Transactions to reconcile them"
+msgstr "Il faut le droit de lecture sur les transactions bancaires pour les rapprocher"
+
+msgid "created by the reconciliation"
+msgstr "créé par le rapprochement"
+
+msgid "due {0}"
+msgstr "échéance {0}"
+
+msgid "{0} cancelled"
+msgstr "{0} annulé"
+
+msgid "{0} is no longer open for reconciliation: reload the page"
+msgstr "{0} n'est plus ouvert au rapprochement : rechargez la page"
+
+msgid "{0} less than the payments, likely card fees: it stays open on the last payment"
+msgstr "{0} de moins que les paiements, sans doute des frais de carte : cet écart reste ouvert sur le dernier paiement"
+
+msgid "{0} lines reconciled"
+msgstr "{0} lignes rapprochées"
+
+msgid "{0} lines still need a document of your choice."
+msgstr "{0} lignes attendent encore un document de votre choix."
+
+msgid "Pre-approved: {0} of {1}"
+msgstr "Pré-approuvées : {0} sur {1}"
+
+msgid "1 line reconciled"
+msgstr "1 ligne rapprochée"
+
+msgid "1 line still needs a document of your choice."
+msgstr "1 ligne attend encore un document de votre choix."
+
+msgid "1 pre-approved"
+msgstr "1 pré-approuvée"
+
+msgid "1 payment will be created"
+msgstr "1 paiement sera créé"
+
+msgid "Validate 1 reconciliation"
+msgstr "Valider 1 rapprochement"
+
+msgid "Back"
+msgstr "Retour"
+
+msgid "{0} payments settled at once"
+msgstr "{0} paiements réglés en une fois"
+
+msgid "{0} payments will be created"
+msgstr "{0} paiements seront créés"
+
+msgid "{0} pre-approved"
+msgstr "{0} pré-approuvées"
+
+msgid "{0} unlinked"
+msgstr "{0} délié"
