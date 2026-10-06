@@ -511,3 +511,15 @@ msgstr "Contact dans le libellé"
 
 msgid "Recognized from past payments"
 msgstr "Reconnu d'après les paiements passés"
+
+msgid "Bank Match Refusal"
+msgstr "Refus de rapprochement"
+
+msgid "A lead the user refused for a bank line on the bank matching page"
+msgstr "Une piste refusée pour une ligne bancaire sur la page de rapprochement"
+
+msgid "Proposal"
+msgstr "Proposition"
+
+msgid "The refused lead: a document, a settlement of several payments or a rule"
+msgstr "La piste refusée : un document, un règlement de plusieurs paiements ou une règle"
