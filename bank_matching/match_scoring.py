@@ -77,6 +77,10 @@ LEGAL_FORMS_AND_TITLES = {
 	"MADAME",
 }
 SIMILAR_LABEL = 0.5
+# An account seen paying for more parties than this is a platform, a family or CAF: it identifies none
+MAX_PARTIES_SHARING_AN_ACCOUNT = 2
+# How much of its confidence a party loses once the user corrected it away on similar lines
+CORRECTION_DAMPING = 0.5
 
 # A card or platform settlement pays out the receipts of one to three days, within a week
 MAX_BATCH_DAYS = 3
@@ -95,13 +99,19 @@ def words(text: str | None) -> set[str]:
 	return {word for word in normalize(text).split() if len(word) >= 3 and not word.isdigit()}
 
 
-def confidence(reference: float = 0, amount: float = 0, name: float = 0, history: float = 0) -> float:
-	return 1 - (
+def confidence(
+	reference: float = 0, amount: float = 0, name: float = 0, history: float = 0, corrected: float = 0
+) -> float:
+	score = 1 - (
 		(1 - REFERENCE_WEIGHT * reference)
 		* (1 - AMOUNT_WEIGHT * amount)
 		* (1 - NAME_WEIGHT * name)
 		* (1 - HISTORY_WEIGHT * history)
 	)
+	# A label quoting the document's number outweighs any past correction
+	if reference >= YEAR_AND_COUNTER:
+		return score
+	return score * (1 - CORRECTION_DAMPING * corrected)
 
 
 def amount_grade(paid: float, outstanding: float, grand_total: float) -> float:
@@ -371,17 +381,49 @@ def _word_found(word: str, label_words: set[str]) -> bool:
 	)
 
 
-def past_payers(label_words: set[str], history: list[tuple[set[str], set[str]]]) -> dict[str, float]:
-	"""Parties that earlier lines with a similar label were reconciled with, weighted by similarity.
+@dataclass(frozen=True)
+class PastLine:
+	"""A line already reconciled: its identifying label words, its counterparty's account and some parties."""
+
+	words: frozenset
+	account: str
+	parties: frozenset
+
+
+def counterparty_account(iban: str | None, account_number: str | None) -> str:
+	return normalize(iban or account_number).replace(" ", "")
+
+
+def shared_accounts(past_lines: list[PastLine]) -> set[str]:
+	parties_by_account = defaultdict(set)
+	for line in past_lines:
+		if line.account:
+			parties_by_account[line.account] |= line.parties
+	return {
+		account
+		for account, parties in parties_by_account.items()
+		if len(parties) > MAX_PARTIES_SHARING_AN_ACCOUNT
+	}
+
+
+def similar_line_parties(
+	label_words: set[str], account: str, past_lines: list[PastLine], ignored_accounts: set[str]
+) -> dict[str, float]:
+	"""Parties of past lines like this one, weighted by likeness: the same counterparty account counts as
+	the same line, otherwise the share of identifying label words in common.
 
 	One similar line gives half the weight; two or more give it all.
 	"""
+	is_identifying = bool(account) and account not in ignored_accounts
 	votes = Counter()
-	for past_words, parties in history:
-		union = label_words | past_words
-		similarity = len(label_words & past_words) / len(union) if union else 0
+	for past in past_lines:
+		if is_identifying and past.account == account:
+			similarity = 1.0
+		else:
+			union = label_words | past.words
+			similarity = len(label_words & past.words) / len(union) if union else 0
 		if similarity >= SIMILAR_LABEL:
-			for party in parties:
+			for party in past.parties:
 				votes[party] += similarity
 	total = sum(votes.values())
 	if not total:

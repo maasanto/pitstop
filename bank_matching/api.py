@@ -4,6 +4,7 @@ from frappe import _
 from frappe.utils import add_months, cint, flt, get_first_day, getdate, nowdate
 
 from bank_matching.pairing import LINE_FIELDS, as_matchable, build_pairing, reconcile, search_documents
+from bank_matching.refusals import get_refused, set_refused
 from bank_matching.rules import apply_rule
 from bank_matching.rules import create_rule as create_bank_rule
 
@@ -28,10 +29,19 @@ def get_bank_accounts() -> list[dict]:
 @frappe.whitelist()
 def get_pairings(bank_account: str, from_date: str, to_date: str) -> dict:
 	lines = get_lines(bank_account, from_date, to_date, {"unallocated_amount": ("!=", 0)})
+	refused = get_refused([line.name for line in lines[:MAX_LINES]])
 	return {
-		"pairings": [build_pairing(as_matchable(line)) for line in lines[:MAX_LINES]],
+		"pairings": [
+			build_pairing(as_matchable(line), refused.get(line.name, [])) for line in lines[:MAX_LINES]
+		],
 		"truncated": len(lines) > MAX_LINES,
 	}
+
+
+@frappe.whitelist(methods=["POST"])
+def set_refused_proposals(bank_transaction: str, proposals: list[str]) -> None:
+	get_line(bank_transaction, "write")
+	set_refused(bank_transaction, proposals)
 
 
 @frappe.whitelist()

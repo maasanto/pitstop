@@ -11,7 +11,7 @@ from frappe import _
 from frappe.utils import flt, getdate
 
 from bank_matching.match_scoring import PRESELECT_THRESHOLD, Receipt, settlement_batches
-from bank_matching.ranking import EXTRA_NUMBER_FIELD, SuggestionRanking
+from bank_matching.ranking import EXTRA_NUMBER_FIELD, SuggestionRanking, proposal_key
 from bank_matching.rules import matching_rule, rule_proposal
 
 LEVELS = ("high", "medium", "low")
@@ -26,6 +26,8 @@ LINE_FIELDS = [
 	"description",
 	"reference_number",
 	"bank_party_name",
+	"bank_party_iban",
+	"bank_party_account_number",
 	"bank_account",
 	"currency",
 	"credit",
@@ -49,10 +51,10 @@ def as_matchable(line):
 	)
 
 
-def build_pairing(line) -> dict:
-	"""Every way Dokos sees to reconcile the line, the one it would pick first."""
+def build_pairing(line, refused: list[str]) -> dict:
+	"""Every way Dokos sees to reconcile the line, the one it would pick first among those not refused."""
 	ranking = SuggestionRanking(BankTransactionMatch([line], None))
-	suggestions = ranking.rank()
+	suggestions = ranking.rank(set(refused))
 	proposals = [document_proposal(suggestion) for suggestion in shortlist(suggestions)]
 	proposals += settlement_proposals(line, ranking.candidates)
 	rule = matching_rule(line)
@@ -61,7 +63,7 @@ def build_pairing(line) -> dict:
 		proposals.append(rule_proposal(rule, "low" if any(map(is_exact_amount, proposals)) else "high"))
 	# Stable sort: within a level, the scorer's own order, then the rule
 	proposals.sort(key=lambda proposal: LEVELS.index(proposal["level"]))
-	return {"line": describe_line(line), "proposals": proposals}
+	return {"line": describe_line(line), "proposals": proposals, "refused": refused}
 
 
 def is_exact_amount(proposal) -> bool:
@@ -93,7 +95,7 @@ def document_proposal(suggestion) -> dict:
 	else:
 		level = "low"
 	return {
-		"key": f"{suggestion.doctype}:{suggestion.name}",
+		"key": proposal_key(suggestion),
 		"level": level,
 		"score": suggestion.match_score,
 		"documents": [describe_document(suggestion)],

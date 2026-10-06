@@ -19,21 +19,28 @@ from bank_matching.match_scoring import (
 	SHOW_THRESHOLD,
 	WEAK_REFERENCE,
 	YEAR_AND_COUNTER,
+	PastLine,
 	Reference,
 	Vocabulary,
 	amount_grade,
 	confidence,
+	counterparty_account,
 	is_identifier,
 	name_grade,
 	normalize,
-	past_payers,
 	reference_evidence,
+	shared_accounts,
+	similar_line_parties,
 )
 
 DOCUMENT_TYPES = ("Payment Entry", "Journal Entry", "Sales Invoice", "Purchase Invoice", "Expense Claim")
 LOOK_BACK_DAYS = 365
 # The number the other side writes in its transfer label, next to the document's own name
-EXTRA_NUMBER_FIELD = {"Payment Entry": "reference_no", "Sales Invoice": "po_no", "Purchase Invoice": "bill_no"}
+EXTRA_NUMBER_FIELD = {
+	"Payment Entry": "reference_no",
+	"Sales Invoice": "po_no",
+	"Purchase Invoice": "bill_no",
+}
 
 
 class SuggestionRanking:
@@ -54,11 +61,15 @@ class SuggestionRanking:
 			)
 		)
 		self.bank_party_name = transactions[0].get("bank_party_name")
+		self.account = counterparty_account(
+			transactions[0].get("bank_party_iban"), transactions[0].get("bank_party_account_number")
+		)
 		self.dates = [getdate(t.get("date")) for t in transactions if t.get("date")]
 		self.selected = {t.get("name") for t in transactions}
 		self.since = add_days(min(self.dates, default=getdate()), -LOOK_BACK_DAYS)
 
-	def rank(self):
+	def rank(self, refused=()):
+		"""Suggestions best first; `refused` proposal keys stay listed but never preselected."""
 		# Kept for callers that also look for settlements among documents too weak to suggest alone
 		self.candidates = candidates = self.get_candidates()
 		if not candidates:
@@ -72,18 +83,21 @@ class SuggestionRanking:
 		evidence = reference_evidence(
 			self.label, self.get_references(candidates, account_lines), self.amount, self.dates
 		)
-		payers = past_payers(label_words, self.get_history(account_lines, vocabulary))
+		history, corrections = self.get_history(account_lines, vocabulary)
+		ignored_accounts = shared_accounts(history)
+		payers = similar_line_parties(label_words, self.account, history, ignored_accounts)
+		corrected = similar_line_parties(label_words, self.account, corrections, ignored_accounts)
 		for candidate in candidates:
-			self.score(candidate, evidence, label_words, vocabulary, payers, contacts)
+			self.score(candidate, evidence, label_words, vocabulary, payers, corrected, contacts)
 
 		suggestions = sorted(
 			(c for c in candidates if c.match_score >= SHOW_THRESHOLD),
 			key=lambda c: (-c.match_score, self.days_apart(c)),
 		)
-		self.preselect(suggestions)
+		self.preselect([s for s in suggestions if proposal_key(s) not in refused])
 		return suggestions
 
-	def score(self, candidate, evidence, label_words, vocabulary, payers, contacts):
+	def score(self, candidate, evidence, label_words, vocabulary, payers, corrected, contacts):
 		party = (candidate.party_type, candidate.party)
 		signals = frappe._dict(
 			reference=evidence.get(candidate.name, 0),
@@ -98,6 +112,7 @@ class SuggestionRanking:
 				vocabulary,
 			),
 			history=payers.get(party, 0),
+			corrected=corrected.get(party, 0),
 		)
 		if signals.reference < WEAK_REFERENCE and not (signals.amount or signals.name or signals.history):
 			signals.reference = 0
@@ -144,13 +159,22 @@ class SuggestionRanking:
 				"docstatus": 1,
 				"date": (">=", self.since),
 			},
-			fields=["name", "description", "reference_number", "bank_party_name", "allocated_amount"],
+			fields=[
+				"name",
+				"description",
+				"reference_number",
+				"bank_party_name",
+				"bank_party_iban",
+				"bank_party_account_number",
+				"allocated_amount",
+			],
 		)
 		for line in lines:
 			line.label = " ".join(
 				filter(None, (line.description, line.reference_number, line.bank_party_name))
 			)
 			line.compact_label = normalize(line.label).replace(" ", "")
+			line.account = counterparty_account(line.bank_party_iban, line.bank_party_account_number)
 		return lines
 
 	def get_references(self, candidates, account_lines):
@@ -192,7 +216,8 @@ class SuggestionRanking:
 		return references
 
 	def get_history(self, account_lines, vocabulary):
-		"""Label words and parties of the account's lines already reconciled."""
+		"""The account's lines already reconciled, twice: with the parties they went to, and with the
+		parties the user refused on them before choosing another."""
 		reconciled = {
 			line.name: line
 			for line in account_lines
@@ -209,10 +234,39 @@ class SuggestionRanking:
 			party_type, party = party_of.get((link.payment_document, link.payment_entry), (None, None))
 			if party:
 				parties_by_line.setdefault(link.parent, set()).add((party_type, party))
-		return [
-			(vocabulary.label_words(reconciled[line].label), parties)
-			for line, parties in parties_by_line.items()
-		]
+
+		def past_lines(parties_by):
+			return [
+				PastLine(
+					frozenset(vocabulary.label_words(reconciled[name].label)),
+					reconciled[name].account,
+					frozenset(parties),
+				)
+				for name, parties in parties_by.items()
+			]
+
+		return past_lines(parties_by_line), past_lines(get_corrections(parties_by_line))
+
+
+def get_corrections(parties_by_line):
+	"""Line -> parties the user refused on it, then reconciled it with another party.
+
+	A refusal of the party the line went to anyway says "wrong document", not "wrong party": it teaches nothing.
+	"""
+	corrections = {}
+	for refusal in frappe.get_all(
+		"Bank Match Refusal",
+		filters={"bank_transaction": ("in", list(parties_by_line) or [""]), "party": ("is", "set")},
+		fields=["bank_transaction", "party_type", "party"],
+	):
+		party = (refusal.party_type, refusal.party)
+		if party not in parties_by_line[refusal.bank_transaction]:
+			corrections.setdefault(refusal.bank_transaction, set()).add(party)
+	return corrections
+
+
+def proposal_key(document):
+	return f"{document.doctype}:{document.name}"
 
 
 def payer(document):
@@ -348,7 +402,11 @@ def describe_signals(signals):
 	if signals.amount:
 		exact = signals.amount == 1
 		reasons.append(
-			{"signal": "amount", "exact": exact, "description": _("Same amount") if exact else _("Close amount")}
+			{
+				"signal": "amount",
+				"exact": exact,
+				"description": _("Same amount") if exact else _("Close amount"),
+			}
 		)
 	if signals.reference:
 		exact = signals.reference >= YEAR_AND_COUNTER
@@ -369,5 +427,7 @@ def describe_signals(signals):
 			}
 		)
 	if signals.history:
-		reasons.append({"signal": "history", "exact": True, "description": _("Recognized from past payments")})
+		reasons.append(
+			{"signal": "history", "exact": True, "description": _("Recognized from past payments")}
+		)
 	return reasons
