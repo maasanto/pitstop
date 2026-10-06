@@ -1,8 +1,13 @@
 import frappe
+from erpnext.accounts.doctype.bank_transaction.bank_transaction import unreconcile_transaction
 from frappe import _
-from frappe.utils import flt, getdate
+from frappe.utils import add_months, cint, flt, get_first_day, getdate, nowdate
 
 from bank_matching.pairing import LINE_FIELDS, as_matchable, build_pairing, reconcile, search_documents
+from bank_matching.rules import apply_rule
+from bank_matching.rules import create_rule as create_bank_rule
+
+PARTY_TYPES = ("Payable", "Receivable")
 
 # ponytail: every open line of the period is scored on each load, about 10 ms a line on a small site;
 # score per page or cache per line if large accounts feel it.
@@ -36,22 +41,123 @@ def search(bank_transaction: str, query: str = "") -> list[dict]:
 
 @frappe.whitelist(methods=["POST"])
 def reconcile_pairings(pairings: list[dict]) -> list[dict]:
-	"""Reconcile each pairing on its own, so that one refused pairing leaves the others reconciled."""
+	"""Reconcile each pairing on its own, so that one refused pairing leaves the others reconciled.
+
+	Each result names the vouchers the reconciliation created, which an undo cancels.
+	"""
 	results = []
 	for index, pairing in enumerate(pairings):
+		name = pairing["bank_transaction"]
 		savepoint = f"bank_matching_pairing_{index}"
 		frappe.db.savepoint(savepoint)
 		try:
-			reconcile(get_line(pairing["bank_transaction"], "write"), pairing["documents"])
+			line = get_line(name, "write")
+			linked_before = linked_vouchers(name)
+			if pairing.get("rule"):
+				apply_rule(name, pairing["rule"])
+			else:
+				reconcile(line, pairing["documents"])
 		except frappe.ValidationError as error:
 			roll_back_pairing(savepoint)
-			results.append({"bank_transaction": pairing["bank_transaction"], "error": str(error)})
+			results.append({"bank_transaction": name, "error": str(error), "created": []})
 			continue
 		if not frappe.in_test:
 			# A later refusal must not undo this pairing; the reconciliation commits its payments alike
 			frappe.db.commit()  # nosemgrep
-		results.append({"bank_transaction": pairing["bank_transaction"], "error": None})
+		chosen = {(document["doctype"], document["name"]) for document in pairing.get("documents") or []}
+		created = linked_vouchers(name) - linked_before - chosen
+		results.append(
+			{
+				"bank_transaction": name,
+				"error": None,
+				"created": [{"doctype": doctype, "name": voucher} for doctype, voucher in sorted(created)],
+			}
+		)
 	return results
+
+
+@frappe.whitelist(methods=["POST"])
+def undo_pairings(pairings: list[dict]) -> list[dict]:
+	"""Put validated lines back as they were: unlinked, and the vouchers the validation created cancelled.
+
+	Unlinking alone would leave those vouchers submitted, booking the money a second time once the line
+	is reconciled again.
+	"""
+	results = []
+	for index, pairing in enumerate(pairings):
+		name = pairing["bank_transaction"]
+		savepoint = f"bank_matching_undo_{index}"
+		frappe.db.savepoint(savepoint)
+		try:
+			undo_pairing(name, {(v["doctype"], v["name"]) for v in pairing.get("created") or []})
+		except frappe.ValidationError as error:
+			roll_back_pairing(savepoint)
+			results.append({"bank_transaction": name, "error": str(error)})
+			continue
+		results.append({"bank_transaction": name, "error": None})
+	return results
+
+
+def undo_pairing(name: str, created: set) -> None:
+	# Only vouchers still linked to this line: the request must not cancel any document it names
+	to_cancel = created & linked_vouchers(name)
+	unreconcile_transaction(name)
+	for doctype, voucher in sorted(to_cancel):
+		document = frappe.get_doc(doctype, voucher)
+		if document.docstatus == 1:
+			document.check_permission("cancel")
+			document.cancel()
+
+
+def linked_vouchers(bank_transaction: str) -> set:
+	return {
+		(row.payment_document, row.payment_entry)
+		for row in frappe.get_all(
+			"Bank Transaction Payments",
+			filters={"parenttype": "Bank Transaction", "parent": bank_transaction},
+			fields=["payment_document", "payment_entry"],
+		)
+	}
+
+
+@frappe.whitelist(methods=["POST"])
+def create_rule(bank_transaction: str, rule_name: str, contains: str, account: str) -> str:
+	return create_bank_rule(get_line(bank_transaction, "read"), rule_name, contains, account)
+
+
+@frappe.whitelist()
+def get_bookable_accounts(bank_transaction: str) -> list[dict]:
+	"""The accounts a recurring line can be booked on: every posting account of the line's company."""
+	line = get_line(bank_transaction, "read")
+	return frappe.get_list(
+		"Account",
+		filters={"company": line.company, "is_group": 0, "disabled": 0, "account_type": ("not in", PARTY_TYPES)},
+		fields=["name", "account_name", "root_type"],
+		order_by="root_type, account_name",
+	)
+
+
+@frappe.whitelist()
+def get_progress(bank_account: str, months: int = 12) -> list[dict]:
+	"""Lines and reconciled lines per month, latest first: the page's progress and its streak."""
+	frappe.has_permission("Bank Account", "read", bank_account, throw=True)
+	rows = frappe.get_list(
+		"Bank Transaction",
+		filters={
+			"bank_account": bank_account,
+			"docstatus": 1,
+			"date": (">=", add_months(get_first_day(nowdate()), -(cint(months) - 1))),
+		},
+		fields=["date", "unallocated_amount"],
+		limit_page_length=0,
+	)
+	by_month = {}
+	for row in rows:
+		month = by_month.setdefault(str(row.date)[:7], {"month": str(row.date)[:7], "lines": 0, "reconciled": 0})
+		month["lines"] += 1
+		if not flt(row.unallocated_amount):
+			month["reconciled"] += 1
+	return sorted(by_month.values(), key=lambda month: month["month"], reverse=True)
 
 
 def roll_back_pairing(savepoint: str) -> None:
