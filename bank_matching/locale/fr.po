@@ -263,6 +263,21 @@ msgstr "Nom absent du libellé"
 msgid "Number not in the label"
 msgstr "Numéro absent du libellé"
 
+msgid "Refused: {0}"
+msgstr "Refusée : {0}"
+
+msgid "Lead refused: {0}"
+msgstr "Piste refusée : {0}"
+
+msgid "Leads you refused"
+msgstr "Pistes refusées"
+
+msgid "Dokos had a lead for these lines and you refused it. Restore it, or pick another document."
+msgstr "Dokos avait une piste pour ces lignes et vous l'avez refusée. Rétablissez-la ou choisissez un autre document."
+
+msgid "Nothing convincing"
+msgstr "Rien de convaincant"
+
 msgid "Refuse the lead"
 msgstr "Refuser la piste"
 
