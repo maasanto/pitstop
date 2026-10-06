@@ -3,7 +3,6 @@ import { Button, Dropdown, Tooltip } from "frappe-ui";
 import { computed } from "vue";
 import { formatDate, formatMoney } from "../format";
 import { __ } from "../translation";
-import ConfidencePill from "./ConfidencePill.vue";
 import DocumentCard from "./DocumentCard.vue";
 import MatchHint from "./MatchHint.vue";
 
@@ -33,7 +32,7 @@ const actions = computed(() => [
 
 <template>
 	<div
-		class="group grid cursor-pointer grid-cols-[1.5rem_minmax(0,0.85fr)_7rem_minmax(0,1.4fr)_10.5rem] items-center gap-x-5 rounded-6 border px-4 py-3.5 transition-colors"
+		class="group grid cursor-pointer grid-cols-[1.5rem_minmax(0,0.85fr)_7rem_minmax(0,1.4fr)_7.5rem] items-center gap-x-5 rounded-6 border px-4 py-3.5 transition-colors"
 		:class="[
 			approved
 				? 'border-outline-green-3 bg-surface-green-1'
@@ -166,31 +165,39 @@ const actions = computed(() => [
 			</DocumentCard>
 		</div>
 
-		<div class="flex items-center justify-end gap-0.5" @click.stop>
-			<ConfidencePill class="mr-2" :proposal="chosen" />
-			<Button
-				v-if="chosen.documents.length === 1"
-				variant="ghost"
-				icon="lucide-eye"
-				:tooltip="__('Preview')"
-				:label="__('Preview')"
-				@click="$emit('preview', chosen.documents[0])"
-			/>
-			<Button
-				variant="ghost"
-				icon="lucide-thumbs-down"
-				:tooltip="__('Not this one')"
-				:label="__('Not this one')"
-				@click="$emit('refuse')"
-			/>
-			<Dropdown align="end" :options="actions">
-				<template #trigger="{ open }">
-					<Button variant="ghost" icon="lucide-ellipsis" :active="open" :label="__('More actions')" />
-				</template>
-				<template #item-suffix="{ item }">
-					<kbd v-if="item.shortcut" class="font-sans text-xs text-ink-gray-5">{{ item.shortcut }}</kbd>
-				</template>
-			</Dropdown>
+		<!-- The section already names the confidence, and a rule shows its wand: only a pick of yours is flagged -->
+		<div class="flex items-center justify-end gap-1" @click.stop>
+			<Tooltip v-if="chosen.manual" :text="__('Chosen by you')">
+				<span class="lucide-user-check size-4 shrink-0 text-ink-blue-6" role="img" :aria-label="__('Chosen by you')" />
+			</Tooltip>
+			<div
+				class="flex items-center gap-0.5 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+				:class="focused ? 'opacity-100' : 'opacity-0'"
+			>
+				<Button
+					v-if="chosen.documents.length === 1"
+					variant="ghost"
+					icon="lucide-eye"
+					:tooltip="__('Preview')"
+					:label="__('Preview')"
+					@click="$emit('preview', chosen.documents[0])"
+				/>
+				<Button
+					variant="ghost"
+					icon="lucide-thumbs-down"
+					:tooltip="__('Not this one')"
+					:label="__('Not this one')"
+					@click="$emit('refuse')"
+				/>
+				<Dropdown align="end" :options="actions">
+					<template #trigger="{ open }">
+						<Button variant="ghost" icon="lucide-ellipsis" :active="open" :label="__('More actions')" />
+					</template>
+					<template #item-suffix="{ item }">
+						<kbd v-if="item.shortcut" class="font-sans text-xs text-ink-gray-5">{{ item.shortcut }}</kbd>
+					</template>
+				</Dropdown>
+			</div>
 		</div>
 	</div>
 </template>

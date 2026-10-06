@@ -51,6 +51,7 @@ const reasonsAbout = (...signals) =>
 			variant="ghost"
 			size="sm"
 			icon="lucide-eye"
+			class="opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
 			:label="__('Preview')"
 			@click.stop="$emit('preview', document)"
 		/>

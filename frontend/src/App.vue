@@ -651,7 +651,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 							</span>
 						</div>
 
-						<section v-for="section in sections" :key="section.level" class="mb-8">
+						<section v-for="section in sections" :key="section.level" class="mb-10">
 							<div
 								v-if="isFolded(section)"
 								class="flex items-center gap-3 rounded-6 border border-outline-green-3 bg-surface-green-1 px-4 py-3"
@@ -675,7 +675,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 								/>
 							</div>
 							<template v-else>
-							<div class="mb-2.5 flex items-end gap-3">
+							<div class="mb-3 flex items-end gap-3">
 								<div>
 									<h2 class="text-lg-semibold text-ink-gray-9">
 										{{ section.title() }}

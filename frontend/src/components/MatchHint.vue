@@ -26,7 +26,7 @@ const description = computed(() =>
 	<Tooltip v-if="state" :text="description">
 		<span
 			v-if="state === 'missing'"
-			class="lucide-circle-x size-4 shrink-0 text-ink-red-5"
+			class="lucide-circle-x size-4 shrink-0 text-ink-gray-4"
 			role="img"
 			:aria-label="description"
 		/>
