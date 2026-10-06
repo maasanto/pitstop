@@ -139,7 +139,12 @@ function chosenFor(pairing) {
 
 function refuse(pairing) {
 	const name = pairing.line.name;
-	refused[name] = [...(refused[name] || []), chosenFor(pairing).key];
+	const proposal = chosenFor(pairing);
+	refused[name] = [...(refused[name] || []), proposal.key];
+	toast(__("Lead refused: {0}", [leadLabel(proposal)]), {
+		duration: 10000,
+		action: { label: __("Undo"), onClick: () => restoreLead(pairing, proposal.key) },
+	});
 	delete chosen[name];
 	approved.delete(name);
 	saveReview();
@@ -152,6 +157,12 @@ function refuse(pairing) {
 
 function restoreLeads(pairing) {
 	delete refused[pairing.line.name];
+	saveReview();
+}
+
+function restoreLead(pairing, key) {
+	const name = pairing.line.name;
+	refused[name] = refused[name]?.filter((refusedKey) => refusedKey !== key);
 	saveReview();
 }
 
@@ -366,12 +377,33 @@ function unmatchedActions(pairing) {
 			icon: "lucide-plus",
 			onClick: () => window.open(newPaymentUrl(pairing.line), "_blank"),
 		},
-		refused[pairing.line.name]?.length && {
-			label: __("Restore the refused leads"),
-			icon: "lucide-undo-2",
-			onClick: () => restoreLeads(pairing),
+	];
+}
+
+// A line without a lead and a line whose leads were all refused call for different actions
+const unmatchedGroups = computed(() =>
+	[
+		{
+			key: "refused",
+			title: () => __("Leads you refused"),
+			hint: () => __("Dokos had a lead for these lines and you refused it. Restore it, or pick another document."),
+			pairings: unmatched.value.filter((pairing) => pairing.proposals.length),
 		},
-	].filter(Boolean);
+		{
+			key: "empty",
+			title: () => __("Nothing convincing"),
+			hint: () =>
+				__("Dokos found nothing convincing for these lines. Search a document, or record what the money is."),
+			pairings: unmatched.value.filter((pairing) => !pairing.proposals.length),
+		},
+	].filter((group) => group.pairings.length),
+);
+
+function leadLabel(proposal) {
+	if (proposal.rule) return proposal.rule.rule_name;
+	if (proposal.settlement) return __("{0} payments settled at once", [proposal.documents.length]);
+	const [document] = proposal.documents;
+	return [document.party_name || document.party, document.name].filter(Boolean).join(" · ");
 }
 
 function newPaymentUrl(line) {
@@ -684,39 +716,59 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 				</template>
 
 				<template v-else-if="tab === 'unmatched'">
-					<p class="mb-3 text-p-sm text-ink-gray-5">
-						{{
-							__(
-								"Dokos found nothing convincing for these lines. Search a document, or record what the money is.",
-							)
-						}}
-					</p>
-					<div class="divide-y divide-outline-gray-1">
-						<div v-for="pairing in unmatched" :key="pairing.line.name" class="flex items-center gap-4 py-3">
-							<div class="w-24 shrink-0 text-sm text-ink-gray-5">{{ formatDate(pairing.line.date) }}</div>
-							<div class="min-w-0 flex-1 truncate text-base text-ink-gray-9">
-								{{ pairing.line.description }}
+					<section v-for="group in unmatchedGroups" :key="group.key" class="mb-8">
+						<h2 class="text-lg-semibold text-ink-gray-9">
+							{{ group.title() }}
+							<span class="ml-1 text-base text-ink-gray-5">{{ group.pairings.length }}</span>
+						</h2>
+						<p class="mb-2 mt-0.5 text-p-sm text-ink-gray-5">{{ group.hint() }}</p>
+						<div class="divide-y divide-outline-gray-1">
+							<div
+								v-for="pairing in group.pairings"
+								:key="pairing.line.name"
+								class="flex items-center gap-4 py-3"
+							>
+								<div class="w-24 shrink-0 text-sm text-ink-gray-5">{{ formatDate(pairing.line.date) }}</div>
+								<div class="min-w-0 flex-1">
+									<div class="truncate text-base text-ink-gray-9">{{ pairing.line.description }}</div>
+									<div
+										v-if="group.key === 'refused'"
+										class="mt-0.5 flex items-center gap-1 text-sm text-ink-gray-5"
+									>
+										<span class="lucide-thumbs-down size-3.5 shrink-0" aria-hidden="true" />
+										<span class="truncate">{{
+											__("Refused: {0}", [leadLabel(pairing.proposals[0])])
+										}}</span>
+									</div>
+								</div>
+								<div class="w-28 shrink-0 text-right text-base-semibold tabular-nums text-ink-gray-9">
+									{{ formatMoney(pairing.line.amount, pairing.line.currency) }}
+								</div>
+								<Button
+									v-if="group.key === 'refused'"
+									variant="ghost"
+									icon-left="lucide-undo-2"
+									:label="__('Restore')"
+									@click="restoreLeads(pairing)"
+								/>
+								<Button
+									icon-left="lucide-search"
+									:label="__('Search a document')"
+									@click="openSearch(pairing)"
+								/>
+								<Dropdown align="end" :options="unmatchedActions(pairing)">
+									<template #trigger="{ open }">
+										<Button
+											variant="ghost"
+											icon="lucide-ellipsis"
+											:active="open"
+											:label="__('More actions')"
+										/>
+									</template>
+								</Dropdown>
 							</div>
-							<div class="w-28 shrink-0 text-right text-base-semibold tabular-nums text-ink-gray-9">
-								{{ formatMoney(pairing.line.amount, pairing.line.currency) }}
-							</div>
-							<Button
-								icon-left="lucide-search"
-								:label="__('Search a document')"
-								@click="openSearch(pairing)"
-							/>
-							<Dropdown align="end" :options="unmatchedActions(pairing)">
-								<template #trigger="{ open }">
-									<Button
-										variant="ghost"
-										icon="lucide-ellipsis"
-										:active="open"
-										:label="__('More actions')"
-									/>
-								</template>
-							</Dropdown>
 						</div>
-					</div>
+					</section>
 					<p v-if="pairings.data && !unmatched.length" class="py-16 text-center text-p-sm text-ink-gray-4">
 						{{ __("Every line has a proposal") }}
 					</p>
