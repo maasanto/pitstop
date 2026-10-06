@@ -19,20 +19,6 @@ export const DOCTYPE_ICONS = {
 	"Expense Claim": "lucide-wallet",
 };
 
-const SIGNAL_ICONS = {
-	reference: "lucide-hash",
-	name: "lucide-user",
-	history: "lucide-history",
-	batch: "lucide-layers",
-};
-
-export function signalIcon(reason) {
-	if (reason.signal === "amount") {
-		return reason.exact ? "lucide-equal" : "lucide-equal-approximately";
-	}
-	return SIGNAL_ICONS[reason.signal];
-}
-
 export function deskUrl(doctype, name) {
 	return `/app/${doctype.toLowerCase().replaceAll(" ", "-")}/${encodeURIComponent(name)}`;
 }
