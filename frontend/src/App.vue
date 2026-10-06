@@ -489,8 +489,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 	<FrappeUIProvider>
 		<div class="min-h-screen bg-surface-base pb-32 text-ink-gray-8">
 			<header class="border-b border-outline-gray-1">
-				<div class="mx-auto flex max-w-[1200px] flex-wrap items-center gap-3 px-5 pb-1 pt-4">
-					<h1 class="mr-2 text-2xl-semibold text-ink-gray-9">{{ __("Bank reconciliation") }}</h1>
+				<div class="mx-auto flex max-w-[1280px] flex-wrap items-center gap-3 px-8 pb-3 pt-7">
+					<h1 class="mr-4 text-4xl-semibold text-ink-gray-9">{{ __("Bank reconciliation") }}</h1>
 					<Select
 						v-model="bankAccount"
 						class="w-64"
@@ -564,18 +564,18 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 						/>
 					</div>
 				</div>
-				<nav class="mx-auto max-w-[1200px] px-5">
+				<nav class="mx-auto mt-2 max-w-[1280px] px-8">
 					<TabButtons v-model="tab" type="underline" :options="tabOptions" />
 				</nav>
 			</header>
 
-			<main class="mx-auto max-w-[1200px] px-5 pt-5">
+			<main class="mx-auto max-w-[1280px] px-8 pt-8">
 				<ErrorMessage v-if="pairings.error" :message="pairings.error" class="mb-4" />
 				<p v-if="pairings.data?.truncated" class="mb-4 text-p-sm text-ink-amber-7">
 					{{ __("Only the latest lines of the period are shown: narrow the period to see the others.") }}
 				</p>
 
-				<div v-if="tab !== 'reconciled' && lines.length" class="mb-5 flex flex-wrap items-center gap-2">
+				<div v-if="tab !== 'reconciled' && lines.length" class="mb-8 flex flex-wrap items-center gap-2">
 					<TabButtons v-model="filters.direction" :options="directionOptions" />
 					<TextInput
 						v-model="filters.text"
@@ -593,7 +593,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 				<template v-if="tab === 'proposals'">
 					<Alert
 						v-if="showGuide"
-						class="mb-5"
+						class="mb-10"
 						theme="blue"
 						:title="__('Dokos already paired your bank lines')"
 						:description="
@@ -605,8 +605,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 						@dismiss="dismissGuide"
 					/>
 
-					<div v-if="pairings.loading && !pairings.data" class="space-y-2">
-						<Skeleton v-for="index in 4" :key="index" class="h-20 w-full rounded-6" />
+					<div v-if="pairings.loading && !pairings.data" class="space-y-3">
+						<Skeleton v-for="index in 4" :key="index" class="h-24 w-full rounded-6" />
 					</div>
 
 					<div
@@ -650,7 +650,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 					</div>
 
 					<template v-else>
-						<div class="mb-6 flex items-center gap-3">
+						<div class="mb-12 flex items-center gap-4">
 							<div class="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-gray-2">
 								<div
 									class="h-full rounded-full bg-surface-green-6 transition-all"
@@ -662,10 +662,10 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 							</span>
 						</div>
 
-						<section v-for="section in sections" :key="section.level" class="mb-10">
+						<section v-for="section in sections" :key="section.level" class="mb-14">
 							<div
 								v-if="isFolded(section)"
-								class="flex items-center gap-3 rounded-6 border border-outline-green-3 bg-surface-green-1 px-4 py-3"
+								class="flex items-center gap-3 rounded-6 border border-outline-green-3 bg-surface-green-1 px-6 py-4"
 							>
 								<span class="lucide-circle-check size-5 text-ink-green-6" aria-hidden="true" />
 								<span class="text-base-medium text-ink-gray-9">{{ section.title() }}</span>
@@ -686,13 +686,13 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 								/>
 							</div>
 							<template v-else>
-							<div class="mb-3 flex items-end gap-3">
+							<div class="mb-5 flex items-end gap-3">
 								<div>
-									<h2 class="text-lg-semibold text-ink-gray-9">
+									<h2 class="text-2xl-semibold text-ink-gray-9">
 										{{ section.title() }}
-										<span class="ml-1 text-base text-ink-gray-5">{{ section.pairings.length }}</span>
+										<span class="ml-1.5 text-lg text-ink-gray-4">{{ section.pairings.length }}</span>
 									</h2>
-									<p class="mt-0.5 text-p-sm text-ink-gray-5">{{ section.hint() }}</p>
+									<p class="mt-2 text-p-base text-ink-gray-5">{{ section.hint() }}</p>
 								</div>
 								<Button
 									v-if="section.level === 'high'"
@@ -705,7 +705,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 									@click="approveAll(section)"
 								/>
 							</div>
-							<div class="space-y-2">
+							<div class="space-y-3">
 								<PairingRow
 									v-for="pairing in section.pairings"
 									:id="`line-${pairing.line.name}`"
@@ -727,24 +727,24 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 				</template>
 
 				<template v-else-if="tab === 'unmatched'">
-					<section v-for="group in unmatchedGroups" :key="group.key" class="mb-8">
-						<h2 class="text-lg-semibold text-ink-gray-9">
+					<section v-for="group in unmatchedGroups" :key="group.key" class="mb-14">
+						<h2 class="text-2xl-semibold text-ink-gray-9">
 							{{ group.title() }}
-							<span class="ml-1 text-base text-ink-gray-5">{{ group.pairings.length }}</span>
+							<span class="ml-1.5 text-lg text-ink-gray-4">{{ group.pairings.length }}</span>
 						</h2>
-						<p class="mb-2 mt-0.5 text-p-sm text-ink-gray-5">{{ group.hint() }}</p>
-						<div class="divide-y divide-outline-gray-1">
+						<p class="mb-4 mt-2 text-p-base text-ink-gray-5">{{ group.hint() }}</p>
+						<div class="divide-y divide-outline-gray-1 border-y border-outline-gray-1">
 							<div
 								v-for="pairing in group.pairings"
 								:key="pairing.line.name"
-								class="flex items-center gap-4 py-3"
+								class="flex items-center gap-5 py-4"
 							>
 								<div class="w-24 shrink-0 text-sm text-ink-gray-5">{{ formatDate(pairing.line.date) }}</div>
 								<div class="min-w-0 flex-1">
-									<div class="truncate text-base text-ink-gray-9">{{ pairing.line.description }}</div>
+									<div class="truncate text-base-medium text-ink-gray-9">{{ pairing.line.description }}</div>
 									<div
 										v-if="group.key === 'refused'"
-										class="mt-0.5 flex items-center gap-1 text-sm text-ink-gray-5"
+										class="mt-2 flex items-center gap-1 text-sm text-ink-gray-5"
 									>
 										<span class="lucide-thumbs-down size-3.5 shrink-0" aria-hidden="true" />
 										<span class="truncate">{{

@@ -37,7 +37,7 @@ const reasonsAbout = (...signals) =>
 </script>
 
 <template>
-	<div v-if="compact" class="flex items-center gap-1.5 py-1 text-sm">
+	<div v-if="compact" class="flex items-center gap-1.5 py-2 text-sm">
 		<a
 			:href="deskUrl(document.doctype, document.name)"
 			target="_blank"
@@ -60,12 +60,12 @@ const reasonsAbout = (...signals) =>
 		<div class="flex items-center gap-1.5">
 			<span class="truncate text-base-medium text-ink-gray-9">{{ title }}</span>
 			<MatchHint v-if="party" :reasons="reasonsAbout('name', 'history')" :missing="__('Name not in the label')" />
-			<span class="ml-auto shrink-0 pl-2 text-base-semibold tabular-nums text-ink-gray-9">
+			<span class="ml-auto shrink-0 pl-2 text-base tabular-nums text-ink-gray-7">
 				{{ formatMoney(document.amount, currency) }}
 			</span>
 			<MatchHint v-if="lineAmount !== null" :reasons="reasonsAbout('amount')" :missing="__('Different amount')" />
 		</div>
-		<div class="mt-1.5 flex items-center gap-1.5 text-sm text-ink-gray-5">
+		<div class="mt-2 flex items-center gap-1.5 text-sm text-ink-gray-5">
 			<Tooltip :text="__(document.doctype)">
 				<span :class="DOCTYPE_ICONS[document.doctype]" class="size-3.5 shrink-0" :aria-label="__(document.doctype)" />
 			</Tooltip>

@@ -32,7 +32,7 @@ const actions = computed(() => [
 
 <template>
 	<div
-		class="group grid cursor-pointer grid-cols-[1.5rem_minmax(0,0.85fr)_7rem_minmax(0,1.4fr)_7.5rem] items-center gap-x-5 rounded-6 border px-4 py-3.5 transition-colors"
+		class="group grid cursor-pointer grid-cols-[1.5rem_minmax(0,0.85fr)_7rem_minmax(0,1.4fr)_6.5rem] items-center gap-x-6 rounded-6 border px-6 py-5 transition-colors"
 		:class="[
 			approved
 				? 'border-outline-green-3 bg-surface-green-1'
@@ -60,7 +60,7 @@ const actions = computed(() => [
 			<div class="truncate text-base-medium text-ink-gray-9" :title="line.description">
 				{{ line.description }}
 			</div>
-			<div class="mt-1.5 flex items-center gap-1.5 text-sm text-ink-gray-5">
+			<div class="mt-2 flex items-center gap-1.5 text-sm text-ink-gray-5">
 				<span
 					:class="
 						line.amount > 0
@@ -75,20 +75,20 @@ const actions = computed(() => [
 			</div>
 		</div>
 
-		<div class="text-right text-lg-semibold tabular-nums text-ink-gray-9">
+		<div class="text-right text-xl-semibold tabular-nums text-ink-gray-9">
 			{{ formatMoney(line.amount, line.currency) }}
 		</div>
 
-		<div class="min-w-0 border-l border-outline-gray-1 pl-5">
+		<div class="min-w-0 border-l border-outline-gray-1 pl-6">
 			<div v-if="chosen.rule" class="min-w-0">
 				<div class="flex items-center gap-1.5">
 					<span class="lucide-wand-sparkles size-4 shrink-0 text-ink-blue-6" aria-hidden="true" />
 					<span class="truncate text-base-medium text-ink-gray-9">{{ chosen.rule.rule_name }}</span>
-					<span class="ml-auto shrink-0 pl-2 text-base-semibold tabular-nums text-ink-gray-9">
+					<span class="ml-auto shrink-0 pl-2 text-base tabular-nums text-ink-gray-7">
 						{{ formatMoney(Math.abs(line.amount), line.currency) }}
 					</span>
 				</div>
-				<div class="mt-1.5 truncate text-sm text-ink-gray-5">
+				<div class="mt-2 truncate text-sm text-ink-gray-5">
 					{{
 						chosen.rule.classify_as === "Payment Entry"
 							? __("Creates a payment to {0}", [chosen.rule.party])
@@ -103,12 +103,12 @@ const actions = computed(() => [
 						__("{0} payments settled at once", [chosen.documents.length])
 					}}</span>
 					<MatchHint :reasons="settlementReasons('batch')" />
-					<span class="ml-auto shrink-0 pl-2 text-base-semibold tabular-nums text-ink-gray-9">
+					<span class="ml-auto shrink-0 pl-2 text-base tabular-nums text-ink-gray-7">
 						{{ formatMoney(chosen.settlement.total, line.currency) }}
 					</span>
 					<MatchHint :reasons="settlementReasons('amount')" />
 				</div>
-				<div class="mt-1 divide-y divide-outline-gray-1">
+				<div class="mt-2 divide-y divide-outline-gray-1">
 					<DocumentCard
 						v-for="document in chosen.documents"
 						:key="document.name"
@@ -118,7 +118,7 @@ const actions = computed(() => [
 						@preview="$emit('preview', $event)"
 					/>
 				</div>
-				<p v-if="chosen.settlement.fee" class="mt-1 text-p-sm text-ink-amber-7">
+				<p v-if="chosen.settlement.fee" class="mt-2 text-p-sm text-ink-amber-7">
 					{{
 						__("{0} less than the payments, likely card fees: it stays open on the last payment", [
 							formatMoney(chosen.settlement.fee, line.currency),
@@ -132,11 +132,11 @@ const actions = computed(() => [
 					<span class="truncate text-base-medium text-ink-gray-9">{{
 						__("{0} documents paid at once", [chosen.documents.length])
 					}}</span>
-					<span class="ml-auto shrink-0 pl-2 text-base-semibold tabular-nums text-ink-gray-9">
+					<span class="ml-auto shrink-0 pl-2 text-base tabular-nums text-ink-gray-7">
 						{{ formatMoney(documentsTotal, line.currency) }}
 					</span>
 				</div>
-				<div class="mt-1 divide-y divide-outline-gray-1">
+				<div class="mt-2 divide-y divide-outline-gray-1">
 					<DocumentCard
 						v-for="document in chosen.documents"
 						:key="document.name"
