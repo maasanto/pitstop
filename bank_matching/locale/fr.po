@@ -260,6 +260,9 @@ msgstr "Montant différent"
 msgid "Name not in the label"
 msgstr "Nom absent du libellé"
 
+msgid "Number not in the label"
+msgstr "Numéro absent du libellé"
+
 msgid "Refuse the lead"
 msgstr "Refuser la piste"
 
