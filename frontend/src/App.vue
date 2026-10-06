@@ -13,6 +13,7 @@ import {
 	TabButtons,
 	TextInput,
 	Tooltip,
+	call,
 	toast,
 	useCall,
 } from "frappe-ui";
@@ -148,6 +149,7 @@ function refuse(pairing) {
 	delete chosen[name];
 	approved.delete(name);
 	saveReview();
+	saveRefusals(name);
 	// The next lead may sit in another confidence section: follow the line there
 	const index = ordered.value.indexOf(pairing);
 	if (index !== -1) focusedIndex.value = index;
@@ -157,13 +159,23 @@ function refuse(pairing) {
 
 function restoreLeads(pairing) {
 	delete refused[pairing.line.name];
-	saveReview();
+	saveRefusals(pairing.line.name);
 }
 
 function restoreLead(pairing, key) {
 	const name = pairing.line.name;
 	refused[name] = refused[name]?.filter((refusedKey) => refusedKey !== key);
-	saveReview();
+	saveRefusals(name);
+}
+
+// Refusals live on the server, where they follow the line to every browser and teach the matcher. A line's
+// saves are chained: two quick changes must land in the order they were made.
+const refusalSaves = {};
+function saveRefusals(name) {
+	const proposals = [...(refused[name] || [])];
+	refusalSaves[name] = (refusalSaves[name] || Promise.resolve())
+		.then(() => call("bank_matching.api.set_refused_proposals", { bank_transaction: name, proposals }))
+		.catch((error) => toast.error(error.messages?.[0] || error.message));
 }
 
 function toggle(pairing) {
@@ -178,7 +190,10 @@ function choose(pairing, proposal) {
 	const isLead = pairing.proposals.some((lead) => lead.key === proposal.key);
 	// A document the user searched or grouped is ready by their own decision
 	chosen[name] = isLead ? proposal : { ...proposal, level: "high", manual: true };
-	refused[name] = refused[name]?.filter((key) => key !== proposal.key);
+	if (refused[name]?.includes(proposal.key)) {
+		refused[name] = refused[name].filter((key) => key !== proposal.key);
+		saveRefusals(name);
+	}
 	approved.add(name);
 	saveReview();
 }
@@ -190,8 +205,8 @@ function approveAll(section) {
 
 const storageKey = (kind) => `bank_matching:${kind}:${bankAccount.value}`;
 
-// The review lives in this browser only, until validated: a reload keeps it, a colleague does not see it.
-// Lines outside the period on screen keep what was stored for them.
+// Pre-approvals live in this browser only, until validated: a reload keeps them, a colleague does not see
+// them. Lines outside the period on screen keep what was stored for them.
 function storeForLines(kind, entries) {
 	const stored = readStored(storageKey(kind)) || {};
 	lines.value.forEach((pairing) => delete stored[pairing.line.name]);
@@ -205,18 +220,14 @@ function saveReview() {
 			lines.value.filter((p) => approved.has(p.line.name)).map((p) => [p.line.name, chosenFor(p).key]),
 		),
 	);
-	storeForLines(
-		"refused",
-		Object.fromEntries(Object.entries(refused).filter(([, keys]) => keys?.length)),
-	);
 }
 
 function restoreReview(data) {
 	approved.clear();
 	[chosen, refused].forEach((state) => Object.keys(state).forEach((name) => delete state[name]));
-	Object.assign(refused, readStored(storageKey("refused")));
 	const saved = readStored(storageKey("approved")) || {};
 	for (const pairing of data.pairings) {
+		if (pairing.refused.length) refused[pairing.line.name] = [...pairing.refused];
 		const proposal = pairing.proposals.find((candidate) => candidate.key === saved[pairing.line.name]);
 		if (proposal) {
 			chosen[pairing.line.name] = proposal;
