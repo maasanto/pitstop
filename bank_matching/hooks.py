@@ -11,3 +11,9 @@ use_json_request_body = True
 require_type_annotated_api_methods = True
 
 website_route_rules = [{"from_route": "/bank-matching/<path:app_path>", "to_route": "bank-matching"}]
+
+doctype_js = {
+	"Sales Invoice": "public/js/find_bank_line.js",
+	"Purchase Invoice": "public/js/find_bank_line.js",
+	"Payment Entry": "public/js/find_bank_line.js",
+}
