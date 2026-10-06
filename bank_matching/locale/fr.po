@@ -490,3 +490,24 @@ msgstr "La recherche de lignes bancaires n'est possible que pour {0}, pas pour {
 
 msgid "{0} {1} has nothing left to reconcile with a bank line"
 msgstr "{0} {1} n'a plus rien à rapprocher avec une ligne bancaire"
+
+msgid "Same amount"
+msgstr "Même montant"
+
+msgid "Close amount"
+msgstr "Montant proche"
+
+msgid "Number in the label"
+msgstr "Numéro dans le libellé"
+
+msgid "Similar number in the label"
+msgstr "Numéro similaire dans le libellé"
+
+msgid "Name in the label"
+msgstr "Nom dans le libellé"
+
+msgid "Contact in the label"
+msgstr "Contact dans le libellé"
+
+msgid "Recognized from past payments"
+msgstr "Reconnu d'après les paiements passés"
