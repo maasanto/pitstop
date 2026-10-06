@@ -8,14 +8,18 @@ from erpnext.tests.utils import ERPNextTestSuite
 from bank_matching.match_scoring import (
 	ONE_TYPO,
 	YEAR_AND_COUNTER,
+	PastLine,
 	Receipt,
 	Reference,
 	Vocabulary,
 	amount_grade,
+	confidence,
 	is_identifier,
 	name_grade,
 	reference_evidence,
 	settlement_batches,
+	shared_accounts,
+	similar_line_parties,
 )
 from bank_matching.ranking import SuggestionRanking, payer
 
@@ -110,6 +114,18 @@ class TestSignalGrades(ERPNextTestSuite):
 		self.assertTrue(vocabulary.is_identifying("DURAND"))
 		self.assertFalse(vocabulary.is_identifying("BAZAAR"))
 		self.assertFalse(vocabulary.is_identifying("SEPA"))
+
+	def test_an_account_paying_for_many_parties_names_none(self):
+		acme, globex, initech = (("Customer", name) for name in ("Acme", "Globex", "Initech"))
+		own = [PastLine(frozenset({"LOYER"}), "FR761", frozenset({acme}))]
+		self.assertEqual(similar_line_parties({"VIREMENT"}, "FR761", own, shared_accounts(own)), {acme: 0.5})
+
+		platform = own + [PastLine(frozenset(), "FR761", frozenset({party})) for party in (globex, initech)]
+		self.assertEqual(similar_line_parties({"VIREMENT"}, "FR761", platform, shared_accounts(platform)), {})
+
+	def test_a_correction_damps_a_party_unless_the_label_quotes_its_number(self):
+		self.assertAlmostEqual(confidence(amount=1, name=1, corrected=1), confidence(amount=1, name=1) / 2)
+		self.assertEqual(confidence(reference=1, amount=1, corrected=1), confidence(reference=1, amount=1))
 
 
 class TestSettlements(ERPNextTestSuite):
@@ -239,7 +255,9 @@ class TestSuggestions(ERPNextTestSuite):
 	def test_the_order_number_of_a_paid_invoice_points_at_its_open_payment(self):
 		invoice = self.create_invoice(self.customer, 300, po_no="PO-ACME-7781")
 		payment = get_payment_entry("Sales Invoice", invoice.name, bank_account="_Test Bank - _TC")
-		payment.update({"posting_date": PAYMENT_DATE, "reference_no": "DEP-1", "reference_date": PAYMENT_DATE})
+		payment.update(
+			{"posting_date": PAYMENT_DATE, "reference_no": "DEP-1", "reference_date": PAYMENT_DATE}
+		)
 		payment.insert()
 		payment.submit()
 

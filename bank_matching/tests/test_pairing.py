@@ -3,7 +3,13 @@ from datetime import date
 import frappe
 from erpnext.tests.utils import ERPNextTestSuite
 
-from bank_matching.api import create_rule, get_pairings, reconcile_pairings, undo_pairings
+from bank_matching.api import (
+	create_rule,
+	get_pairings,
+	reconcile_pairings,
+	set_refused_proposals,
+	undo_pairings,
+)
 from bank_matching.lookup import get_lines_for_document, reconcile_document
 
 PAYMENT_DATE = date(2026, 9, 15)
@@ -66,11 +72,11 @@ class TestPairings(ERPNextTestSuite):
 		).insert()
 		return customer
 
-	def create_invoice(self, amount):
+	def create_invoice(self, amount, customer=None):
 		invoice = frappe.get_doc(
 			{
 				"doctype": "Sales Invoice",
-				"customer": self.customer,
+				"customer": customer or self.customer,
 				"company": COMPANY,
 				"set_posting_time": 1,
 				"posting_date": PAYMENT_DATE,
@@ -109,7 +115,7 @@ class TestPairings(ERPNextTestSuite):
 		payment.submit()
 		return payment
 
-	def create_line(self, amount, description):
+	def create_line(self, amount, description, iban=None):
 		"""A positive amount is money in."""
 		return (
 			frappe.get_doc(
@@ -121,6 +127,7 @@ class TestPairings(ERPNextTestSuite):
 					"debit": max(-amount, 0),
 					"currency": "INR",
 					"description": description,
+					"bank_party_iban": iban,
 				}
 			)
 			.insert()
@@ -140,6 +147,11 @@ class TestPairings(ERPNextTestSuite):
 		with self.set_user(ACCOUNTANT):
 			pairings = get_pairings(self.bank_account, str(PAYMENT_DATE), str(PAYMENT_DATE))["pairings"]
 		return next(pairing for pairing in pairings if pairing["line"]["name"] == line.name)
+
+	def by_document(self, line, field):
+		"""Each single-document proposal of the line: document name -> the proposal's field."""
+		proposals = self.pairing_of(line)["proposals"]
+		return {p["documents"][0]["name"]: p[field] for p in proposals if len(p["documents"]) == 1}
 
 	def test_an_invoice_paired_with_its_line_is_paid_on_validation(self):
 		invoice = self.create_invoice(1234.56)
@@ -237,6 +249,39 @@ class TestPairings(ERPNextTestSuite):
 		invoices = [p["documents"][0]["name"] for p in self.pairing_of(line)["proposals"]]
 
 		self.assertEqual(invoices[:2], [best.name, runner_up.name])
+
+	def test_a_refused_lead_stays_refused_and_no_longer_blocks_its_rival(self):
+		globex = self.get_customer("Globex Leasing", contact=("Jane", "Roe"))
+		acme_invoice = self.create_invoice(612.40)
+		globex_invoice = self.create_invoice(612.40, customer=globex)
+		line = self.create_line(612.40, "VIR ACME RENTALS GLOBEX LEASING")
+
+		self.assertEqual(self.by_document(line, "level")[globex_invoice.name], "medium", "two parties tie")
+		with self.set_user(ACCOUNTANT):
+			set_refused_proposals(line.name, [f"Sales Invoice:{acme_invoice.name}"])
+
+		self.assertEqual(self.pairing_of(line)["refused"], [f"Sales Invoice:{acme_invoice.name}"])
+		self.assertEqual(self.by_document(line, "level")[globex_invoice.name], "high")
+
+	def test_a_correction_teaches_which_party_an_account_pays_for(self):
+		globex = self.get_customer("Globex Leasing", contact=("Jane", "Roe"))
+		acme_invoice = self.create_invoice(517.33)
+		globex_invoice = self.create_invoice(517.33, customer=globex)
+		first = self.create_line(
+			517.33, "TRANSFER FROM ACCOUNT 4471", iban="FR76 3000 6000 0112 3456 7890 189"
+		)
+		documents = [{"doctype": "Sales Invoice", "name": globex_invoice.name}]
+		with self.set_user(ACCOUNTANT):
+			set_refused_proposals(first.name, [f"Sales Invoice:{acme_invoice.name}"])
+			reconcile_pairings([{"bank_transaction": first.name, "documents": documents}])
+
+		next_globex_invoice = self.create_invoice(517.33, customer=globex)
+		# Not a word in common with the first label: only the account can tell who pays
+		second = self.create_line(517.33, "INCOMING WIRE 9930", iban="FR7630006000011234567890189")
+
+		scores = self.by_document(second, "score")
+		self.assertGreater(scores[next_globex_invoice.name], 0.6, "the account's past payer gains")
+		self.assertLess(scores[acme_invoice.name], 0.6, "the party corrected away loses")
 
 	def test_a_card_batch_is_proposed_as_one_settlement_less_its_fee(self):
 		receipts = [self.create_receipt(amount, f"TPE-{amount}") for amount in (130, 150, 120)]
