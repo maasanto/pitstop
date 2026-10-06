@@ -9,6 +9,8 @@ import frappe
 from frappe import _
 from frappe.utils import flt, getdate
 
+from bank_matching.rules import matching_rule, rule_proposal
+
 try:
 	from erpnext.accounts.page.bank_reconciliation.bank_reconciliation import BankReconciliation
 	from erpnext.accounts.page.bank_reconciliation.bank_transaction_match import (
@@ -26,6 +28,8 @@ except ImportError as error:
 	) from error
 
 LEVELS = ("high", "medium", "low")
+# Beyond five leads the user searches rather than refuses one by one
+MAX_PROPOSALS = 5
 # Invoices are paid by a Payment Entry the reconciliation creates; the others already moved the money
 INVOICE_TYPES = ("Sales Invoice", "Purchase Invoice", "Expense Claim")
 EXTRA_NUMBER_FIELD = {
@@ -35,6 +39,7 @@ EXTRA_NUMBER_FIELD = {
 }
 LINE_FIELDS = [
 	"name",
+	"company",
 	"date",
 	"description",
 	"reference_number",
@@ -43,6 +48,9 @@ LINE_FIELDS = [
 	"currency",
 	"credit",
 	"debit",
+	# What Bank Transaction Rules compare
+	"deposit",
+	"withdrawal",
 	"unallocated_amount",
 	"allocated_amount",
 ]
@@ -63,19 +71,34 @@ def build_pairing(line) -> dict:
 	"""Every way Dokos sees to reconcile the line, the one it would pick first."""
 	ranking = SuggestionRanking(BankTransactionMatch([line], None))
 	suggestions = ranking.rank()
-	proposals = [document_proposal(suggestion) for suggestion in best_of_each_type(suggestions)]
+	proposals = [document_proposal(suggestion) for suggestion in shortlist(suggestions)]
 	proposals += settlement_proposals(line, ranking.candidates)
-	# Stable sort: within a level, the scorer's own order
+	rule = matching_rule(line)
+	if rule:
+		# A document already booked for the amount wins: applying the rule would book the line twice
+		proposals.append(rule_proposal(rule, "low" if any(map(is_exact_amount, proposals)) else "high"))
+	# Stable sort: within a level, the scorer's own order, then the rule
 	proposals.sort(key=lambda proposal: LEVELS.index(proposal["level"]))
 	return {"line": describe_line(line), "proposals": proposals}
 
 
-def best_of_each_type(suggestions):
-	"""A strong payment must not hide behind a stronger invoice of another party, nor the reverse."""
-	seen = set()
-	for suggestion in suggestions:
-		if suggestion.doctype not in seen:
-			seen.add(suggestion.doctype)
+def is_exact_amount(proposal) -> bool:
+	if proposal.get("settlement"):
+		return not proposal["settlement"]["fee"]
+	return any(
+		reason["signal"] == "amount" and reason["exact"]
+		for document in proposal["documents"]
+		for reason in document["reasons"]
+	)
+
+
+def shortlist(suggestions):
+	"""The runners-up the user falls back on when refusing a lead, plus the best of each type: a strong
+	payment must not hide behind stronger invoices of another party, nor the reverse."""
+	seen_types = set()
+	for rank, suggestion in enumerate(suggestions):
+		if rank < MAX_PROPOSALS or suggestion.doctype not in seen_types:
+			seen_types.add(suggestion.doctype)
 			yield suggestion
 
 
@@ -170,11 +193,18 @@ def describe_document(document) -> dict:
 		"grand_total": flt(document.grand_total),
 		"posting_date": document.posting_date,
 		"due_date": document.get("due_date"),
-		"reference": document.get(EXTRA_NUMBER_FIELD.get(document.doctype, "")) or None,
+		"reference": document_reference(document),
 		"mode_of_payment": document.get("mode_of_payment"),
 		"score": document.get("match_score"),
 		"reasons": document.get("match_reasons") or [],
 	}
+
+
+def document_reference(document) -> str | None:
+	if document.doctype == "Journal Entry":
+		# erpnext gives a journal entry as "name: cheque number", or its remark when it has none
+		return (document.get("reference_string") or "").partition(": ")[2] or None
+	return document.get(EXTRA_NUMBER_FIELD.get(document.doctype, "")) or None
 
 
 def search_documents(line, query: str, limit: int) -> list[dict]:
@@ -198,16 +228,7 @@ def search_documents(line, query: str, limit: int) -> list[dict]:
 		)
 	]
 	matches.sort(key=lambda candidate: -flt(candidate.get("match_score")))
-	return [
-		{
-			"key": f"{candidate.doctype}:{candidate.name}",
-			"level": "low",
-			"score": candidate.get("match_score"),
-			"documents": [describe_document(candidate)],
-			"creates_payment": creates_payment(candidate),
-		}
-		for candidate in matches[:limit]
-	]
+	return [document_proposal(candidate) for candidate in matches[:limit]]
 
 
 def reconcile(line, documents: list[dict]) -> None:
