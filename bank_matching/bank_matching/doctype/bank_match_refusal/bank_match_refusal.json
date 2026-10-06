@@ -1,0 +1,82 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-10-06 16:00:00.000000",
+ "description": "A lead the user refused for a bank line on the bank matching page",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "bank_transaction",
+  "proposal",
+  "party_type",
+  "party"
+ ],
+ "fields": [
+  {
+   "fieldname": "bank_transaction",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Bank Transaction",
+   "options": "Bank Transaction",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "The refused lead: a document, a settlement of several payments or a rule",
+   "fieldname": "proposal",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Proposal",
+   "reqd": 1
+  },
+  {
+   "fieldname": "party_type",
+   "fieldtype": "Link",
+   "label": "Party Type",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "party",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Party",
+   "options": "party_type"
+  }
+ ],
+ "in_create": 1,
+ "links": [],
+ "modified": "2026-10-06 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bank Matching",
+ "name": "Bank Match Refusal",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Accounts User",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Accounts Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
