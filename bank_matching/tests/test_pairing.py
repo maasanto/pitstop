@@ -3,7 +3,8 @@ from datetime import date
 import frappe
 from erpnext.tests.utils import ERPNextTestSuite
 
-from bank_matching.api import get_pairings, reconcile_pairings
+from bank_matching.api import create_rule, get_pairings, reconcile_pairings, undo_pairings
+from bank_matching.lookup import get_lines_for_document, reconcile_document
 
 PAYMENT_DATE = date(2026, 9, 15)
 COMPANY = "_Test Company"
@@ -109,13 +110,15 @@ class TestPairings(ERPNextTestSuite):
 		return payment
 
 	def create_line(self, amount, description):
+		"""A positive amount is money in."""
 		return (
 			frappe.get_doc(
 				{
 					"doctype": "Bank Transaction",
 					"date": PAYMENT_DATE,
 					"bank_account": self.bank_account,
-					"credit": amount,
+					"credit": max(amount, 0),
+					"debit": max(-amount, 0),
 					"currency": "INR",
 					"description": description,
 				}
@@ -123,6 +126,15 @@ class TestPairings(ERPNextTestSuite):
 			.insert()
 			.submit()
 		)
+
+	def create_bank_fees_rule(self):
+		account = frappe.db.get_value(
+			"Account", {"company": COMPANY, "root_type": "Expense", "is_group": 0, "account_type": ""}
+		)
+		with self.set_user(ACCOUNTANT):
+			return create_rule(
+				self.create_line(-1, "FRAIS TENUE DE COMPTE AOUT").name, "Bank fees", "FRAIS TENUE", account
+			)
 
 	def pairing_of(self, line):
 		with self.set_user(ACCOUNTANT):
@@ -141,9 +153,90 @@ class TestPairings(ERPNextTestSuite):
 		with self.set_user(ACCOUNTANT):
 			results = reconcile_pairings([{"bank_transaction": line.name, "documents": best["documents"]}])
 
-		self.assertEqual(results, [{"bank_transaction": line.name, "error": None}])
+		self.assertIsNone(results[0]["error"])
 		self.assertEqual(frappe.db.get_value("Bank Transaction", line.name, "unallocated_amount"), 0)
 		self.assertEqual(frappe.db.get_value("Sales Invoice", invoice.name, "outstanding_amount"), 0)
+
+	def test_undo_reopens_the_invoice_and_cancels_the_payment_it_created(self):
+		invoice = self.create_invoice(765.43)
+		line = self.create_line(765.43, f"VIR SEPA RECU /DE JOHN DOE /MOTIF {invoice.name}")
+		documents = [{"doctype": "Sales Invoice", "name": invoice.name}]
+
+		with self.set_user(ACCOUNTANT):
+			[result] = reconcile_pairings([{"bank_transaction": line.name, "documents": documents}])
+			[payment] = result["created"]
+			self.assertEqual(payment["doctype"], "Payment Entry")
+			undo_pairings([{"bank_transaction": line.name, "created": result["created"]}])
+
+		self.assertEqual(frappe.db.get_value("Bank Transaction", line.name, "unallocated_amount"), 765.43)
+		self.assertEqual(frappe.db.get_value("Sales Invoice", invoice.name, "outstanding_amount"), 765.43)
+		self.assertEqual(frappe.db.get_value("Payment Entry", payment["name"], "docstatus"), 2)
+
+	def test_a_rule_books_a_recurring_line_and_undo_cancels_the_entry(self):
+		rule = self.create_bank_fees_rule()
+		line = self.create_line(-12.5, "FRAIS TENUE DE COMPTE SEPTEMBRE")
+
+		best = self.pairing_of(line)["proposals"][0]
+		self.assertEqual(best["rule"]["name"], rule)
+		with self.set_user(ACCOUNTANT):
+			[result] = reconcile_pairings([{"bank_transaction": line.name, "rule": rule}])
+
+		[entry] = result["created"]
+		self.assertEqual(entry["doctype"], "Journal Entry")
+		self.assertEqual(frappe.db.get_value("Bank Transaction", line.name, "unallocated_amount"), 0)
+
+		with self.set_user(ACCOUNTANT):
+			undo_pairings([{"bank_transaction": line.name, "created": result["created"]}])
+		self.assertEqual(frappe.db.get_value("Bank Transaction", line.name, "unallocated_amount"), 12.5)
+		self.assertEqual(frappe.db.get_value("Journal Entry", entry["name"], "docstatus"), 2)
+
+	def test_one_line_pays_several_invoices(self):
+		invoices = [self.create_invoice(amount) for amount in (111.11, 222.22)]
+		line = self.create_line(333.33, "VIR SEPA RECU /DE JOHN DOE")
+
+		with self.set_user(ACCOUNTANT):
+			[result] = reconcile_pairings(
+				[
+					{
+						"bank_transaction": line.name,
+						"documents": [{"doctype": "Sales Invoice", "name": i.name} for i in invoices],
+					}
+				]
+			)
+
+		self.assertIsNone(result["error"])
+		for invoice in invoices:
+			self.assertEqual(frappe.db.get_value("Sales Invoice", invoice.name, "outstanding_amount"), 0)
+
+	def test_an_invoice_finds_the_line_naming_it_first(self):
+		invoice = self.create_invoice(543.21)
+		unrelated = self.create_line(543.21, "VIR SEPA RECU /DE INCONNU")
+		naming = self.create_line(543.21, f"VIR SEPA RECU /DE JOHN DOE /MOTIF {invoice.name}")
+
+		with self.set_user(ACCOUNTANT):
+			lines = get_lines_for_document("Sales Invoice", invoice.name)["lines"]
+
+		self.assertEqual([match["line"]["name"] for match in lines[:2]], [naming.name, unrelated.name])
+		self.assertEqual(lines[0]["proposal"]["level"], "high")
+
+	def test_reconciling_from_the_invoice_pays_it(self):
+		invoice = self.create_invoice(432.10)
+		line = self.create_line(432.10, f"VIR JOHN DOE {invoice.name}")
+
+		with self.set_user(ACCOUNTANT):
+			reconcile_document("Sales Invoice", invoice.name, line.name)
+
+		self.assertEqual(frappe.db.get_value("Sales Invoice", invoice.name, "outstanding_amount"), 0)
+		self.assertEqual(frappe.db.get_value("Bank Transaction", line.name, "unallocated_amount"), 0)
+
+	def test_the_runner_up_invoice_stays_available_once_the_best_is_refused(self):
+		best = self.create_invoice(456.78)
+		runner_up = self.create_invoice(456.79)
+		line = self.create_line(456.78, "VIR SEPA RECU /DE JOHN DOE")
+
+		invoices = [p["documents"][0]["name"] for p in self.pairing_of(line)["proposals"]]
+
+		self.assertEqual(invoices[:2], [best.name, runner_up.name])
 
 	def test_a_card_batch_is_proposed_as_one_settlement_less_its_fee(self):
 		receipts = [self.create_receipt(amount, f"TPE-{amount}") for amount in (130, 150, 120)]
