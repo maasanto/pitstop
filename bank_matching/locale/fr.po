@@ -80,8 +80,8 @@ msgstr "Aucun document ouvert ne correspond"
 msgid "No reconciled line over this period"
 msgstr "Aucune ligne rapprochée sur cette période"
 
-msgid "Not this one? Search another document"
-msgstr "Pas celui-ci ? Rechercher un autre document"
+msgid "Not this one"
+msgstr "Pas celui-ci"
 
 msgid "Nothing left to review over this period"
 msgstr "Plus rien à vérifier sur cette période"
@@ -253,3 +253,222 @@ msgstr "{0} pré-approuvées"
 
 msgid "{0} unlinked"
 msgstr "{0} délié"
+
+msgid "Different amount"
+msgstr "Montant différent"
+
+msgid "Name not in the label"
+msgstr "Nom absent du libellé"
+
+msgid "Refuse the lead"
+msgstr "Refuser la piste"
+
+msgid "Score: {0}"
+msgstr "Score : {0}"
+
+msgid "Grouped payments: no score of their own"
+msgstr "Paiements regroupés : pas de score propre"
+
+msgid "More actions"
+msgstr "Plus d'actions"
+
+msgid "Restore"
+msgstr "Rétablir"
+
+msgid "Restore the refused leads"
+msgstr "Rétablir les pistes refusées"
+
+msgid "Pick the right document"
+msgstr "Choisir le bon document"
+
+msgid "Leads from Dokos"
+msgstr "Pistes de Dokos"
+
+msgid "No lead: search the document above."
+msgstr "Aucune piste : recherchez le document ci-dessus."
+
+msgid "Proposed"
+msgstr "Proposée"
+
+msgid "Type a number, a party or an amount to search every open document"
+msgstr "Saisissez un numéro, un tiers ou un montant pour chercher parmi tous les documents ouverts"
+
+msgid "Other open documents"
+msgstr "Autres documents ouverts"
+
+msgid "Search results"
+msgstr "Résultats de la recherche"
+
+msgid "Creates a payment to {0}"
+msgstr "Crée un paiement à {0}"
+
+msgid "Creates a bank entry on {0}"
+msgstr "Crée une écriture bancaire sur {0}"
+
+msgid "{0} documents paid at once"
+msgstr "{0} documents payés en une fois"
+
+msgid "Always book such lines…"
+msgstr "Toujours comptabiliser ces lignes…"
+
+msgid "Always book such lines"
+msgstr "Toujours comptabiliser ces lignes"
+
+msgid "Your pick"
+msgstr "Votre choix"
+
+msgid "Rule"
+msgstr "Règle"
+
+msgid "Chosen by you"
+msgstr "Choisi par vous"
+
+msgid "From your bank rule {0}"
+msgstr "D'après votre règle bancaire {0}"
+
+msgid "Rule {0} created"
+msgstr "Règle {0} créée"
+
+msgid "When the label contains"
+msgstr "Quand le libellé contient"
+
+msgid "Rule name"
+msgstr "Nom de la règle"
+
+msgid "Book it on the account"
+msgstr "Comptabiliser sur le compte"
+
+msgid "Search an account"
+msgstr "Rechercher un compte"
+
+msgid "Dokos then proposes a bank entry for every such line; validating creates it. The rule is a Bank Transaction Rule you can refine in the desk."
+msgstr "Dokos propose alors une écriture bancaire pour chacune de ces lignes ; la validation la crée. La règle est une règle de transaction bancaire que vous pouvez affiner dans le bureau."
+
+msgid "Create the rule"
+msgstr "Créer la règle"
+
+msgid "Add to the documents paid by this line"
+msgstr "Ajouter aux documents payés par cette ligne"
+
+msgid "1 document"
+msgstr "1 document"
+
+msgid "{0} documents"
+msgstr "{0} documents"
+
+msgid "Clear"
+msgstr "Effacer"
+
+msgid "Use this document"
+msgstr "Utiliser ce document"
+
+msgid "Use these {0} documents"
+msgstr "Utiliser ces {0} documents"
+
+msgid "All"
+msgstr "Tout"
+
+msgid "Money in"
+msgstr "Entrées"
+
+msgid "Money out"
+msgstr "Sorties"
+
+msgid "Label, party, number or amount"
+msgstr "Libellé, tiers, numéro ou montant"
+
+msgid "Clear filters"
+msgstr "Effacer les filtres"
+
+msgid "About {0} min of manual matching saved"
+msgstr "Environ {0} min de rapprochement manuel gagnées"
+
+msgid "Undo"
+msgstr "Annuler"
+
+msgid "1 line put back"
+msgstr "1 ligne remise à rapprocher"
+
+msgid "{0} lines put back"
+msgstr "{0} lignes remises à rapprocher"
+
+msgid "{0} of {1} lines reconciled"
+msgstr "{0} lignes rapprochées sur {1}"
+
+msgid "1 month up to date"
+msgstr "1 mois à jour"
+
+msgid "{0} months up to date"
+msgstr "{0} mois à jour"
+
+msgid "1 month up to date in a row"
+msgstr "1 mois à jour d'affilée"
+
+msgid "{0} months up to date in a row"
+msgstr "{0} mois à jour d'affilée"
+
+msgid "Find the line of a document"
+msgstr "Trouver la ligne d'un document"
+
+msgid "No proposal matches these filters"
+msgstr "Aucune proposition ne correspond à ces filtres"
+
+msgid "Everything is reconciled over this period"
+msgstr "Tout est rapproché sur cette période"
+
+msgid "1 pairing, pre-approved"
+msgstr "1 rapprochement, pré-approuvé"
+
+msgid "{0} pairings, all pre-approved"
+msgstr "{0} rapprochements, tous pré-approuvés"
+
+msgid "Show"
+msgstr "Afficher"
+
+msgid "Invoice or payment number, party or amount"
+msgstr "Numéro de facture ou de paiement, tiers ou montant"
+
+msgid "No open invoice or payment matches"
+msgstr "Aucune facture ni aucun paiement ouvert ne correspond"
+
+msgid "Scoring the open bank lines…"
+msgstr "Évaluation des lignes bancaires ouvertes…"
+
+msgid "No open bank line matches this document"
+msgstr "Aucune ligne bancaire ouverte ne correspond à ce document"
+
+msgid "No open bank line matches this document."
+msgstr "Aucune ligne bancaire ouverte ne correspond à ce document."
+
+msgid "Reconcile"
+msgstr "Rapprocher"
+
+msgid "{0} reconciled with {1}"
+msgstr "{0} rapproché avec {1}"
+
+msgid "Reconciled with {0}"
+msgstr "Rapproché avec {0}"
+
+msgid "Find the bank line"
+msgstr "Trouver la ligne bancaire"
+
+msgid "Bank lines for {0}"
+msgstr "Lignes bancaires pour {0}"
+
+msgid "Looking for matching bank lines…"
+msgstr "Recherche des lignes bancaires correspondantes…"
+
+msgid "Open the reconciliation page"
+msgstr "Ouvrir la page de rapprochement"
+
+msgid "Rule {0} no longer applies to {1}: reload the page"
+msgstr "La règle {0} ne s'applique plus à {1} : rechargez la page"
+
+msgid "Give the part of the label that identifies these lines"
+msgstr "Indiquez la partie du libellé qui identifie ces lignes"
+
+msgid "Bank lines can be looked up for {0} only, not for {1}"
+msgstr "La recherche de lignes bancaires n'est possible que pour {0}, pas pour {1}"
+
+msgid "{0} {1} has nothing left to reconcile with a bank line"
+msgstr "{0} {1} n'a plus rien à rapprocher avec une ligne bancaire"
