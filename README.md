@@ -4,8 +4,8 @@ Prototype of a bank reconciliation page at `/bank-matching` that opens on the pa
 each unreconciled bank line comes with its best document, a confidence level and the signals behind it.
 One click pre-approves a pairing, one more validates every pre-approved pairing.
 
-The scoring is erpnext's (`erpnext/accounts/page/bank_reconciliation/match_scoring.py`), so the app needs an
-erpnext that ships it: branch `feat/bank-rec-match-scoring` until it is merged.
+The scoring lives in the app (`match_scoring.py`, `ranking.py`) and runs on a stock erpnext. It is meant to
+move into erpnext's reconciliation page once settled; branch `feat/bank-rec-match-scoring` holds that port.
 
 ## Build
 

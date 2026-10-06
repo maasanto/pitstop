@@ -1,42 +1,24 @@
-"""Pairings between bank lines and documents, from the scorer erpnext ships with its reconciliation page.
+"""Pairings between bank lines and documents, from the app's scorer.
 
-The scoring itself stays in erpnext so that both pages rank documents the same way; this module only turns
-its suggestions into what the page shows: one proposal per document type, a settlement of several receipts,
-and a confidence level drawn from the scorer's own thresholds.
+This module turns the scorer's suggestions into what the page shows: one proposal per document type, a
+settlement of several receipts, and a confidence level drawn from the scorer's own thresholds.
 """
 
 import frappe
+from erpnext.accounts.page.bank_reconciliation.bank_reconciliation import BankReconciliation
+from erpnext.accounts.page.bank_reconciliation.bank_transaction_match import BankTransactionMatch
 from frappe import _
 from frappe.utils import flt, getdate
 
+from bank_matching.match_scoring import PRESELECT_THRESHOLD, Receipt, settlement_batches
+from bank_matching.ranking import EXTRA_NUMBER_FIELD, SuggestionRanking
 from bank_matching.rules import matching_rule, rule_proposal
-
-try:
-	from erpnext.accounts.page.bank_reconciliation.bank_reconciliation import BankReconciliation
-	from erpnext.accounts.page.bank_reconciliation.bank_transaction_match import (
-		BankTransactionMatch,
-		SuggestionRanking,
-	)
-	from erpnext.accounts.page.bank_reconciliation.match_scoring import (
-		PRESELECT_THRESHOLD,
-		Receipt,
-		settlement_batches,
-	)
-except ImportError as error:
-	raise ImportError(
-		"bank_matching needs the bank reconciliation scorer of erpnext (branch feat/bank-rec-match-scoring)"
-	) from error
 
 LEVELS = ("high", "medium", "low")
 # Beyond five leads the user searches rather than refuses one by one
 MAX_PROPOSALS = 5
 # Invoices are paid by a Payment Entry the reconciliation creates; the others already moved the money
 INVOICE_TYPES = ("Sales Invoice", "Purchase Invoice", "Expense Claim")
-EXTRA_NUMBER_FIELD = {
-	"Payment Entry": "reference_no",
-	"Sales Invoice": "po_no",
-	"Purchase Invoice": "bill_no",
-}
 LINE_FIELDS = [
 	"name",
 	"company",

@@ -5,12 +5,10 @@ Each line is scored as the page scores it, so a document reads the same level he
 
 import frappe
 from erpnext.accounts.page.bank_reconciliation.bank_transaction_match import (
-	LOOK_BACK_DAYS,
 	PARTY_FIELD,
 	PARTY_NAME_FIELD,
 	PARTY_TYPES,
 	BankTransactionMatch,
-	SuggestionRanking,
 )
 from frappe import _
 from frappe.utils import add_days, flt, getdate, today
@@ -24,6 +22,7 @@ from bank_matching.pairing import (
 	document_proposal,
 	reconcile,
 )
+from bank_matching.ranking import LOOK_BACK_DAYS, SuggestionRanking
 
 DOCUMENT_TYPES = ("Sales Invoice", "Purchase Invoice", "Payment Entry")
 # ponytail: each scored line costs about 10 ms, so 60 lines keep the dialog under a second; a document
