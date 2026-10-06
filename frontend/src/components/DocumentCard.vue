@@ -75,7 +75,7 @@ const reasonsAbout = (...signals) =>
 				@click.stop
 				>{{ document.name }}</a
 			>
-			<MatchHint :reasons="reasonsAbout('reference')" />
+			<MatchHint :reasons="reasonsAbout('reference')" :missing="__('Number not in the label')" />
 			<span v-if="details" class="truncate">· {{ details }}</span>
 			<slot name="note" />
 			<span

@@ -129,8 +129,14 @@ async function reconcileWith(match) {
 						<div class="truncate text-base-medium text-ink-gray-9">{{ match.line.description }}</div>
 						<div class="mt-1 flex items-center gap-1.5 text-sm text-ink-gray-5">
 							{{ formatDate(match.line.date) }}
-							<MatchHint :reasons="reasonsAbout(match.proposal, 'reference')" />
-							<MatchHint :reasons="reasonsAbout(match.proposal, 'name', 'history')" />
+							<MatchHint
+								:reasons="reasonsAbout(match.proposal, 'reference')"
+								:missing="__('Number not in the label')"
+							/>
+							<MatchHint
+								:reasons="reasonsAbout(match.proposal, 'name', 'history')"
+								:missing="__('Name not in the label')"
+							/>
 						</div>
 					</div>
 					<span class="flex items-center gap-1.5 text-base-semibold tabular-nums text-ink-gray-9">

@@ -12,7 +12,6 @@ const props = defineProps({
 const HINTS = {
 	exact: { icon: "lucide-check", color: "bg-surface-green-7 text-ink-green-1" },
 	approximate: { icon: "lucide-minus", color: "bg-surface-amber-7 text-ink-amber-1" },
-	missing: { icon: "lucide-x", color: "bg-surface-red-2 text-ink-red-7" },
 };
 const state = computed(() => {
 	if (!props.reasons.length) return props.missing && "missing";
@@ -26,6 +25,13 @@ const description = computed(() =>
 <template>
 	<Tooltip v-if="state" :text="description">
 		<span
+			v-if="state === 'missing'"
+			class="lucide-circle-x size-4 shrink-0 text-ink-red-5"
+			role="img"
+			:aria-label="description"
+		/>
+		<span
+			v-else
 			:class="HINTS[state].color"
 			class="inline-flex size-4 shrink-0 items-center justify-center rounded-full"
 			role="img"
