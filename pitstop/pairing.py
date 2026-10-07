@@ -88,11 +88,21 @@ def build_pairing(line, refused: list[str]) -> dict:
 	proposals += settlement_proposals(line, ranking.candidates)
 	rule = matching_rule(line)
 	if rule:
-		# A document already booked for the amount wins: applying the rule would book the line twice
-		proposals.append(rule_proposal(rule, "low" if any(map(is_exact_amount, proposals)) else "high"))
+		# A document already booked for the amount wins: applying the rule would book the line twice. A
+		# payment rule also yields to its party's own documents: paying an invoice beats an unallocated payment.
+		yields = any(map(is_exact_amount, proposals)) or any(
+			is_for_party(proposal, rule.party_type, rule.party) for proposal in proposals
+		)
+		proposals.append(rule_proposal(rule, "low" if yields else "high"))
 	# Stable sort: within a level, a released file, the scorer's own order, then the rule
 	proposals.sort(key=lambda proposal: LEVELS.index(proposal["level"]))
 	return {"line": describe_line(line), "proposals": proposals, "refused": refused}
+
+
+def is_for_party(proposal, party_type: str | None, party: str | None) -> bool:
+	return bool(party) and any(
+		(document["party_type"], document["party"]) == (party_type, party) for document in proposal["documents"]
+	)
 
 
 def file_proposals(line) -> list[dict]:
