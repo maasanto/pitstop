@@ -1,7 +1,7 @@
 <script setup>
 import { Button, Dropdown, KeyboardShortcut, Tooltip } from "frappe-ui";
 import { computed } from "vue";
-import { formatDate, formatMoney } from "../format";
+import { descriptionText, formatDate, formatMoney } from "../format";
 import { __ } from "../translation";
 import DocumentCard from "./DocumentCard.vue";
 import MatchHint from "./MatchHint.vue";
@@ -63,8 +63,11 @@ function toggleUnlessSelecting() {
 		</button>
 
 		<div class="min-w-0">
-			<div class="line-clamp-2 break-words text-base-medium !leading-5 text-ink-gray-9" :title="line.description">
-				{{ line.description }}
+			<div
+				class="line-clamp-2 break-words text-base-medium !leading-5 text-ink-gray-9"
+				:title="descriptionText(line.description)"
+			>
+				<span class="whitespace-pre-line">{{ descriptionText(line.description) }}</span>
 			</div>
 			<div class="mt-2 flex items-center gap-1.5 text-sm text-ink-gray-5">
 				<span

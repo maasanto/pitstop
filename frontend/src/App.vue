@@ -28,7 +28,7 @@ import ReconciledTab from "./components/ReconciledTab.vue";
 import RuleDialog from "./components/RuleDialog.vue";
 import RuleOffers from "./components/RuleOffers.vue";
 import SearchDialog from "./components/SearchDialog.vue";
-import { formatDate, formatMoney, formatPercent } from "./format";
+import { descriptionText, formatDate, formatMoney, formatPercent } from "./format";
 import { readStored, writeStored } from "./storage";
 import { __, _n } from "./translation";
 
@@ -120,7 +120,7 @@ const isFiltered = computed(
 function searchableText(pairing) {
 	const documents = chosenFor(pairing)?.documents || [];
 	return [
-		pairing.line.description,
+		descriptionText(pairing.line.description),
 		pairing.line.bank_party_name,
 		Math.abs(pairing.line.amount).toFixed(2),
 		...documents.flatMap((document) => [document.name, document.party_name, document.reference]),
@@ -806,7 +806,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 							>
 								<div class="w-24 shrink-0 text-sm text-ink-gray-5">{{ formatDate(pairing.line.date) }}</div>
 								<div class="min-w-0 flex-1 basis-60">
-									<div class="truncate text-base-medium text-ink-gray-9">{{ pairing.line.description }}</div>
+									<div class="truncate text-base-medium text-ink-gray-9">{{ descriptionText(pairing.line.description) }}</div>
 									<div
 										v-if="group.key === 'refused'"
 										class="mt-1 flex items-center gap-1 text-sm text-ink-gray-5"
