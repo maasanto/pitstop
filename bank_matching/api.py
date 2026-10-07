@@ -1,5 +1,8 @@
 import frappe
-from erpnext.accounts.doctype.bank_transaction.bank_transaction import unreconcile_transaction
+from erpnext.accounts.doctype.bank_transaction.bank_transaction import (
+	PENDING_STATUS,
+	unreconcile_transaction,
+)
 from frappe import _
 from frappe.utils import add_months, cint, flt, get_first_day, getdate, nowdate
 
@@ -14,6 +17,8 @@ PARTY_TYPES = ("Payable", "Receivable")
 # score per page or cache per line if large accounts feel it.
 MAX_LINES = 200
 SEARCH_LIMIT = 20
+# An operation the bank feed only announces is not booked yet: nothing to reconcile, nothing to count
+BOOKED_LINES = {"docstatus": 1, "status": ("!=", PENDING_STATUS)}
 
 
 @frappe.whitelist()
@@ -168,7 +173,7 @@ def get_progress(bank_account: str, months: int = 12) -> list[dict]:
 		"Bank Transaction",
 		filters={
 			"bank_account": bank_account,
-			"docstatus": 1,
+			**BOOKED_LINES,
 			"date": (">=", add_months(get_first_day(nowdate()), -(cint(months) - 1))),
 		},
 		fields=["date", "unallocated_amount"],
@@ -256,7 +261,7 @@ def get_lines(bank_account: str, from_date: str, to_date: str, filters: dict) ->
 		"Bank Transaction",
 		filters={
 			"bank_account": bank_account,
-			"docstatus": 1,
+			**BOOKED_LINES,
 			"date": ("between", [getdate(from_date), getdate(to_date)]),
 			**filters,
 		},
@@ -270,4 +275,10 @@ def get_line(name: str, permission: str):
 	line.check_permission(permission)
 	if line.docstatus != 1:
 		frappe.throw(_("Bank Transaction {0} is not submitted").format(name))
+	if line.status == PENDING_STATUS:
+		frappe.throw(
+			_("Bank Transaction {0} is only announced by the bank: reconcile it once the bank books it").format(
+				name
+			)
+		)
 	return as_matchable(frappe._dict({field: line.get(field) for field in LINE_FIELDS}))

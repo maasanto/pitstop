@@ -13,7 +13,7 @@ from erpnext.accounts.page.bank_reconciliation.bank_transaction_match import (
 from frappe import _
 from frappe.utils import add_days, flt, getdate, today
 
-from bank_matching.api import get_line
+from bank_matching.api import BOOKED_LINES, get_line
 from bank_matching.pairing import (
 	LINE_FIELDS,
 	as_matchable,
@@ -132,7 +132,7 @@ def closest_lines(document, amount: float) -> list:
 			continue
 		filters = {
 			"bank_account": ("in", bank_accounts),
-			"docstatus": 1,
+			**BOOKED_LINES,
 			"unallocated_amount": ("!=", 0),
 			"date": (">=", add_days(today(), -LOOK_BACK_DAYS)),
 			"credit" if into_bank else "debit": (">", 0),
