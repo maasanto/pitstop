@@ -6,6 +6,7 @@ import {
 	ErrorMessage,
 	FrappeUIProvider,
 	KeyboardShortcut,
+	LoadingText,
 	Popover,
 	Skeleton,
 	TabButtons,
@@ -48,20 +49,56 @@ const company = computed(
 );
 watch(bankAccount, (account) => account && writeStored("pitstop:bank-account", account));
 
-const pairings = useCall({
-	url: "/api/v2/method/pitstop.api.get_pairings",
-	immediate: false,
-	params: () => ({ bank_account: bankAccount.value, from_date: period.value[0], to_date: period.value[1] }),
-	onSuccess: restoreReview,
-});
-watch([bankAccount, period], () => bankAccount.value && period.value.length === 2 && pairings.reload());
-// A reload aborts the request in flight, whose AbortError then lands on `error` after the new request cleared it
-const pairingsError = computed(() => (pairings.error?.name === "AbortError" ? null : pairings.error));
-
 // The proposal each line is paired with: the scorer's first not refused, unless the user picked another
 const chosen = reactive({});
 const refused = reactive({});
 const approved = reactive(new Set());
+
+// Lines arrive a page at a time, latest first: the first ones are there to review while Dokos scores the others
+const pairings = reactive({ data: null, loading: false, error: null, scored: 0 });
+let pairingsRequest = 0;
+
+async function loadPairings() {
+	const request = ++pairingsRequest;
+	const previous = pairings.data?.pairings || [];
+	const params = { bank_account: bankAccount.value, from_date: period.value[0], to_date: period.value[1] };
+	const loaded = new Map();
+	Object.assign(pairings, { loading: true, error: null, scored: 0 });
+	focusedIndex.value = 0;
+	try {
+		let page;
+		do {
+			page = await call("pitstop.api.get_pairings", { ...params, start: pairings.scored });
+			if (request !== pairingsRequest) return;
+			pairings.scored += page.pairings.length;
+			// A line reconciled meanwhile shifts the next page by one: the line seen twice is shown once
+			page.pairings.forEach((pairing) => loaded.set(pairing.line.name, pairing));
+			restoreReview(page.pairings);
+			pairings.data = {
+				total: page.total,
+				truncated: page.truncated,
+				rule_offers: page.rule_offers ?? pairings.data?.rule_offers ?? [],
+				// Until a reload reaches them, the lines it has not scored yet keep their previous pairing
+				pairings: [
+					...loaded.values(),
+					...previous.slice(loaded.size).filter((pairing) => !loaded.has(pairing.line.name)),
+				],
+			};
+		} while (page.pairings.length && pairings.scored < page.total);
+	} catch (error) {
+		if (request === pairingsRequest) pairings.error = error;
+	} finally {
+		if (request === pairingsRequest) pairings.loading = false;
+	}
+}
+
+watch([bankAccount, period], () => {
+	if (!bankAccount.value || period.value.length !== 2) return;
+	pairings.data = null;
+	approved.clear();
+	[chosen, refused].forEach((state) => Object.keys(state).forEach((name) => delete state[name]));
+	loadPairings();
+});
 const lines = computed(() => pairings.data?.pairings || []);
 const ruleOffers = computed(() => pairings.data?.rule_offers || []);
 
@@ -230,19 +267,20 @@ function saveReview() {
 	);
 }
 
-function restoreReview(data) {
-	approved.clear();
-	[chosen, refused].forEach((state) => Object.keys(state).forEach((name) => delete state[name]));
+function restoreReview(pagePairings) {
 	const saved = readStored(storageKey("approved")) || {};
-	for (const pairing of data.pairings) {
-		if (pairing.refused.length) refused[pairing.line.name] = [...pairing.refused];
-		const proposal = pairing.proposals.find((candidate) => candidate.key === saved[pairing.line.name]);
+	for (const pairing of pagePairings) {
+		const name = pairing.line.name;
+		delete chosen[name];
+		delete refused[name];
+		approved.delete(name);
+		if (pairing.refused.length) refused[name] = [...pairing.refused];
+		const proposal = pairing.proposals.find((candidate) => candidate.key === saved[name]);
 		if (proposal) {
-			chosen[pairing.line.name] = proposal;
-			approved.add(pairing.line.name);
+			chosen[name] = proposal;
+			approved.add(name);
 		}
 	}
-	focusedIndex.value = 0;
 }
 
 const toValidate = computed(() => lines.value.filter((pairing) => approved.has(pairing.line.name)));
@@ -348,7 +386,7 @@ const monthLabel = (month) =>
 	new Intl.DateTimeFormat(window.lang || "en", { month: "long" }).format(new Date(`${month}-01`));
 
 function refresh() {
-	pairings.reload();
+	loadPairings();
 	monthlyProgress.reload();
 }
 
@@ -576,7 +614,16 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 			</header>
 
 			<main class="mx-auto max-w-[1280px] px-4 pt-8 sm:px-8">
-				<ErrorMessage v-if="pairingsError" :message="pairingsError" class="mb-4" />
+				<ErrorMessage v-if="pairings.error" :message="pairings.error" class="mb-4" />
+				<LoadingText
+					v-if="tab !== 'reconciled' && pairings.loading"
+					class="mb-4"
+					:text="
+						pairings.data
+							? __('Pairing your bank lines: {0} of {1}', [pairings.scored, pairings.data.total])
+							: __('Pairing your bank lines…')
+					"
+				/>
 				<p v-if="pairings.data?.truncated" class="mb-4 text-p-sm text-ink-amber-7">
 					{{ __("Only the latest lines of the period are shown: narrow the period to see the others.") }}
 				</p>
@@ -630,12 +677,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 						@answered="refresh"
 					/>
 
-					<div v-if="pairings.loading && !pairings.data" class="space-y-3">
-						<Skeleton v-for="index in 4" :key="index" class="h-20 w-full rounded-6" />
-					</div>
-
 					<div
-						v-else-if="pairings.data && !proposed.length"
+						v-if="pairings.data && !pairings.loading && !proposed.length"
 						class="flex flex-col items-center gap-3 py-20 text-center"
 					>
 						<template v-if="isFiltered">
@@ -737,6 +780,9 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 							</template>
 						</section>
 					</template>
+					<div v-if="pairings.loading" class="space-y-3" aria-hidden="true">
+						<Skeleton v-for="index in proposed.length ? 2 : 4" :key="index" class="h-20 w-full rounded-6" />
+					</div>
 				</template>
 
 				<template v-else-if="tab === 'unmatched'">
@@ -800,7 +846,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 							</div>
 						</div>
 					</section>
-					<p v-if="pairings.data && !unmatched.length" class="py-16 text-center text-p-sm text-ink-gray-4">
+					<p v-if="pairings.data && !pairings.loading && !unmatched.length" class="py-16 text-center text-p-sm text-ink-gray-4">
 						{{ __("Every line has a proposal") }}
 					</p>
 				</template>
