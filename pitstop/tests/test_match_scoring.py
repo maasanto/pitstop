@@ -4,6 +4,7 @@ import frappe
 from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
 from erpnext.accounts.page.bank_reconciliation.bank_transaction_match import BankTransactionMatch
 from erpnext.tests.utils import ERPNextTestSuite
+from frappe.utils import add_days
 
 from pitstop.match_scoring import (
 	ONE_TYPO,
@@ -206,7 +207,7 @@ class TestSuggestions(ERPNextTestSuite):
 		).insert()
 		return customer
 
-	def create_invoice(self, customer, amount, po_no=None):
+	def create_invoice(self, customer, amount, po_no=None, posting_date=PAYMENT_DATE):
 		invoice = frappe.get_doc(
 			{
 				"doctype": "Sales Invoice",
@@ -214,8 +215,8 @@ class TestSuggestions(ERPNextTestSuite):
 				"po_no": po_no,
 				"company": self.company,
 				"set_posting_time": 1,
-				"posting_date": PAYMENT_DATE,
-				"due_date": PAYMENT_DATE,
+				"posting_date": posting_date,
+				"due_date": posting_date,
 				"debit_to": "Debtors - _TC",
 				"currency": "INR",
 				"conversion_rate": 1,
@@ -299,13 +300,24 @@ class TestSuggestions(ERPNextTestSuite):
 
 		self.assertNotIn(invoice.name, [d.name for d in suggestions])
 
-	def test_an_exact_amount_alone_is_suggested_but_not_preselected(self):
-		invoice = self.create_invoice(self.customer, 4321.09)
+	def test_an_exact_amount_alone_is_suggested_only_near_the_line_date_and_never_preselected(self):
+		recent = self.create_invoice(self.customer, 4321.09, posting_date=add_days(PAYMENT_DATE, -10))
+		old = self.create_invoice(self.customer, 4321.09, posting_date=add_days(PAYMENT_DATE, -120))
+		later = self.create_invoice(self.customer, 4321.09, posting_date=add_days(PAYMENT_DATE, 20))
 
-		suggestions = self.suggest(4321.09, "VIR SEPA RECU")
+		suggested = {d.name: d for d in self.suggest(4321.09, "VIR SEPA RECU")}
 
-		self.assertIn(invoice.name, [d.name for d in suggestions])
-		self.assertFalse(any(d.get("vgtSelected") for d in suggestions))
+		self.assertIn(recent.name, suggested)
+		self.assertNotIn(old.name, suggested, "an amount alone is no lead for an invoice months older")
+		self.assertNotIn(later.name, suggested, "nor for one issued weeks after the payment")
+		self.assertFalse(any(d.get("vgtSelected") for d in suggested.values()))
+
+	def test_an_old_invoice_with_its_amount_and_a_name_in_the_label_is_still_suggested(self):
+		old = self.create_invoice(self.customer, 4321.09, posting_date=add_days(PAYMENT_DATE, -120))
+
+		suggestions = self.suggest(4321.09, "VIR SEPA RECU /DE JOHN DOE")
+
+		self.assertIn(old.name, [d.name for d in suggestions])
 
 	def test_an_accountant_without_hr_roles_still_gets_suggestions(self):
 		# Expense Claims are unreadable to a plain accountant: they are skipped, not an error
