@@ -44,7 +44,7 @@ const single = computed(() => !props.proposal.rule && !props.proposal.settlement
 					{{
 						proposal.rule.classify_as === "Payment Entry"
 							? __("Creates a payment to {0}", [proposal.rule.party])
-							: __("Creates a bank entry on {0}", [proposal.rule.account])
+							: __("Creates a bank entry on {0}", [proposal.rule.account_label])
 					}}
 				</div>
 			</template>

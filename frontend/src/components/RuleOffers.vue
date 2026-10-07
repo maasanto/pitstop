@@ -12,6 +12,13 @@ const emit = defineEmits(["answered"]);
 const answering = ref(null);
 const offerId = (offer) => `${offer.transaction_type}:${offer.key}`;
 
+function title(offer) {
+	if (!offer.party) return __("Always book “{0}” lines on the account {1}?", [offer.key, offer.account_label]);
+	return offer.transaction_type === "Deposit"
+		? __("Always record “{0}” lines as payments from {1}?", [offer.key, offer.party_name])
+		: __("Always record “{0}” lines as payments to {1}?", [offer.key, offer.party_name]);
+}
+
 async function answer(offer, method, message) {
 	answering.value = offerId(offer);
 	try {
@@ -39,11 +46,9 @@ async function answer(offer, method, message) {
 		>
 			<span class="lucide-wand-sparkles size-5 shrink-0 text-ink-blue-6" aria-hidden="true" />
 			<div class="min-w-0 flex-1">
-				<p class="text-base-medium text-ink-gray-9">
-					{{ __("Always book “{0}” lines on {1}?", [offer.key, offer.account]) }}
-				</p>
+				<p class="text-base-medium text-ink-gray-9">{{ title(offer) }}</p>
 				<p class="mt-1 text-p-sm text-ink-gray-6">
-					{{ __("You booked them there the last {0} times", [offer.booked]) }} ·
+					{{ __("You booked them that way the last {0} times", [offer.booked]) }} ·
 					{{
 						_n(
 							offer.lines.length,

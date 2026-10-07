@@ -92,7 +92,7 @@ const actions = computed(() => [
 					{{
 						chosen.rule.classify_as === "Payment Entry"
 							? __("Creates a payment to {0}", [chosen.rule.party])
-							: __("Creates a bank entry on {0}", [chosen.rule.account])
+							: __("Creates a bank entry on {0}", [chosen.rule.account_label])
 					}}
 				</div>
 			</div>
