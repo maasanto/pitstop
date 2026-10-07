@@ -3,6 +3,8 @@ import { Button, Popover, Switch, call, toast, useCall } from "frappe-ui";
 import { ref } from "vue";
 import { __ } from "../translation";
 
+// A display preference of this browser, unlike the hourly reconciliation below which is company-wide
+const isFullWidth = defineModel("fullWidth", { type: Boolean, default: true });
 const setting = useCall({ url: "/api/v2/method/pitstop.auto_reconciliation.get_auto_reconciliation" });
 const saving = ref(false);
 
@@ -28,6 +30,8 @@ async function setEnabled(enabled) {
 			<Button variant="ghost" icon="lucide-settings" :label="__('Settings')" :tooltip="__('Settings')" />
 		</template>
 		<div class="w-80 space-y-3 p-3">
+			<Switch v-model="isFullWidth" :label="__('Full width')" :description="__('Use the whole width of the screen.')" />
+			<hr class="border-outline-gray-1" />
 			<Switch
 				:model-value="setting.data?.enabled"
 				:disabled="!setting.data?.can_change || saving"
