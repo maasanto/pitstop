@@ -653,14 +653,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 					</div>
 				</div>
 				<nav class="mx-auto mt-2 flex max-w-[1280px] flex-wrap items-center justify-between gap-x-3 px-4 sm:px-8">
-					<!-- frappe-ui's tabs stop at 14px: the tabs are the page's main navigation, so they get a size up -->
-					<TabButtons
-						v-model="tab"
-						type="underline"
-						size="md"
-						:options="tabOptions"
-						class="[&_[data-slot=tab-button]>span>:first-child]:!size-5 [&_[data-slot=tab-button]>span]:!h-11 [&_[data-slot=tab-button]>span]:!text-base"
-					/>
+					<TabButtons v-model="tab" type="underline" size="md" :options="tabOptions" />
 					<Button
 						variant="ghost"
 						icon-left="lucide-file-search"
