@@ -4,10 +4,12 @@ A rule says what a recurring line is when no document exists for it (bank fees, 
 subscription); validating the pairing creates that document the way the /banking page does, so the
 created voucher is flagged as such and an undo cancels it.
 
-A label the user keeps booking on the same account is offered as a rule. The answer is kept the way the cash
+A label the user keeps booking on the same account, or as payments of the same party, is offered as a rule. The answer is kept the way the cash
 flow forecast keeps its own proposals: a Bank Transaction Rule, Accepted or Rejected, whose
 `detected_from_description` is the label's key, so neither ever offers that label again.
 """
+
+from collections import namedtuple
 
 import frappe
 from erpnext.accounts.cash_flow_forecast.recurring_patterns import (
@@ -27,9 +29,12 @@ from frappe.utils.caching import request_cache
 
 from pitstop.ranking import LOOK_BACK_DAYS
 
-# Booked on one same account this many times, a recurring label is worth a rule
+# Booked the same way this many times, a recurring label is worth a rule
 MIN_BOOKINGS_FOR_A_RULE = 2
 OFFER_LINE_FIELDS = ["name", "company", "date", "description", "credit", "deposit", "withdrawal"]
+# How a past line was booked, in the terms of the rule that would book the next one: a bank entry on an account
+# (no party), or a payment of a party on the party's own account
+Booking = namedtuple("Booking", ["classify_as", "account", "party_type", "party"])
 
 
 @request_cache
@@ -70,6 +75,7 @@ def rule_proposal(rule, level: str) -> dict:
 			"rule_name": rule.rule_name,
 			"classify_as": rule.classify_as,
 			"account": rule.account,
+			"account_label": account_label(rule.account) if rule.account else None,
 			"party_type": rule.party_type,
 			"party": rule.party,
 		},
@@ -110,8 +116,8 @@ def create_rule(line, rule_name: str, contains: str, account: str) -> str:
 
 
 def rule_offers(bank_account: str, open_lines: list) -> list[dict]:
-	"""Rules worth offering: labels of open lines the user booked on one same account at least twice before,
-	that no rule covers and no rule was ever accepted or declined for.
+	"""Rules worth offering: labels of open lines the user booked the same way at least twice before, on one
+	account or as payments of one party, that no rule covers and no rule was ever accepted or declined for.
 
 	A rule the forecast merely proposed for the label does not count: the offer answers it.
 	"""
@@ -139,7 +145,9 @@ def rule_offers(bank_account: str, open_lines: list) -> list[dict]:
 		{
 			"key": key[0],
 			"transaction_type": key[1],
-			"account": habits[key].account,
+			**habits[key].booking._asdict(),
+			"account_label": account_label(habits[key].booking.account),
+			"party_name": party_name(habits[key].booking),
 			"booked": len(habits[key].lines),
 			"lines": [line.name for line in lines],
 			"condition": match_condition(key[0], habits[key].lines + lines),
@@ -148,13 +156,27 @@ def rule_offers(bank_account: str, open_lines: list) -> list[dict]:
 	]
 
 
+def account_label(account: str) -> str:
+	"""`6061 - Water` rather than `Water - ACME`: the number users know, without the company suffix."""
+	number, name = frappe.get_cached_value("Account", account, ["account_number", "account_name"])
+	return f"{number} - {name}" if number else name
+
+
+def party_name(booking: Booking) -> str | None:
+	if not booking.party:
+		return None
+	title_field = frappe.get_meta(booking.party_type).get_title_field()
+	return frappe.db.get_value(booking.party_type, booking.party, title_field) or booking.party
+
+
 def habit_key(line) -> tuple[str, str]:
 	"""The label stripped of dates, numbers and operation words, as the forecast's recurring series key it."""
 	return normalise_description(line.description), "Deposit" if flt(line.credit) > 0 else "Withdrawal"
 
 
 def booking_habits(bank_account: str, since) -> dict:
-	"""Label key -> the account its past lines were all booked on by a bank entry, and those lines.
+	"""Label key -> how its past lines were all booked, and those lines: on one account by a bank entry, or by
+	payments of one party.
 
 	One line of the key settled any other way, or booked elsewhere, and the key is no habit.
 	"""
@@ -168,7 +190,7 @@ def booking_habits(bank_account: str, since) -> dict:
 		},
 		fields=OFFER_LINE_FIELDS,
 	)
-	booked_on = booking_accounts(bank_account, [line.name for line in lines])
+	booked_as = line_bookings(bank_account, [line.name for line in lines])
 	lines_by_key = {}
 	for line in lines:
 		key = habit_key(line)
@@ -176,20 +198,40 @@ def booking_habits(bank_account: str, since) -> dict:
 			lines_by_key.setdefault(key, []).append(line)
 	habits = {}
 	for key, key_lines in lines_by_key.items():
-		accounts = {booked_on.get(line.name) for line in key_lines}
-		if len(key_lines) >= MIN_BOOKINGS_FOR_A_RULE and len(accounts) == 1 and None not in accounts:
-			habits[key] = frappe._dict(account=accounts.pop(), lines=key_lines)
+		bookings = {booked_as.get(line.name) for line in key_lines}
+		if len(key_lines) >= MIN_BOOKINGS_FOR_A_RULE and len(bookings) == 1 and None not in bookings:
+			habits[key] = frappe._dict(booking=bookings.pop(), lines=key_lines)
 	return habits
 
 
-def booking_accounts(bank_account: str, line_names: list[str]) -> dict[str, str]:
-	"""Line -> the one account its bank entries booked it on, without a party; other lines are left out."""
+def line_bookings(bank_account: str, line_names: list[str]) -> dict[str, Booking]:
+	"""Line -> how it was booked, when all its vouchers booked it the same way; other lines are left out."""
 	links = frappe.get_all(
 		"Bank Transaction Payments",
 		filters={"parenttype": "Bank Transaction", "parent": ("in", line_names or [""])},
 		fields=["parent", "payment_document", "payment_entry"],
 	)
-	entries = [link.payment_entry for link in links if link.payment_document == "Journal Entry"]
+	vouchers = {doctype: [] for doctype in ("Journal Entry", "Payment Entry")}
+	for link in links:
+		vouchers.get(link.payment_document, []).append(link.payment_entry)
+	bookings = {
+		**bank_entry_bookings(bank_account, vouchers["Journal Entry"]),
+		**party_payment_bookings(vouchers["Payment Entry"]),
+	}
+	bookings_by_line = {}
+	for link in links:
+		bookings_by_line.setdefault(link.parent, set()).add(
+			bookings.get((link.payment_document, link.payment_entry))
+		)
+	return {
+		line: next(iter(found))
+		for line, found in bookings_by_line.items()
+		if len(found) == 1 and None not in found
+	}
+
+
+def bank_entry_bookings(bank_account: str, entries: list[str]) -> dict[tuple, Booking]:
+	"""Journal entries booking the bank line on one other account, without a party."""
 	counterparts = {}
 	for row in frappe.get_all(
 		"Journal Entry Account",
@@ -201,14 +243,36 @@ def booking_accounts(bank_account: str, line_names: list[str]) -> dict[str, str]
 		fields=["parent", "account", "party"],
 	):
 		counterparts.setdefault(row.parent, set()).add(None if row.party else row.account)
-	accounts_by_line = {}
-	for link in links:
-		accounts = counterparts.get(link.payment_entry) if link.payment_document == "Journal Entry" else None
-		accounts_by_line.setdefault(link.parent, set()).update(accounts or {None})
 	return {
-		line: next(iter(accounts))
-		for line, accounts in accounts_by_line.items()
+		("Journal Entry", entry): Booking("Bank Entry", next(iter(accounts)), None, None)
+		for entry, accounts in counterparts.items()
 		if len(accounts) == 1 and None not in accounts
+	}
+
+
+def party_payment_bookings(payments: list[str]) -> dict[tuple, Booking]:
+	"""Payments of a party allocated to no document, with the party's own account: what a payment rule makes.
+
+	A line that paid invoices needs no rule: the scorer already knows its party and finds the next invoice, where
+	a rule would only add an unallocated payment.
+	"""
+	return {
+		("Payment Entry", payment.name): Booking(
+			"Payment Entry",
+			payment.paid_to if payment.payment_type == "Pay" else payment.paid_from,
+			payment.party_type,
+			payment.party,
+		)
+		for payment in frappe.get_all(
+			"Payment Entry",
+			filters={
+				"name": ("in", payments or [""]),
+				"docstatus": 1,
+				"party": ("is", "set"),
+				"total_allocated_amount": 0,
+			},
+			fields=["name", "payment_type", "party_type", "party", "paid_from", "paid_to"],
+		)
 	}
 
 
@@ -231,18 +295,20 @@ def answer_rule_offer(bank_account: str, key: str, transaction_type: str, status
 	rule.update(
 		{
 			"transaction_type": transaction_type,
-			"classify_as": "Bank Entry",
+			"classify_as": offer["classify_as"],
 			"bank_entry_type": "Single Account",
 			# The account the user actually booked on, over the forecast's guess
 			"account": offer["account"],
+			"party_type": offer["party_type"],
+			"party": offer["party"],
 			"proposal_status": status,
 			"detected_from_description": key,
 			# Kept when declined too, as the forecast keeps its own: a condition is mandatory, and flipping
 			# the status in the desk makes the rule work
 			"description_rules": [offer["condition"]],
-			"rule_description": _("Offered after {0} lines booked on {1}").format(
-				offer["booked"], offer["account"]
-			),
+			"rule_description": _("Offered after {0} payments of {1}").format(offer["booked"], offer["party_name"])
+			if offer["party"]
+			else _("Offered after {0} lines booked on {1}").format(offer["booked"], offer["account_label"]),
 		}
 	)
 	rule.save()
