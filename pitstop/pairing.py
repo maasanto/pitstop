@@ -5,10 +5,7 @@ settlement of several receipts, and a confidence level drawn from the scorer's o
 """
 
 import frappe
-from erpnext.accounts.doctype.bank_transaction.bank_reconciliation import (
-	get_matching_payment_order,
-	reconcile_from_payment_order,
-)
+from erpnext.accounts.doctype.bank_transaction import bank_reconciliation
 from erpnext.accounts.page.bank_reconciliation.bank_reconciliation import BankReconciliation
 from erpnext.accounts.page.bank_reconciliation.bank_transaction_match import BankTransactionMatch
 from erpnext.accounts.page.bank_reconciliation.multi_party_reconciliation import (
@@ -30,9 +27,14 @@ MAX_PROPOSALS = 5
 INVOICE_TYPES = ("Sales Invoice", "Purchase Invoice", "Expense Claim")
 # Transfers or direct debits the bank books as one movement for the whole file:
 # (the one file of exactly the line's amount, how the line clears it, the file's date)
-PAYMENT_FILES = {
-	"Payment Order": (get_matching_payment_order, reconcile_from_payment_order, "posting_date"),
-}
+PAYMENT_FILES = {}
+# Dokos before v5.18 cannot find the transfer file a line clears: its transfers get no file proposal
+if hasattr(bank_reconciliation, "get_matching_payment_order"):
+	PAYMENT_FILES["Payment Order"] = (
+		bank_reconciliation.get_matching_payment_order,
+		bank_reconciliation.reconcile_from_payment_order,
+		"posting_date",
+	)
 try:
 	from erpnext.accounts.doctype.sepa_direct_debit.services.settlement import (
 		get_matching_direct_debit,
