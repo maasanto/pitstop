@@ -1,4 +1,5 @@
 from datetime import date
+from unittest.mock import patch
 
 import frappe
 from erpnext.accounts.doctype.bank_reconciliation_tool.bank_reconciliation_tool import (
@@ -6,6 +7,7 @@ from erpnext.accounts.doctype.bank_reconciliation_tool.bank_reconciliation_tool 
 	create_bulk_payment_entry_and_reconcile,
 )
 from erpnext.accounts.doctype.bank_transaction.bank_transaction import PENDING_STATUS
+from erpnext.accounts.page.bank_reconciliation.auto_bank_reconciliation import auto_bank_reconciliation
 from erpnext.tests.utils import ERPNextTestSuite
 
 from pitstop.api import (
@@ -16,6 +18,12 @@ from pitstop.api import (
 	reconcile_pairings,
 	set_refused_proposals,
 	undo_pairings,
+)
+from pitstop.auto_reconciliation import (
+	SETTING,
+	get_auto_reconciliation,
+	scheduled_reconciliation,
+	set_auto_reconciliation,
 )
 from pitstop.lookup import get_lines_for_document, reconcile_document
 
@@ -182,6 +190,11 @@ class TestPairings(ERPNextTestSuite):
 	def rule_of(self, line):
 		proposal = self.rule_proposal_of(line)
 		return proposal and proposal["rule"]["name"]
+
+	def run_hourly_job(self):
+		# The job looks back from today; the fixtures are dated PAYMENT_DATE
+		with patch("pitstop.auto_reconciliation.nowdate", return_value=str(PAYMENT_DATE)):
+			scheduled_reconciliation()
 
 	def by_document(self, line, field):
 		"""Each single-document proposal of the line: document name -> the proposal's field."""
@@ -397,6 +410,39 @@ class TestPairings(ERPNextTestSuite):
 		self.assertNotIn(pending.name, [match["line"]["name"] for match in found])
 		self.assertIn("only announced", result["error"])
 		self.assertEqual(frappe.db.get_value("Sales Invoice", invoice.name, "outstanding_amount"), 654.32)
+
+	def test_the_hourly_job_reconciles_a_line_naming_its_invoice_once_enabled(self):
+		invoice = self.create_invoice(432.1)
+		line = self.create_line(432.1, f"VIR SEPA RECU /DE JOHN DOE /MOTIF {invoice.name}")
+
+		self.run_hourly_job()
+		self.assertEqual(frappe.db.get_value("Bank Transaction", line.name, "unallocated_amount"), 432.1, "off by default")
+
+		with self.set_user(ACCOUNTANT):
+			self.assertTrue(get_auto_reconciliation()["can_change"])
+			set_auto_reconciliation(True)
+		self.run_hourly_job()
+
+		self.assertEqual(frappe.db.get_value("Bank Transaction", line.name, "unallocated_amount"), 0)
+		self.assertEqual(frappe.db.get_value("Sales Invoice", invoice.name, "outstanding_amount"), 0)
+
+	def test_a_line_the_hourly_job_fails_on_is_logged_and_the_others_still_reconcile(self):
+		failing, working = (self.create_invoice(amount) for amount in (111.11, 222.22))
+		failing_line = self.create_line(111.11, f"VIR JOHN DOE {failing.name}")
+		working_line = self.create_line(222.22, f"VIR JOHN DOE {working.name}")
+		frappe.db.set_single_value("Accounts Settings", SETTING, 1)
+
+		def crash_on_failing_line(rows):
+			if frappe.parse_json(rows)[0]["name"] == failing_line.name:
+				raise RuntimeError("Simulated crash")
+			return auto_bank_reconciliation(rows)
+
+		with patch("pitstop.auto_reconciliation.auto_bank_reconciliation", side_effect=crash_on_failing_line):
+			self.run_hourly_job()
+
+		self.assertEqual(frappe.db.get_value("Bank Transaction", failing_line.name, "unallocated_amount"), 111.11)
+		self.assertEqual(frappe.db.get_value("Bank Transaction", working_line.name, "unallocated_amount"), 0)
+		self.assertTrue(frappe.db.exists("Error Log", {"reference_name": failing_line.name}))
 
 	def test_a_label_always_booked_on_one_account_is_offered_as_a_rule(self):
 		account = self.expense_accounts()[0]

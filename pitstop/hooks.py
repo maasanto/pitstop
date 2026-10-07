@@ -21,3 +21,7 @@ doctype_js = {
 	"Purchase Invoice": "public/js/find_bank_line.js",
 	"Payment Entry": "public/js/find_bank_line.js",
 }
+
+after_install = "pitstop.install.create_custom_fields_for_pitstop"
+after_migrate = "pitstop.install.create_custom_fields_for_pitstop"
+scheduler_events = {"hourly_long": ["pitstop.auto_reconciliation.scheduled_reconciliation"]}

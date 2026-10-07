@@ -17,6 +17,7 @@ import {
 	useCall,
 } from "frappe-ui";
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
+import AutoReconciliationSettings from "./components/AutoReconciliationSettings.vue";
 import BankAccountPicker from "./components/BankAccountPicker.vue";
 import DocumentLookupDialog from "./components/DocumentLookupDialog.vue";
 import PairingRow from "./components/PairingRow.vue";
@@ -553,6 +554,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 								</div>
 							</div>
 						</Popover>
+						<AutoReconciliationSettings />
 						<Button
 							variant="ghost"
 							icon="lucide-external-link"

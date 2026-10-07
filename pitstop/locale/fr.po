@@ -656,3 +656,30 @@ msgstr "Sélectionnez un document, ou plusieurs quand cette ligne les règle ens
 
 msgid "Only documents of the same type can be paid together"
 msgstr "Seuls des documents du même type peuvent être réglés ensemble"
+
+msgid "Automatically reconcile bank transactions"
+msgstr "Rapprocher automatiquement les transactions bancaires"
+
+msgid "If enabled, automatic reconciliation will run every hour on the unreconciled bank transactions of the last 90 days"
+msgstr "Si activé, le rapprochement automatique s'exécutera toutes les heures sur les transactions bancaires non rapprochées des 90 derniers jours"
+
+msgid "Settings"
+msgstr "Paramètres"
+
+msgid "Reconcile automatically every hour"
+msgstr "Rapprocher automatiquement toutes les heures"
+
+msgid "Runs the automatic reconciliation of the classic page on the open lines of the last 90 days: a line whose label names an invoice or a payment is reconciled with it."
+msgstr "Lance le rapprochement automatique de la page classique sur les lignes ouvertes des 90 derniers jours : une ligne dont le libellé cite une facture ou un paiement est rapprochée avec."
+
+msgid "Only users who can edit the Accounts Settings can change this."
+msgstr "Seuls les utilisateurs qui peuvent modifier les Paramètres de comptabilité peuvent changer ce réglage."
+
+msgid "Also in the Accounts Settings"
+msgstr "Également dans les Paramètres de comptabilité"
+
+msgid "Lines are now reconciled every hour"
+msgstr "Les lignes sont désormais rapprochées toutes les heures"
+
+msgid "Hourly reconciliation stopped"
+msgstr "Rapprochement horaire arrêté"
