@@ -54,6 +54,8 @@ const pairings = useCall({
 	onSuccess: restoreReview,
 });
 watch([bankAccount, period], () => bankAccount.value && period.value.length === 2 && pairings.reload());
+// A reload aborts the request in flight, whose AbortError then lands on `error` after the new request cleared it
+const pairingsError = computed(() => (pairings.error?.name === "AbortError" ? null : pairings.error));
 
 // The proposal each line is paired with: the scorer's first not refused, unless the user picked another
 const chosen = reactive({});
@@ -572,7 +574,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 			</header>
 
 			<main class="mx-auto max-w-[1280px] px-4 pt-8 sm:px-8">
-				<ErrorMessage v-if="pairings.error" :message="pairings.error" class="mb-4" />
+				<ErrorMessage v-if="pairingsError" :message="pairingsError" class="mb-4" />
 				<p v-if="pairings.data?.truncated" class="mb-4 text-p-sm text-ink-amber-7">
 					{{ __("Only the latest lines of the period are shown: narrow the period to see the others.") }}
 				</p>
