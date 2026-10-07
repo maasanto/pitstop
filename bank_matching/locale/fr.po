@@ -523,3 +523,60 @@ msgstr "Proposition"
 
 msgid "The refused lead: a document, a settlement of several payments or a rule"
 msgstr "La piste refusée : un document, un règlement de plusieurs paiements ou une règle"
+
+msgid "Last {0} days"
+msgstr "{0} derniers jours"
+
+msgid "This month"
+msgstr "Ce mois-ci"
+
+msgid "Last month"
+msgstr "Le mois dernier"
+
+msgid "Q{0} {1}"
+msgstr "T{0} {1}"
+
+msgid "This fiscal year"
+msgstr "Cet exercice"
+
+msgid "Last fiscal year"
+msgstr "L'exercice précédent"
+
+msgid "This week"
+msgstr "Cette semaine"
+
+msgid "Last week"
+msgstr "La semaine dernière"
+
+msgid "This quarter"
+msgstr "Ce trimestre"
+
+msgid "Last quarter"
+msgstr "Le trimestre dernier"
+
+msgid "This year"
+msgstr "Cette année"
+
+msgid "Last year"
+msgstr "L'année dernière"
+
+msgid "Custom period"
+msgstr "Période personnalisée"
+
+msgid "Search a period, e.g. Q1 or 2025"
+msgstr "Chercher une période, par ex. T1 ou 2025"
+
+msgid "Periods"
+msgstr "Périodes"
+
+msgid "No period matches: pick the dates on the calendar"
+msgstr "Aucune période ne correspond : choisissez les dates sur le calendrier"
+
+msgid "Choose a bank account"
+msgstr "Choisir un compte bancaire"
+
+msgid "Bank accounts"
+msgstr "Comptes bancaires"
+
+msgid "Selected"
+msgstr "Sélectionné"
