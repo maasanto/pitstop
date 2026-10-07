@@ -24,6 +24,7 @@ import PeriodPicker from "./components/PeriodPicker.vue";
 import PreviewDialog from "./components/PreviewDialog.vue";
 import ReconciledTab from "./components/ReconciledTab.vue";
 import RuleDialog from "./components/RuleDialog.vue";
+import RuleOffers from "./components/RuleOffers.vue";
 import SearchDialog from "./components/SearchDialog.vue";
 import { formatDate, formatMoney } from "./format";
 import { readStored, writeStored } from "./storage";
@@ -59,6 +60,7 @@ const chosen = reactive({});
 const refused = reactive({});
 const approved = reactive(new Set());
 const lines = computed(() => pairings.data?.pairings || []);
+const ruleOffers = computed(() => pairings.data?.rule_offers || []);
 
 const filters = reactive({ direction: "all", text: "", min: "", max: "" });
 const directionOptions = [
@@ -611,6 +613,12 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 						dismissible
 						@dismiss="dismissGuide"
 					/>
+					<RuleOffers
+						v-if="ruleOffers.length"
+						:offers="ruleOffers"
+						:bank-account="bankAccount"
+						@answered="refresh"
+					/>
 
 					<div v-if="pairings.loading && !pairings.data" class="space-y-3">
 						<Skeleton v-for="index in 4" :key="index" class="h-24 w-full rounded-6" />
@@ -722,6 +730,12 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 				</template>
 
 				<template v-else-if="tab === 'unmatched'">
+					<RuleOffers
+						v-if="ruleOffers.length"
+						:offers="ruleOffers"
+						:bank-account="bankAccount"
+						@answered="refresh"
+					/>
 					<section v-for="group in unmatchedGroups" :key="group.key" class="mb-14">
 						<h2 class="text-2xl-semibold text-ink-gray-9">
 							{{ group.title() }}
