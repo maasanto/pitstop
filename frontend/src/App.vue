@@ -34,7 +34,7 @@ import { __, _n } from "./translation";
 
 const period = ref([dayjs().subtract(89, "day").format("YYYY-MM-DD"), dayjs().format("YYYY-MM-DD")]);
 const bankAccount = ref(null);
-const tab = ref("proposals");
+const tab = ref("high");
 const showGuide = ref(!readStored("pitstop:guide-dismissed"));
 
 const accounts = useCall({
@@ -145,36 +145,75 @@ const shown = computed(() => lines.value.filter(isShown));
 const proposed = computed(() => shown.value.filter((pairing) => chosenFor(pairing)));
 const unmatched = computed(() => shown.value.filter((pairing) => !chosenFor(pairing)));
 
+// One tab each, most confident first: a finished tab hands over to the next one in this order
 const SECTIONS = [
 	{
 		level: "high",
+		icon: "lucide-circle-check-big",
 		title: () => __("Ready to validate"),
 		hint: () => __("Several signals agree and no other party comes close. A glance is enough."),
 	},
 	{
 		level: "medium",
+		icon: "lucide-scale",
 		title: () => __("To check"),
 		hint: () => __("Likely right, but not certain. Compare with the other leads before approving."),
 	},
 	{
 		level: "low",
+		icon: "lucide-circle-help",
 		title: () => __("Uncertain"),
 		hint: () => __("Only weak signals. Open the preview, or search the right document."),
+	},
+	{
+		level: "unmatched",
+		icon: "lucide-search-x",
+		title: () => __("Without proposal"),
+		hint: () => __("Pick a line, then the document it pays. Or record what the money is from its menu."),
 	},
 ];
 const sections = computed(() =>
 	SECTIONS.map((section) => ({
 		...section,
-		pairings: proposed.value.filter((pairing) => chosenFor(pairing).level === section.level),
-	})).filter((section) => section.pairings.length),
+		pairings:
+			section.level === "unmatched"
+				? unmatched.value
+				: proposed.value.filter((pairing) => chosenFor(pairing).level === section.level),
+	})),
 );
-const ordered = computed(() => sections.value.flatMap((section) => section.pairings));
+const currentSection = computed(() => sections.value.find((section) => section.level === tab.value));
+// A line without proposal leaves its tab once a document is picked for it; the others once pre-approved
+const isDone = (section) =>
+	section.level === "unmatched"
+		? !section.pairings.length
+		: section.pairings.every((pairing) => approved.has(pairing.line.name));
+const nextSection = computed(() =>
+	sections.value.slice(sections.value.indexOf(currentSection.value) + 1).find((section) => !isDone(section)),
+);
+// The keyboard walks the proposals of the tab on screen
+const ordered = computed(() =>
+	currentSection.value && currentSection.value.level !== "unmatched" ? currentSection.value.pairings : [],
+);
 // No count until the lines are there: a zero while loading reads as nothing to do
 const count = (rows) => (pairings.data ? ` · ${rows.length}` : "");
 const tabOptions = computed(() => [
-	{ label: `${__("Proposals")}${count(proposed.value)}`, value: "proposals" },
-	{ label: __("Already reconciled"), value: "reconciled" },
+	...sections.value.map((section) => ({
+		label: `${section.title()}${count(section.pairings)}`,
+		value: section.level,
+		iconLeft: section.icon,
+	})),
+	{ label: __("Already reconciled"), value: "reconciled", iconLeft: "lucide-history" },
 ]);
+// Land on the first tab with work once the lines are in, rather than on an empty one
+watch(
+	() => pairings.data && !pairings.loading,
+	(isLoaded) => {
+		if (isLoaded && currentSection.value && !currentSection.value.pairings.length) {
+			tab.value = sections.value.find((section) => section.pairings.length)?.level ?? tab.value;
+		}
+	},
+	{ once: true },
+);
 const hasProposals = computed(() => lines.value.some((pairing) => chosenFor(pairing)));
 
 function chosenFor(pairing) {
@@ -194,7 +233,7 @@ function refuse(pairing) {
 	approved.delete(name);
 	saveReview();
 	saveRefusals(name);
-	// The next lead may sit in another confidence section: follow the line there
+	// The next lead may move the line to another confidence tab: the focus then stays on the line now in its place
 	const index = ordered.value.indexOf(pairing);
 	if (index !== -1) focusedIndex.value = index;
 	moveFocus(0);
@@ -398,11 +437,6 @@ function refresh() {
 	periodTotals.reload();
 }
 
-// A section whose pairings are all pre-approved folds into one line, unless the user reopens it
-const reopened = reactive(new Set());
-const isFolded = (section) =>
-	!reopened.has(section.level) && section.pairings.every((pairing) => approved.has(pairing.line.name));
-
 const preview = reactive({ open: false, document: null });
 function showPreview(document) {
 	preview.document = document;
@@ -495,7 +529,7 @@ function moveFocus(step) {
 }
 
 function onKeydown(event) {
-	if (tab.value !== "proposals" || search.open || preview.open) return;
+	if (!ordered.value.length || search.open || preview.open) return;
 	if (event.target.closest?.("input, textarea, select, [contenteditable], [role=dialog]")) return;
 	const pairing = focusedPairing.value;
 	const handlers = {
@@ -619,7 +653,14 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 					</div>
 				</div>
 				<nav class="mx-auto mt-2 flex max-w-[1280px] flex-wrap items-center justify-between gap-x-3 px-4 sm:px-8">
-					<TabButtons v-model="tab" type="underline" :options="tabOptions" />
+					<!-- frappe-ui's tabs stop at 14px: the tabs are the page's main navigation, so they get a size up -->
+					<TabButtons
+						v-model="tab"
+						type="underline"
+						size="md"
+						:options="tabOptions"
+						class="[&_[data-slot=tab-button]>span>:first-child]:!size-5 [&_[data-slot=tab-button]>span]:!h-11 [&_[data-slot=tab-button]>span]:!text-base"
+					/>
 					<Button
 						variant="ghost"
 						icon-left="lucide-file-search"
@@ -645,7 +686,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 				</p>
 
 				<Alert
-					v-if="tab === 'proposals' && showGuide && hasProposals"
+					v-if="currentSection && showGuide && hasProposals"
 					class="mb-8"
 					theme="blue"
 					:title="__('Dokos already paired your bank lines')"
@@ -696,7 +737,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 					</li>
 				</ul>
 
-				<template v-if="tab === 'proposals'">
+				<template v-if="currentSection">
 					<RuleOffers
 						v-if="ruleOffers.length"
 						:offers="ruleOffers"
@@ -726,89 +767,69 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 						</template>
 					</div>
 
-					<template v-else>
-						<section v-for="section in sections" :key="section.level" class="mb-14">
-							<div
-								v-if="isFolded(section)"
-								class="flex items-center gap-3 rounded-6 border border-outline-green-3 bg-surface-green-1 px-6 py-4"
-							>
-								<span class="lucide-circle-check size-5 text-ink-green-6" aria-hidden="true" />
-								<span class="text-base-medium text-ink-gray-9">{{ section.title() }}</span>
-								<span class="text-base text-ink-gray-6">
-									{{
-										_n(
-											section.pairings.length,
-											__("1 pairing, pre-approved"),
-											__("{0} pairings, all pre-approved", [section.pairings.length]),
-										)
-									}}
-								</span>
-								<Button
-									class="ml-auto"
-									variant="ghost"
-									:label="__('Show')"
-									@click="reopened.add(section.level)"
-								/>
-							</div>
-							<template v-else>
-							<div class="mb-4 flex flex-wrap items-end gap-3">
-								<div>
-									<h2 class="text-2xl-semibold text-ink-gray-9">
-										{{ section.title() }}
-										<span class="ml-1.5 text-lg text-ink-gray-4">{{ section.pairings.length }}</span>
-									</h2>
-									<p class="mt-2 text-p-base text-ink-gray-5">{{ section.hint() }}</p>
-								</div>
-								<Button
-									v-if="section.level === 'high'"
-									class="ml-auto"
-									variant="subtle"
-									theme="green"
-									icon-left="lucide-check-check"
-									:label="__('Pre-approve these {0}', [section.pairings.length])"
-									:disabled="section.pairings.every((pairing) => approved.has(pairing.line.name))"
-									@click="approveAll(section)"
-								/>
-							</div>
-							<div class="space-y-2">
-								<PairingRow
-									v-for="pairing in section.pairings"
-									:id="`line-${pairing.line.name}`"
-									:key="pairing.line.name"
-									:pairing="pairing"
-									:chosen="chosenFor(pairing)"
-									:approved="approved.has(pairing.line.name)"
-									:focused="focusedPairing === pairing"
-									@toggle="toggle(pairing)"
-									@refuse="refuse(pairing)"
-									@search="openSearch(pairing)"
-									@preview="showPreview"
-									@create-rule="openRule(pairing)"
-								/>
-							</div>
-							</template>
-						</section>
-					</template>
-					<div v-if="pairings.loading" class="space-y-3" aria-hidden="true">
-						<Skeleton v-for="index in proposed.length ? 2 : 4" :key="index" class="h-20 w-full rounded-6" />
-					</div>
-
-					<section v-if="unmatched.length" class="mb-14">
-						<h2 class="text-2xl-semibold text-ink-gray-9">
-							{{ __("Without proposal") }}
-							<span class="ml-1.5 text-lg text-ink-gray-4">{{ unmatched.length }}</span>
-						</h2>
-						<p class="mb-4 mt-2 text-p-base text-ink-gray-5">
-							{{ __("Pick a line, then the document it pays. Or record what the money is from its menu.") }}
-						</p>
+					<section v-else class="mb-14">
+						<div class="mb-4 flex flex-wrap items-end gap-3">
+							<p class="text-p-base text-ink-gray-5">{{ currentSection.hint() }}</p>
+							<Button
+								v-if="currentSection.level === 'high' && currentSection.pairings.length"
+								class="ml-auto"
+								variant="subtle"
+								theme="green"
+								icon-left="lucide-check-check"
+								:label="__('Pre-approve these {0}', [currentSection.pairings.length])"
+								:disabled="isDone(currentSection)"
+								@click="approveAll(currentSection)"
+							/>
+						</div>
+						<div
+							v-if="pairings.data && !pairings.loading && isDone(currentSection)"
+							class="mb-4 flex items-center gap-3 rounded-6 border border-outline-green-3 bg-surface-green-1 px-6 py-4"
+						>
+							<span class="lucide-circle-check size-5 text-ink-green-6" aria-hidden="true" />
+							<span class="text-base text-ink-gray-8">
+								{{
+									currentSection.pairings.length
+										? __("Every line here is pre-approved.")
+										: __("Nothing left here.")
+								}}
+							</span>
+							<Button
+								v-if="nextSection"
+								class="ml-auto"
+								variant="solid"
+								icon-right="lucide-arrow-right"
+								:label="__('Next: {0}', [nextSection.title()])"
+								@click="tab = nextSection.level"
+							/>
+						</div>
 						<UnmatchedMatcher
+							v-if="currentSection.level === 'unmatched' && unmatched.length"
 							:pairings="unmatched"
 							:actions-for="unmatchedActions"
 							@choose="choose"
 							@preview="showPreview"
 							@restore="restoreLeads"
 						/>
+						<div v-else class="space-y-2">
+							<PairingRow
+								v-for="pairing in currentSection.pairings"
+								:id="`line-${pairing.line.name}`"
+								:key="pairing.line.name"
+								:pairing="pairing"
+								:chosen="chosenFor(pairing)"
+								:approved="approved.has(pairing.line.name)"
+								:focused="focusedPairing === pairing"
+								@toggle="toggle(pairing)"
+								@refuse="refuse(pairing)"
+								@search="openSearch(pairing)"
+								@preview="showPreview"
+								@create-rule="openRule(pairing)"
+							/>
+						</div>
 					</section>
+					<div v-if="pairings.loading" class="space-y-3" aria-hidden="true">
+						<Skeleton v-for="index in currentSection.pairings.length ? 2 : 4" :key="index" class="h-20 w-full rounded-6" />
+					</div>
 				</template>
 
 				<ReconciledTab
