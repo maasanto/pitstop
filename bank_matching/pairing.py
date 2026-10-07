@@ -5,6 +5,14 @@ settlement of several receipts, and a confidence level drawn from the scorer's o
 """
 
 import frappe
+from erpnext.accounts.doctype.bank_transaction.bank_reconciliation import (
+	get_matching_payment_order,
+	reconcile_from_payment_order,
+)
+from erpnext.accounts.doctype.sepa_direct_debit.services.settlement import (
+	get_matching_direct_debit,
+	reconcile_from_direct_debit,
+)
 from erpnext.accounts.page.bank_reconciliation.bank_reconciliation import BankReconciliation
 from erpnext.accounts.page.bank_reconciliation.bank_transaction_match import BankTransactionMatch
 from erpnext.accounts.page.bank_reconciliation.multi_party_reconciliation import (
@@ -24,6 +32,12 @@ LEVELS = ("high", "medium", "low")
 MAX_PROPOSALS = 5
 # Invoices are paid by a Payment Entry the reconciliation creates; the others already moved the money
 INVOICE_TYPES = ("Sales Invoice", "Purchase Invoice", "Expense Claim")
+# Transfers or direct debits the bank books as one movement for the whole file:
+# (the one file of exactly the line's amount, how the line clears it, the file's date)
+PAYMENT_FILES = {
+	"Payment Order": (get_matching_payment_order, reconcile_from_payment_order, "posting_date"),
+	"Sepa Direct Debit": (get_matching_direct_debit, reconcile_from_direct_debit, "collection_date"),
+}
 LINE_FIELDS = [
 	"name",
 	"company",
@@ -60,15 +74,54 @@ def build_pairing(line, refused: list[str]) -> dict:
 	"""Every way Dokos sees to reconcile the line, the one it would pick first among those not refused."""
 	ranking = SuggestionRanking(BankTransactionMatch([line], None))
 	suggestions = ranking.rank(set(refused))
-	proposals = [document_proposal(suggestion) for suggestion in shortlist(suggestions)]
+	proposals = file_proposals(line)
+	proposals += [document_proposal(suggestion) for suggestion in shortlist(suggestions)]
 	proposals += settlement_proposals(line, ranking.candidates)
 	rule = matching_rule(line)
 	if rule:
 		# A document already booked for the amount wins: applying the rule would book the line twice
 		proposals.append(rule_proposal(rule, "low" if any(map(is_exact_amount, proposals)) else "high"))
-	# Stable sort: within a level, the scorer's own order, then the rule
+	# Stable sort: within a level, a released file, the scorer's own order, then the rule
 	proposals.sort(key=lambda proposal: LEVELS.index(proposal["level"]))
 	return {"line": describe_line(line), "proposals": proposals, "refused": refused}
+
+
+def file_proposals(line) -> list[dict]:
+	"""The released Payment Order paid by a withdrawal, or the direct debit file collected by a deposit.
+
+	erpnext only names a file whose total is exactly the line's amount and the only one to be.
+	"""
+	doctype = "Payment Order" if line.amount < 0 else "Sepa Direct Debit"
+	find_file, _clear, date_field = PAYMENT_FILES[doctype]
+	name = find_file(line.name)
+	if not name:
+		return []
+	file = frappe._dict(
+		doctype=doctype,
+		name=name,
+		signed_amount=line.amount,
+		grand_total=abs(line.amount),
+		posting_date=frappe.db.get_value(doctype, name, date_field),
+		match_reasons=[{"signal": "amount", "exact": True, "description": _("Same amount")}],
+	)
+	return [
+		{
+			"key": proposal_key(file),
+			"level": "high",
+			"score": None,
+			"documents": [describe_document(file)],
+			"creates_payment": False,
+		}
+	]
+
+
+def reconcile_file(line, doctype: str, names: list[str]) -> None:
+	find_file, clear, _date_field = PAYMENT_FILES[doctype]
+	if names != [find_file(line.name)]:
+		frappe.throw(
+			_("{0} {1} no longer matches this line exactly: reload the page").format(_(doctype), ", ".join(names))
+		)
+	clear(line.name, names[0])
 
 
 def is_exact_amount(proposal) -> bool:
@@ -227,6 +280,9 @@ def reconcile(line, documents: list[dict]) -> None:
 		frappe.throw(_("A bank line is reconciled with documents of a single type, got {0}").format(doctypes))
 	doctype = doctypes.pop()
 	names = [document["name"] for document in documents]
+	if doctype in PAYMENT_FILES:
+		reconcile_file(line, doctype, names)
+		return
 	rows = {
 		row["name"]: dict(row, doctype=doctype)
 		for row in BankTransactionMatch([line], doctype, match=False).get_linked_documents(
