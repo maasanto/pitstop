@@ -38,7 +38,7 @@ function toggleUnlessSelecting() {
 
 <template>
 	<div
-		class="group grid cursor-pointer grid-cols-[1.5rem_minmax(0,1fr)_auto] items-start gap-x-4 rounded-6 border px-4 py-4 transition-colors md:grid-cols-[1.5rem_minmax(0,1fr)_7rem] md:gap-x-5 md:px-5 xl:grid-cols-[1.5rem_minmax(0,0.85fr)_7rem_minmax(0,1.4fr)_6.5rem]"
+		class="group grid cursor-pointer grid-cols-[1.5rem_minmax(0,1fr)_auto] items-start gap-x-4 rounded-6 border px-4 py-4 transition-colors md:grid-cols-[1.5rem_minmax(0,1fr)_7rem] md:gap-x-5 md:px-5 xl:grid-cols-[1.5rem_minmax(0,1.2fr)_7rem_minmax(0,1.3fr)_6.5rem]"
 		:class="[
 			approved
 				? 'border-outline-green-3 bg-surface-green-1'
@@ -63,7 +63,7 @@ function toggleUnlessSelecting() {
 		</button>
 
 		<div class="min-w-0">
-			<div class="line-clamp-2 break-words text-base-medium !leading-5 text-ink-gray-9" :title="line.description">
+			<div class="line-clamp-3 break-words text-xs-medium !leading-4 text-ink-gray-9" :title="line.description">
 				{{ line.description }}
 			</div>
 			<div class="mt-2 flex items-center gap-1.5 text-sm text-ink-gray-5">
@@ -81,7 +81,7 @@ function toggleUnlessSelecting() {
 			</div>
 		</div>
 
-		<div class="text-right text-xl-semibold tabular-nums text-ink-gray-9">
+		<div class="text-right text-lg-semibold tabular-nums text-ink-gray-9">
 			{{ formatMoney(line.amount, line.currency) }}
 		</div>
 
