@@ -580,3 +580,15 @@ msgstr "Comptes bancaires"
 
 msgid "Selected"
 msgstr "Sélectionné"
+
+msgid "e.g. Last 3 weeks, Q1, May 2025"
+msgstr "ex. T1, mai 2025, depuis le 1er septembre"
+
+msgid "Amount"
+msgstr "Montant"
+
+msgid "1 of {0} pre-approved"
+msgstr "1 sur {0} pré-approuvée"
+
+msgid "{0} of {1} pre-approved"
+msgstr "{0} sur {1} pré-approuvées"
