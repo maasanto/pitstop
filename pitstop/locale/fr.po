@@ -689,3 +689,6 @@ msgstr "Les lignes sont désormais rapprochées toutes les heures"
 
 msgid "Hourly reconciliation stopped"
 msgstr "Rapprochement horaire arrêté"
+
+msgid "Document types"
+msgstr "Types de document"
