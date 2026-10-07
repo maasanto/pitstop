@@ -24,7 +24,9 @@ PARTY_TYPES = ("Payable", "Receivable")
 MAX_LINES = 200
 # The page asks for its lines a page at a time, so the first ones show while the others are scored
 PAGE_LENGTH = 25
-SEARCH_LIMIT = 20
+# The picker lists every open document and filters them in the browser
+# ponytail: one payload of up to 500 rows, page it server-side if a company keeps more open
+SEARCH_LIMIT = 500
 # An operation the bank feed only announces is not booked yet: nothing to reconcile, nothing to count
 BOOKED_LINES = {"docstatus": 1, "status": ("!=", PENDING_STATUS)}
 

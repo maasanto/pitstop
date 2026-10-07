@@ -323,6 +323,9 @@ msgstr "Saisissez un numéro, un tiers ou un montant pour chercher parmi tous le
 msgid "Other open documents"
 msgstr "Autres documents ouverts"
 
+msgid "Show only exact amount"
+msgstr "Montant exact uniquement"
+
 msgid "Search results"
 msgstr "Résultats de la recherche"
 
