@@ -250,6 +250,30 @@ class TestPairings(ERPNextTestSuite):
 		for invoice in invoices:
 			self.assertEqual(frappe.db.get_value("Sales Invoice", invoice.name, "outstanding_amount"), 0)
 
+	def test_invoices_of_two_parties_get_a_payment_each_and_undo_cancels_both(self):
+		globex = self.get_customer("Globex Leasing", contact=("Jane", "Roe"))
+		invoices = [self.create_invoice(150.5), self.create_invoice(249.5, customer=globex)]
+		line = self.create_line(400, "VIR SEPA RECU /DE HOLDING DOE")
+		documents = [{"doctype": "Sales Invoice", "name": invoice.name} for invoice in invoices]
+
+		with self.set_user(ACCOUNTANT):
+			[result] = reconcile_pairings([{"bank_transaction": line.name, "documents": documents}])
+
+		self.assertIsNone(result["error"])
+		payments = [voucher["name"] for voucher in result["created"]]
+		self.assertEqual(
+			{frappe.db.get_value("Payment Entry", payment, "party") for payment in payments},
+			{self.customer, globex},
+		)
+		self.assertEqual(frappe.db.get_value("Bank Transaction", line.name, "unallocated_amount"), 0)
+
+		with self.set_user(ACCOUNTANT):
+			undo_pairings([{"bank_transaction": line.name, "created": result["created"]}])
+		for invoice in invoices:
+			self.assertEqual(
+				frappe.db.get_value("Sales Invoice", invoice.name, "outstanding_amount"), invoice.grand_total
+			)
+
 	def test_an_invoice_finds_the_line_naming_it_first(self):
 		invoice = self.create_invoice(543.21)
 		unrelated = self.create_line(543.21, "VIR SEPA RECU /DE INCONNU")
