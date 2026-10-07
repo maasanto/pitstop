@@ -96,13 +96,16 @@ def file_proposals(line) -> list[dict]:
 	name = find_file(line.name)
 	if not name:
 		return []
+	reasons = [{"signal": "amount", "exact": True, "description": _("Same amount")}]
+	if name.lower() in (line.description or "").lower():
+		reasons.append({"signal": "reference", "exact": True, "description": _("Number in the label")})
 	file = frappe._dict(
 		doctype=doctype,
 		name=name,
 		signed_amount=line.amount,
 		grand_total=abs(line.amount),
 		posting_date=frappe.db.get_value(doctype, name, date_field),
-		match_reasons=[{"signal": "amount", "exact": True, "description": _("Same amount")}],
+		match_reasons=reasons,
 	)
 	return [
 		{
