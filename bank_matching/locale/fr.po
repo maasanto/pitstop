@@ -551,6 +551,12 @@ msgstr "Cet exercice"
 msgid "Last fiscal year"
 msgstr "L'exercice précédent"
 
+msgid "FY {0}"
+msgstr "Exercice {0}"
+
+msgid "Matched date"
+msgstr "Date reconnue"
+
 msgid "This week"
 msgstr "Cette semaine"
 
