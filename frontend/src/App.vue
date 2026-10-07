@@ -21,6 +21,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } 
 import AutoReconciliationSettings from "./components/AutoReconciliationSettings.vue";
 import BankAccountPicker from "./components/BankAccountPicker.vue";
 import DocumentLookupDialog from "./components/DocumentLookupDialog.vue";
+import DocumentTypeIcon from "./components/DocumentTypeIcon.vue";
 import PairingRow from "./components/PairingRow.vue";
 import PeriodPicker from "./components/PeriodPicker.vue";
 import PreviewDialog from "./components/PreviewDialog.vue";
@@ -28,7 +29,7 @@ import ReconciledTab from "./components/ReconciledTab.vue";
 import RuleDialog from "./components/RuleDialog.vue";
 import RuleOffers from "./components/RuleOffers.vue";
 import SearchDialog from "./components/SearchDialog.vue";
-import { descriptionText, formatDate, formatMoney, formatPercent } from "./format";
+import { DOCUMENT_TYPES, descriptionText, formatDate, formatMoney, formatPercent } from "./format";
 import { readStored, writeStored } from "./storage";
 import { __, _n } from "./translation";
 
@@ -668,6 +669,17 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 					</div>
 					<Button v-if="isFiltered" variant="ghost" :label="__('Clear filters')" @click="clearFilters" />
 				</div>
+
+				<ul
+					v-if="tab !== 'unmatched'"
+					class="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-gray-6"
+					:aria-label="__('Document types')"
+				>
+					<li v-for="doctype in Object.keys(DOCUMENT_TYPES)" :key="doctype" class="flex items-center gap-1.5">
+						<DocumentTypeIcon :doctype="doctype" />
+						{{ __(doctype) }}
+					</li>
+				</ul>
 
 				<template v-if="tab === 'proposals'">
 					<RuleOffers

@@ -34,14 +34,16 @@ export function descriptionText(description) {
 	return new DOMParser().parseFromString(html, "text/html").body.textContent.trim();
 }
 
-export const DOCTYPE_ICONS = {
-	"Sales Invoice": "lucide-file-text",
-	"Purchase Invoice": "lucide-receipt",
-	"Payment Entry": "lucide-banknote",
-	"Journal Entry": "lucide-book-open",
-	"Expense Claim": "lucide-wallet",
-	"Payment Order": "lucide-send",
-	"Sepa Direct Debit": "lucide-hand-coins",
+// Green, red and amber already mean approved, outgoing and gap on the cards: types take the other hues.
+// Class names stay literal so Tailwind keeps them.
+export const DOCUMENT_TYPES = {
+	"Sales Invoice": { icon: "lucide-file-text", tint: "bg-surface-blue-2 text-ink-blue-7" },
+	"Purchase Invoice": { icon: "lucide-receipt", tint: "bg-surface-orange-2 text-ink-orange-7" },
+	"Payment Entry": { icon: "lucide-banknote", tint: "bg-surface-teal-2 text-ink-teal-7" },
+	"Journal Entry": { icon: "lucide-book-open", tint: "bg-surface-violet-2 text-ink-violet-7" },
+	"Expense Claim": { icon: "lucide-wallet", tint: "bg-surface-pink-2 text-ink-pink-7" },
+	"Payment Order": { icon: "lucide-send", tint: "bg-surface-yellow-2 text-ink-yellow-7" },
+	"Sepa Direct Debit": { icon: "lucide-hand-coins", tint: "bg-surface-cyan-2 text-ink-cyan-7" },
 };
 
 export function deskUrl(doctype, name) {
