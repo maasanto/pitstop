@@ -46,25 +46,30 @@ const reasonsAbout = (...signals) =>
 			>{{ document.name }}</a
 		>
 		<span class="truncate text-ink-gray-5">· {{ party }} · {{ formatDate(document.posting_date) }}</span>
-		<span class="ml-auto shrink-0 tabular-nums text-ink-gray-7">{{ formatMoney(document.amount, currency) }}</span>
 		<Button
 			variant="ghost"
 			size="sm"
 			icon="lucide-eye"
-			class="opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+			class="ml-auto shrink-0 opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
 			:label="__('Preview')"
 			@click.stop="$emit('preview', document)"
 		/>
+		<span class="shrink-0 tabular-nums text-ink-gray-7">{{ formatMoney(document.amount, currency) }}</span>
 	</div>
 	<div v-else class="min-w-0">
 		<div class="flex items-center gap-1.5">
 			<span class="truncate text-base-medium text-ink-gray-9">{{ title }}</span>
 			<MatchHint v-if="party" :reasons="reasonsAbout('name', 'history')" :missing="__('Name not in the label')" />
 			<MatchHint :reasons="reasonsAbout('corrected')" />
-			<span class="ml-auto shrink-0 pl-2 text-base tabular-nums text-ink-gray-7">
-				{{ formatMoney(document.amount, currency) }}
+			<!-- Hints sit before amounts, so amounts line up down the page whether a hint backs them or not -->
+			<span class="ml-auto flex shrink-0 items-center gap-1.5 pl-2">
+				<MatchHint
+					v-if="lineAmount !== null"
+					:reasons="reasonsAbout('amount')"
+					:mismatch="__('Different amount')"
+				/>
+				<span class="text-base tabular-nums text-ink-gray-7">{{ formatMoney(document.amount, currency) }}</span>
 			</span>
-			<MatchHint v-if="lineAmount !== null" :reasons="reasonsAbout('amount')" :missing="__('Different amount')" />
 		</div>
 		<div class="mt-2 flex items-center gap-1.5 text-sm text-ink-gray-5">
 			<Tooltip :text="__(document.doctype)">

@@ -1,5 +1,5 @@
 <script setup>
-import { Button, Combobox, Dialog, ErrorMessage, FormControl, toast, useCall } from "frappe-ui";
+import { Button, Dialog, ErrorMessage, FormControl, toast, useCall } from "frappe-ui";
 import { computed, ref, watch } from "vue";
 import { formatMoney } from "../format";
 import { __ } from "../translation";
@@ -62,10 +62,13 @@ async function submit() {
 		<div class="space-y-4">
 			<FormControl v-model="contains" :label="__('When the label contains')" />
 			<FormControl v-model="ruleName" :label="__('Rule name')" />
-			<div>
-				<div class="mb-1.5 text-xs text-ink-gray-5">{{ __("Book it on the account") }}</div>
-				<Combobox v-model="account" :options="accountOptions" :placeholder="__('Search an account')" />
-			</div>
+			<FormControl
+				v-model="account"
+				type="combobox"
+				:label="__('Book it on the account')"
+				:options="accountOptions"
+				:placeholder="__('Search an account')"
+			/>
 			<p class="text-p-sm text-ink-gray-5">
 				{{
 					__(

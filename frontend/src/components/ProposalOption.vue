@@ -1,5 +1,5 @@
 <script setup>
-import { Button, Checkbox } from "frappe-ui";
+import { Button } from "frappe-ui";
 import { computed } from "vue";
 import { formatMoney } from "../format";
 import ConfidencePill from "./ConfidencePill.vue";
@@ -15,26 +15,38 @@ const props = defineProps({
 	isPicked: { type: Boolean, default: false },
 	isPickable: { type: Boolean, default: false },
 });
-defineEmits(["choose", "preview", "pick"]);
+const emit = defineEmits(["choose", "preview", "pick"]);
 
 const single = computed(() => !props.proposal.rule && !props.proposal.settlement && props.proposal.documents[0]);
+// A rule or a settlement pays the line on its own: only its button chooses it
+const canPick = computed(() => single.value && (props.isPickable || props.isPicked));
+
+// Selecting a number to copy it is not a pick
+function togglePick() {
+	if (!canPick.value || window.getSelection()?.isCollapsed === false) return;
+	emit("pick", !props.isPicked);
+}
 </script>
 
 <template>
-	<div class="flex items-start gap-3" :class="isRefused && 'opacity-60'">
-		<div class="w-5 shrink-0 pt-2.5">
-			<Checkbox
-				v-if="single"
-				:model-value="isPicked"
-				:disabled="!isPickable && !isPicked"
-				:aria-label="__('Add to the documents paid by this line')"
-				@update:model-value="(isChecked) => $emit('pick', isChecked)"
-			/>
-		</div>
-		<div
-			class="min-w-0 flex-1 rounded-4 border px-3 py-2"
-			:class="isPicked ? 'border-outline-gray-4' : 'border-outline-gray-1'"
-		>
+	<div
+		:role="single ? 'checkbox' : undefined"
+		:aria-checked="single ? isPicked : undefined"
+		:aria-disabled="single && !canPick ? true : undefined"
+		:tabindex="canPick ? 0 : undefined"
+		:title="single && !canPick ? __('Only documents of the same type can be paid together') : undefined"
+		class="flex items-start gap-3 rounded-4 border px-3 py-2 transition-colors"
+		:class="[
+			isPicked ? 'border-outline-gray-5 bg-surface-gray-2' : 'border-outline-gray-1',
+			canPick && !isPicked && 'cursor-pointer hover:border-outline-gray-3 hover:bg-surface-gray-1',
+			canPick && isPicked && 'cursor-pointer',
+			(isRefused || (single && !canPick)) && 'opacity-60',
+		]"
+		@click="togglePick"
+		@keydown.space.self.prevent="togglePick"
+		@keydown.enter.self.prevent="togglePick"
+	>
+		<div class="min-w-0 flex-1">
 			<template v-if="proposal.rule">
 				<div class="flex items-center gap-1.5 text-base-medium text-ink-gray-9">
 					<span class="lucide-wand-sparkles size-4 text-ink-blue-6" aria-hidden="true" />
@@ -76,9 +88,9 @@ const single = computed(() => !props.proposal.rule && !props.proposal.settlement
 					icon="lucide-eye"
 					:tooltip="__('Preview')"
 					:label="__('Preview')"
-					@click="$emit('preview', single)"
+					@click.stop="$emit('preview', single)"
 				/>
-				<Button :label="actionLabel" :disabled="isCurrent" @click="$emit('choose')" />
+				<Button :label="actionLabel" :disabled="isCurrent" @click.stop="$emit('choose')" />
 			</div>
 		</div>
 	</div>

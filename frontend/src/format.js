@@ -1,3 +1,5 @@
+import { dayjs } from "frappe-ui";
+
 const locale = () => window.lang || "en";
 
 export function formatMoney(amount, currency) {
@@ -7,15 +9,23 @@ export function formatMoney(amount, currency) {
 	}).format(amount || 0);
 }
 
+// The system's date format, as the desk shows dates: `dd-mm-yyyy` reads as dayjs' `DD-MM-YYYY`
 export function formatDate(value) {
-	return value ? new Intl.DateTimeFormat(locale()).format(new Date(value)) : "";
+	if (!value) return "";
+	return window.date_format
+		? dayjs(value).format(window.date_format.toUpperCase())
+		: new Intl.DateTimeFormat(locale()).format(dayjs(value).toDate());
 }
 
-// `8 juil. 26`: short enough to show a range beside each period of the picker
+// `8 juil.`, short enough to show a range beside each period of the picker; the year only when it is not this one
 export function formatShortDate(value) {
-	return new Intl.DateTimeFormat(locale(), { day: "numeric", month: "short", year: "2-digit" }).format(
-		new Date(value),
-	);
+	const date = dayjs(value);
+	const year = date.year() === dayjs().year() ? {} : { year: "numeric" };
+	return new Intl.DateTimeFormat(locale(), { day: "numeric", month: "short", ...year }).format(date.toDate());
+}
+
+export function formatPercent(ratio) {
+	return new Intl.NumberFormat(locale(), { style: "percent" }).format(ratio);
 }
 
 export const DOCTYPE_ICONS = {

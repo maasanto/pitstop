@@ -155,17 +155,11 @@ msgstr "Rechercher un document"
 msgid "Search a label, document or party"
 msgstr "Rechercher un libellé, un document ou un tiers"
 
-msgid "Search another document"
-msgstr "Rechercher un autre document"
-
 msgid "See the lines without proposal"
 msgstr "Voir les lignes sans proposition"
 
 msgid "Several signals agree and no other party comes close. A glance is enough."
 msgstr "Plusieurs indices concordent et aucun autre tiers n'approche. Un coup d'œil suffit."
-
-msgid "Show the other leads"
-msgstr "Voir les autres pistes"
 
 msgid "The bank line goes back to the lines to reconcile. {0} itself is kept."
 msgstr "La ligne bancaire retourne parmi les lignes à rapprocher. {0} est conservé."
@@ -206,8 +200,8 @@ msgstr "Sans proposition"
 msgid "You need read access to Bank Transactions to reconcile them"
 msgstr "Il faut le droit de lecture sur les transactions bancaires pour les rapprocher"
 
-msgid "created by the reconciliation"
-msgstr "créé par le rapprochement"
+msgid "Created by the reconciliation"
+msgstr "Créé par le rapprochement"
 
 msgid "due {0}"
 msgstr "échéance {0}"
@@ -374,8 +368,6 @@ msgstr "Dokos propose alors une écriture bancaire pour chacune de ces lignes ; 
 msgid "Create the rule"
 msgstr "Créer la règle"
 
-msgid "Add to the documents paid by this line"
-msgstr "Ajouter aux documents payés par cette ligne"
 
 msgid "1 document"
 msgstr "1 document"
@@ -593,9 +585,6 @@ msgstr "Choisir un compte bancaire"
 msgid "Bank accounts"
 msgstr "Comptes bancaires"
 
-msgid "Selected"
-msgstr "Sélectionné"
-
 msgid "e.g. Last 3 weeks, Q1, May 2025"
 msgstr "ex. T1, mai 2025, depuis le 1er septembre"
 
@@ -652,3 +641,18 @@ msgstr "Dokos ne proposera plus cette règle"
 
 msgid "Rule created: these lines are now proposed for validation"
 msgstr "Règle créée : ces lignes sont désormais proposées à la validation"
+
+msgid "Other leads, or another document"
+msgstr "Autres pistes, ou un autre document"
+
+msgid "Cancel the entry"
+msgstr "Annuler l'écriture"
+
+msgid "The entry is cancelled and the bank line goes back to the lines to reconcile."
+msgstr "L'écriture est annulée et la ligne bancaire retourne parmi les lignes à rapprocher."
+
+msgid "Select one document, or several when this line pays them together."
+msgstr "Sélectionnez un document, ou plusieurs quand cette ligne les règle ensemble."
+
+msgid "Only documents of the same type can be paid together"
+msgstr "Seuls des documents du même type peuvent être réglés ensemble"

@@ -26,7 +26,7 @@ import ReconciledTab from "./components/ReconciledTab.vue";
 import RuleDialog from "./components/RuleDialog.vue";
 import RuleOffers from "./components/RuleOffers.vue";
 import SearchDialog from "./components/SearchDialog.vue";
-import { formatDate, formatMoney } from "./format";
+import { formatDate, formatMoney, formatPercent } from "./format";
 import { readStored, writeStored } from "./storage";
 import { __, _n } from "./translation";
 
@@ -129,11 +129,14 @@ const sections = computed(() =>
 	})).filter((section) => section.pairings.length),
 );
 const ordered = computed(() => sections.value.flatMap((section) => section.pairings));
+// No count until the lines are there: a zero while loading reads as nothing to do
+const count = (rows) => (pairings.data ? ` · ${rows.length}` : "");
 const tabOptions = computed(() => [
-	{ label: `${__("Proposals")} · ${proposed.value.length}`, value: "proposals" },
-	{ label: `${__("Without proposal")} · ${unmatched.value.length}`, value: "unmatched" },
+	{ label: `${__("Proposals")}${count(proposed.value)}`, value: "proposals" },
+	{ label: `${__("Without proposal")}${count(unmatched.value)}`, value: "unmatched" },
 	{ label: __("Already reconciled"), value: "reconciled" },
 ]);
+const hasProposals = computed(() => lines.value.some((pairing) => chosenFor(pairing)));
 
 function chosenFor(pairing) {
 	const name = pairing.line.name;
@@ -445,13 +448,12 @@ function dismissGuide() {
 const focusedIndex = ref(0);
 const focusedPairing = computed(() => ordered.value[focusedIndex.value]);
 const SHORTCUTS = [
-	{ combo: "ArrowDown", label: () => __("Next line") },
-	{ combo: "ArrowUp", label: () => __("Previous line") },
+	{ combo: "ArrowDown", alternatives: ["J"], label: () => __("Next line") },
+	{ combo: "ArrowUp", alternatives: ["K"], label: () => __("Previous line") },
 	{ combo: "Space", label: () => __("Pre-approve or release") },
 	{ combo: "P", label: () => __("Preview the document") },
 	{ combo: "X", label: () => __("Refuse the lead") },
-	{ combo: "O", label: () => __("Show the other leads") },
-	{ combo: "Slash", label: () => __("Search another document") },
+	{ combo: "O", alternatives: ["/"], label: () => __("Other leads, or another document") },
 	{ combo: "Mod+Enter", label: () => __("Validate the pre-approved") },
 ];
 
@@ -493,7 +495,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 	<FrappeUIProvider>
 		<div class="min-h-screen bg-surface-base pb-32 text-ink-gray-8">
 			<header class="border-b border-outline-gray-1">
-				<div class="mx-auto flex max-w-[1280px] flex-wrap items-center gap-3 px-8 pb-3 pt-7">
+				<div class="mx-auto flex max-w-[1280px] flex-wrap items-center gap-3 px-4 pb-3 pt-7 sm:px-8">
 					<h1 class="mr-4 text-4xl-semibold text-ink-gray-9">{{ __("Bank reconciliation") }}</h1>
 					<BankAccountPicker v-model="bankAccount" :accounts="accounts.data || []" />
 					<PeriodPicker v-model="period" :company="company" />
@@ -518,7 +520,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 								</svg>
 								<span class="tabular-nums">
 									{{ monthLabel(thisMonth.month) }} ·
-									{{ Math.round((100 * thisMonth.reconciled) / thisMonth.lines) }} %
+									{{ formatPercent(thisMonth.reconciled / thisMonth.lines) }}
 								</span>
 								<span v-if="streak" class="flex items-center gap-0.5 text-ink-amber-7">
 									<span class="lucide-flame size-3.5" aria-hidden="true" />
@@ -526,13 +528,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 								</span>
 							</div>
 						</Tooltip>
-						<Button
-							variant="ghost"
-							icon="lucide-file-search"
-							:label="__('Find the line of a document')"
-							:tooltip="__('Find the line of a document')"
-							@click="lookup.open = true"
-						/>
 						<Popover align="end">
 							<template #trigger>
 								<Button
@@ -542,15 +537,17 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 									:tooltip="__('Keyboard shortcuts')"
 								/>
 							</template>
-							<div class="w-72 space-y-2 p-3">
+							<div class="w-80 space-y-2 p-3">
 								<p class="text-sm-medium text-ink-gray-9">{{ __("Review without the mouse") }}</p>
 								<div
 									v-for="shortcut in SHORTCUTS"
 									:key="shortcut.combo"
-									class="flex items-center justify-between text-sm text-ink-gray-7"
+									class="flex items-center justify-between gap-4 text-sm text-ink-gray-7"
 								>
 									{{ shortcut.label() }}
-									<KeyboardShortcut :combo="shortcut.combo" />
+									<span class="flex shrink-0 items-center gap-1.5">
+										<KeyboardShortcut :combo="shortcut.combo" :alt-combos="shortcut.alternatives" bg />
+									</span>
 								</div>
 							</div>
 						</Popover>
@@ -563,16 +560,36 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 						/>
 					</div>
 				</div>
-				<nav class="mx-auto mt-2 max-w-[1280px] px-8">
+				<nav class="mx-auto mt-2 flex max-w-[1280px] flex-wrap items-center justify-between gap-x-3 px-4 sm:px-8">
 					<TabButtons v-model="tab" type="underline" :options="tabOptions" />
+					<Button
+						variant="ghost"
+						icon-left="lucide-file-search"
+						:label="__('Find the line of a document')"
+						@click="lookup.open = true"
+					/>
 				</nav>
 			</header>
 
-			<main class="mx-auto max-w-[1280px] px-8 pt-8">
+			<main class="mx-auto max-w-[1280px] px-4 pt-8 sm:px-8">
 				<ErrorMessage v-if="pairings.error" :message="pairings.error" class="mb-4" />
 				<p v-if="pairings.data?.truncated" class="mb-4 text-p-sm text-ink-amber-7">
 					{{ __("Only the latest lines of the period are shown: narrow the period to see the others.") }}
 				</p>
+
+				<Alert
+					v-if="tab === 'proposals' && showGuide && hasProposals"
+					class="mb-8"
+					theme="blue"
+					:title="__('Dokos already paired your bank lines')"
+					:description="
+						__(
+							'1. Check each pairing: the icons say what matched. 2. Click a line to pre-approve it. 3. Validate them all at once; invoices get their payment created.',
+						)
+					"
+					dismissible
+					@dismiss="dismissGuide"
+				/>
 
 				<div v-if="tab !== 'reconciled' && lines.length" class="mb-8 flex flex-wrap items-center gap-2">
 					<TabButtons v-model="filters.direction" :options="directionOptions">
@@ -602,19 +619,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 				</div>
 
 				<template v-if="tab === 'proposals'">
-					<Alert
-						v-if="showGuide"
-						class="mb-10"
-						theme="blue"
-						:title="__('Dokos already paired your bank lines')"
-						:description="
-							__(
-								'1. Check each pairing: the icons say what matched. 2. Click a line to pre-approve it. 3. Validate them all at once; invoices get their payment created.',
-							)
-						"
-						dismissible
-						@dismiss="dismissGuide"
-					/>
 					<RuleOffers
 						v-if="ruleOffers.length"
 						:offers="ruleOffers"
@@ -623,7 +627,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 					/>
 
 					<div v-if="pairings.loading && !pairings.data" class="space-y-3">
-						<Skeleton v-for="index in 4" :key="index" class="h-24 w-full rounded-6" />
+						<Skeleton v-for="index in 4" :key="index" class="h-20 w-full rounded-6" />
 					</div>
 
 					<div
@@ -691,7 +695,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 								/>
 							</div>
 							<template v-else>
-							<div class="mb-5 flex items-end gap-3">
+							<div class="mb-4 flex flex-wrap items-end gap-3">
 								<div>
 									<h2 class="text-2xl-semibold text-ink-gray-9">
 										{{ section.title() }}
@@ -710,7 +714,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 									@click="approveAll(section)"
 								/>
 							</div>
-							<div class="space-y-3">
+							<div class="space-y-2">
 								<PairingRow
 									v-for="pairing in section.pairings"
 									:id="`line-${pairing.line.name}`"
@@ -748,31 +752,32 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 							<div
 								v-for="pairing in group.pairings"
 								:key="pairing.line.name"
-								class="flex items-center gap-5 py-4"
+								class="flex flex-wrap items-center gap-x-5 gap-y-2 py-4"
 							>
 								<div class="w-24 shrink-0 text-sm text-ink-gray-5">{{ formatDate(pairing.line.date) }}</div>
-								<div class="min-w-0 flex-1">
+								<div class="min-w-0 flex-1 basis-60">
 									<div class="truncate text-base-medium text-ink-gray-9">{{ pairing.line.description }}</div>
 									<div
 										v-if="group.key === 'refused'"
-										class="mt-2 flex items-center gap-1 text-sm text-ink-gray-5"
+										class="mt-1 flex items-center gap-1 text-sm text-ink-gray-5"
 									>
 										<span class="lucide-thumbs-down size-3.5 shrink-0" aria-hidden="true" />
 										<span class="truncate">{{
 											__("Refused: {0}", [leadLabel(pairing.proposals[0])])
 										}}</span>
+										<Button
+											class="ml-1 shrink-0"
+											variant="ghost"
+											size="xs"
+											icon-left="lucide-undo-2"
+											:label="__('Restore')"
+											@click="restoreLeads(pairing)"
+										/>
 									</div>
 								</div>
 								<div class="w-28 shrink-0 text-right text-base-semibold tabular-nums text-ink-gray-9">
 									{{ formatMoney(pairing.line.amount, pairing.line.currency) }}
 								</div>
-								<Button
-									v-if="group.key === 'refused'"
-									variant="ghost"
-									icon-left="lucide-undo-2"
-									:label="__('Restore')"
-									@click="restoreLeads(pairing)"
-								/>
 								<Button
 									icon-left="lucide-search"
 									:label="__('Search a document')"

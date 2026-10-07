@@ -10,6 +10,11 @@ const router = createRouter({
 	routes: [{ path: "/:pathMatch(.*)*", component: { render: () => null } }],
 });
 
+// The page wears the theme the user picked in the desk
+const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+document.documentElement.dataset.theme =
+	window.desk_theme === "Dark" || (window.desk_theme === "Automatic" && prefersDark) ? "dark" : "light";
+
 await loadTranslations();
 const app = createApp(App);
 app.config.globalProperties.__ = __;
