@@ -2,24 +2,25 @@
 import {
 	Alert,
 	Button,
-	DateRangePicker,
 	Dropdown,
 	ErrorMessage,
 	FrappeUIProvider,
 	KeyboardShortcut,
 	Popover,
-	Select,
 	Skeleton,
 	TabButtons,
 	TextInput,
 	Tooltip,
 	call,
+	dayjs,
 	toast,
 	useCall,
 } from "frappe-ui";
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
+import BankAccountPicker from "./components/BankAccountPicker.vue";
 import DocumentLookupDialog from "./components/DocumentLookupDialog.vue";
 import PairingRow from "./components/PairingRow.vue";
+import PeriodPicker from "./components/PeriodPicker.vue";
 import PreviewDialog from "./components/PreviewDialog.vue";
 import ReconciledTab from "./components/ReconciledTab.vue";
 import RuleDialog from "./components/RuleDialog.vue";
@@ -28,28 +29,22 @@ import { formatDate, formatMoney } from "./format";
 import { readStored, writeStored } from "./storage";
 import { __, _n } from "./translation";
 
-const isoDate = (date) =>
-	[date.getFullYear(), date.getMonth() + 1, date.getDate()]
-		.map((part) => String(part).padStart(2, "0"))
-		.join("-");
-const today = new Date();
-const period = ref([isoDate(new Date(today.getFullYear(), today.getMonth() - 2, 1)), isoDate(today)]);
-// The system's date format, `dd-mm-yyyy` in Frappe's notation, is `DD-MM-YYYY` in dayjs'
-const dateFormat = window.date_format?.toUpperCase();
+const period = ref([dayjs().subtract(89, "day").format("YYYY-MM-DD"), dayjs().format("YYYY-MM-DD")]);
 const bankAccount = ref(null);
 const tab = ref("proposals");
 const showGuide = ref(!readStored("bank_matching:guide-dismissed"));
 
 const accounts = useCall({
 	url: "/api/v2/method/bank_matching.api.get_bank_accounts",
-	onSuccess: (rows) => (bankAccount.value ||= rows[0]?.name),
+	onSuccess: (rows) => {
+		const remembered = rows.find((account) => account.name === readStored("bank_matching:bank-account"));
+		bankAccount.value ||= (remembered || rows[0])?.name;
+	},
 });
-const accountOptions = computed(() =>
-	(accounts.data || []).map((account) => ({
-		label: `${account.account_name} · ${account.bank}`,
-		value: account.name,
-	})),
+const company = computed(
+	() => (accounts.data || []).find((account) => account.name === bankAccount.value)?.company,
 );
+watch(bankAccount, (account) => account && writeStored("bank_matching:bank-account", account));
 
 const pairings = useCall({
 	url: "/api/v2/method/bank_matching.api.get_pairings",
@@ -71,6 +66,11 @@ const directionOptions = [
 	{ label: __("Money in"), value: "in" },
 	{ label: __("Money out"), value: "out" },
 ];
+// The same arrows as on each line's date, so the filter reads as "lines like these"
+const DIRECTION_ICONS = {
+	in: "lucide-arrow-down-left text-ink-green-6",
+	out: "lucide-arrow-up-right text-ink-red-5",
+};
 const isFiltered = computed(
 	() => filters.direction !== "all" || filters.text.trim() || filters.min !== "" || filters.max !== "",
 );
@@ -491,13 +491,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 			<header class="border-b border-outline-gray-1">
 				<div class="mx-auto flex max-w-[1280px] flex-wrap items-center gap-3 px-8 pb-3 pt-7">
 					<h1 class="mr-4 text-4xl-semibold text-ink-gray-9">{{ __("Bank reconciliation") }}</h1>
-					<Select
-						v-model="bankAccount"
-						class="w-64"
-						:options="accountOptions"
-						:placeholder="__('Bank account')"
-					/>
-					<DateRangePicker v-model="period" class="w-60" :clearable="false" :format="dateFormat" />
+					<BankAccountPicker v-model="bankAccount" :accounts="accounts.data || []" />
+					<PeriodPicker v-model="period" :company="company" />
 					<div class="ml-auto flex items-center gap-1">
 						<Tooltip
 							v-if="thisMonth?.lines"
@@ -576,7 +571,15 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 				</p>
 
 				<div v-if="tab !== 'reconciled' && lines.length" class="mb-8 flex flex-wrap items-center gap-2">
-					<TabButtons v-model="filters.direction" :options="directionOptions" />
+					<TabButtons v-model="filters.direction" :options="directionOptions">
+						<template #prefix="{ button }">
+							<span
+								v-if="DIRECTION_ICONS[button.modelValue]"
+								:class="['size-4', DIRECTION_ICONS[button.modelValue]]"
+								aria-hidden="true"
+							/>
+						</template>
+					</TabButtons>
 					<TextInput
 						v-model="filters.text"
 						class="w-64"
