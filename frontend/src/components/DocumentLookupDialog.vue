@@ -1,7 +1,7 @@
 <script setup>
 import { Button, Dialog, ErrorMessage, LoadingText, TextInput, toast, useCall } from "frappe-ui";
 import { ref, watch } from "vue";
-import { formatDate, formatMoney } from "../format";
+import { descriptionText, formatDate, formatMoney } from "../format";
 import { __ } from "../translation";
 import ConfidencePill from "./ConfidencePill.vue";
 import DocumentTypeIcon from "./DocumentTypeIcon.vue";
@@ -61,7 +61,7 @@ async function reconcileWith(match) {
 	});
 	reconcilingLine.value = null;
 	if (reconcile.error) return;
-	toast.success(__("{0} reconciled with {1}", [document.value.name, match.line.description]));
+	toast.success(__("{0} reconciled with {1}", [document.value.name, descriptionText(match.line.description)]));
 	open.value = false;
 	emit("reconciled");
 }
@@ -130,7 +130,7 @@ async function reconcileWith(match) {
 					class="flex items-center gap-4 rounded-4 border border-outline-gray-1 px-3 py-2.5"
 				>
 					<div class="min-w-0 flex-1">
-						<div class="truncate text-base-medium text-ink-gray-9">{{ match.line.description }}</div>
+						<div class="truncate text-base-medium text-ink-gray-9">{{ descriptionText(match.line.description) }}</div>
 						<div class="mt-1 flex items-center gap-1.5 text-sm text-ink-gray-5">
 							{{ formatDate(match.line.date) }}
 							<MatchHint

@@ -1,7 +1,7 @@
 <script setup>
 import { Button, Dropdown, Skeleton, TextInput, Tooltip, dialog, toast, useCall } from "frappe-ui";
 import { computed, ref } from "vue";
-import { deskUrl, formatDate, formatMoney } from "../format";
+import { deskUrl, descriptionText, formatDate, formatMoney } from "../format";
 import { __ } from "../translation";
 import DocumentTypeIcon from "./DocumentTypeIcon.vue";
 
@@ -22,7 +22,11 @@ const shown = computed(() => {
 	return (lines.data || []).filter(
 		({ line, documents }) =>
 			!text ||
-			[line.description, line.reference_number, ...documents.flatMap((d) => [d.payment_entry, d.party])].some(
+			[
+				descriptionText(line.description),
+				line.reference_number,
+				...documents.flatMap((d) => [d.payment_entry, d.party]),
+			].some(
 				(value) =>
 					String(value || "")
 						.toLowerCase()
@@ -120,8 +124,8 @@ function done(message) {
 					{{ formatDate(line.date) }}
 				</div>
 				<div class="flex min-h-7 min-w-0 items-center">
-					<span class="truncate text-base-medium text-ink-gray-9" :title="line.description">
-						{{ line.description }}
+					<span class="truncate text-base-medium text-ink-gray-9" :title="descriptionText(line.description)">
+						{{ descriptionText(line.description) }}
 					</span>
 				</div>
 				<div class="flex min-h-7 items-center justify-end text-base-semibold tabular-nums text-ink-gray-9">

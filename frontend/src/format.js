@@ -28,6 +28,12 @@ export function formatPercent(ratio) {
 	return new Intl.NumberFormat(locale(), { style: "percent" }).format(ratio);
 }
 
+// Bank imports can carry HTML such as `<br>`: show it as plain text, line breaks kept, never as markup
+export function descriptionText(description) {
+	const html = (description || "").replace(/<br\s*\/?>|<\/(p|div|li)>/gi, "\n");
+	return new DOMParser().parseFromString(html, "text/html").body.textContent.trim();
+}
+
 // Green, red and amber already mean approved, outgoing and gap on the cards: types take the other hues.
 // Class names stay literal so Tailwind keeps them.
 export const DOCUMENT_TYPES = {
