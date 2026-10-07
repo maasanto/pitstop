@@ -226,6 +226,19 @@ def get_progress(bank_account: str, months: int = 12) -> list[dict]:
 	return sorted(by_month.values(), key=lambda month: month["month"], reverse=True)
 
 
+@frappe.whitelist()
+def get_period_totals(bank_account: str, from_date: str, to_date: str) -> dict:
+	"""Money in and money out over the period, each with the amount already reconciled."""
+	lines = get_lines(bank_account, from_date, to_date, {})
+	totals = {direction: {"total": 0.0, "reconciled": 0.0, "lines": 0} for direction in ("in", "out")}
+	for line in lines:
+		direction = totals["in" if flt(line.credit) else "out"]
+		direction["total"] += flt(line.credit) or flt(line.debit)
+		direction["reconciled"] += flt(line.allocated_amount)
+		direction["lines"] += 1
+	return {**totals, "currency": lines[0].currency if lines else None}
+
+
 def roll_back_pairing(savepoint: str) -> None:
 	try:
 		frappe.db.rollback(save_point=savepoint)
