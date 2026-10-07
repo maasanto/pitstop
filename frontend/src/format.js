@@ -24,6 +24,8 @@ export const DOCTYPE_ICONS = {
 	"Payment Entry": "lucide-banknote",
 	"Journal Entry": "lucide-book-open",
 	"Expense Claim": "lucide-wallet",
+	"Payment Order": "lucide-send",
+	"Sepa Direct Debit": "lucide-hand-coins",
 };
 
 export function deskUrl(doctype, name) {

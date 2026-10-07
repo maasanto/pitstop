@@ -284,10 +284,12 @@ async function validate() {
 		.forEach((result) => toast.error(result.error, { description: result.bank_transaction, duration: 15000 }));
 	if (done.length) {
 		const minutes = Math.max(1, Math.round((done.length * MANUAL_SECONDS_PER_LINE) / 60));
+		// A line that cleared a payment file's transit account stays reconciled
+		const undoable = done.filter((result) => result.undoable);
 		toast.success(_n(done.length, __("1 line reconciled"), __("{0} lines reconciled", [done.length])), {
 			description: __("About {0} min of manual matching saved", [minutes]),
 			duration: 20000,
-			action: { label: __("Undo"), onClick: () => undo(done, keys) },
+			action: undoable.length ? { label: __("Undo"), onClick: () => undo(undoable, keys) } : undefined,
 		});
 	}
 	done.forEach((result) => approved.delete(result.bank_transaction));
