@@ -1,6 +1,7 @@
 <script setup>
 import { Button, DateRangePicker, Popover, TextInput, call, dayjs } from "frappe-ui";
 import { computed, ref, watch } from "vue";
+import { parseDateRange } from "../dateRange";
 import { formatDate, formatShortDate } from "../format";
 import { __ } from "../translation";
 
@@ -87,13 +88,20 @@ const current = computed(() =>
 const isOpen = ref(false);
 const query = ref("");
 const highlighted = ref(0);
-const shown = computed(() => {
+const matching = computed(() => {
 	const tokens = query.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
 	return options.value.filter((candidate) => {
 		const text = [candidate.label, candidate.from, candidate.to].join(" ").toLowerCase();
 		return tokens.every((token) => text.includes(token));
 	});
 });
+// What the user typed, read as dates ("May 2025", "since 3 weeks"), unless a period already covers it
+const typed = computed(() => {
+	const range = parseDateRange(query.value);
+	const isListed = matching.value.some((candidate) => candidate.from === range?.from && candidate.to === range?.to);
+	return range && !isListed ? { group: "typed", label: query.value.trim(), ...range } : null;
+});
+const shown = computed(() => (typed.value ? [typed.value, ...matching.value] : matching.value));
 watch(query, () => (highlighted.value = 0));
 watch(isOpen, (open) => {
 	query.value = "";
@@ -133,13 +141,13 @@ function onSearchKeydown(event) {
 				<TextInput
 					v-model="query"
 					autofocus
-					:placeholder="__('Search a period, e.g. Q1 or 2025')"
+					:placeholder="__('e.g. Last 3 weeks, Q1, May 2025')"
 					@keydown="onSearchKeydown"
 				>
 					<template #prefix><span class="lucide-search size-4" aria-hidden="true" /></template>
 				</TextInput>
 				<ul class="mt-1.5 max-h-80 overflow-y-auto" role="listbox" :aria-label="__('Periods')">
-					<template v-for="(candidate, index) in shown" :key="candidate.label">
+					<template v-for="(candidate, index) in shown" :key="`${candidate.group}:${candidate.label}`">
 						<li
 							v-if="index && candidate.group !== shown[index - 1].group"
 							role="separator"
@@ -153,13 +161,16 @@ function onSearchKeydown(event) {
 							@mouseenter="highlighted = index"
 							@click="pick(candidate)"
 						>
-							<span class="flex items-center gap-2 text-ink-gray-8">
+							<span class="flex min-w-0 items-center gap-2 text-ink-gray-8">
 								<span
 									class="size-4 shrink-0"
-									:class="candidate === current ? 'lucide-check text-ink-gray-9' : ''"
+									:class="{
+										'lucide-check text-ink-gray-9': candidate === current,
+										'lucide-text-cursor-input text-ink-gray-5': candidate.group === 'typed',
+									}"
 									aria-hidden="true"
 								/>
-								{{ candidate.label }}
+								<span class="truncate">{{ candidate.label }}</span>
 							</span>
 							<span class="flex items-center gap-1 whitespace-nowrap text-sm tabular-nums text-ink-gray-5">
 								{{ formatShortDate(candidate.from) }}

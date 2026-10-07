@@ -1365,6 +1365,11 @@ chokidar@^5.0.0:
   dependencies:
     readdirp "^5.0.0"
 
+chrono-node@^2.9.1:
+  version "2.10.2"
+  resolved "https://registry.yarnpkg.com/chrono-node/-/chrono-node-2.10.2.tgz#74c6aaa95aca7709f4cb301a732ea52863c7681e"
+  integrity sha512-xBCwGGmodF2YVtzE7/8ewNDajbCg72jgZHyOXvhkuQiYhIQ1KbqyXJJJw2fLaQ603LL4oMVhOyjckEBve45S4w==
+
 classnames@^2.2.5:
   version "2.5.1"
   resolved "https://registry.yarnpkg.com/classnames/-/classnames-2.5.1.tgz#ba774c614be0f016da105c858e7159eae8e7687b"
