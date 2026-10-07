@@ -174,7 +174,6 @@ const ordered = computed(() => sections.value.flatMap((section) => section.pairi
 const count = (rows) => (pairings.data ? ` · ${rows.length}` : "");
 const tabOptions = computed(() => [
 	{ label: `${__("Proposals")}${count(proposed.value)}`, value: "proposals" },
-	{ label: `${__("Without proposal")}${count(unmatched.value)}`, value: "unmatched" },
 	{ label: __("Already reconciled"), value: "reconciled" },
 ]);
 const hasProposals = computed(() => lines.value.some((pairing) => chosenFor(pairing)));
@@ -690,7 +689,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 					/>
 
 					<div
-						v-if="pairings.data && !pairings.loading && !proposed.length"
+						v-if="pairings.data && !pairings.loading && !proposed.length && !unmatched.length"
 						class="flex flex-col items-center gap-3 py-20 text-center"
 					>
 						<template v-if="isFiltered">
@@ -702,31 +701,13 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 								<span class="lucide-party-popper size-6" aria-hidden="true" />
 							</div>
 							<p class="text-lg-semibold text-ink-gray-9">
-								{{
-									unmatched.length
-										? __("Nothing left to review over this period")
-										: __("Everything is reconciled over this period")
-								}}
+								{{ __("Everything is reconciled over this period") }}
 							</p>
 							<p v-if="streak" class="flex items-center gap-1 text-sm text-ink-amber-7">
 								<span class="lucide-flame size-4" aria-hidden="true" />
 								{{ _n(streak, __("1 month up to date in a row"), __("{0} months up to date in a row", [streak])) }}
 							</p>
 						</template>
-						<p v-if="!isFiltered && unmatched.length" class="text-sm text-ink-gray-5">
-							{{
-								_n(
-									unmatched.length,
-									__("1 line still needs a document of your choice."),
-									__("{0} lines still need a document of your choice.", [unmatched.length]),
-								)
-							}}
-						</p>
-						<Button
-							v-if="!isFiltered && unmatched.length"
-							:label="__('See the lines without proposal')"
-							@click="tab = 'unmatched'"
-						/>
 					</div>
 
 					<template v-else>
@@ -795,15 +776,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 					<div v-if="pairings.loading" class="space-y-3" aria-hidden="true">
 						<Skeleton v-for="index in proposed.length ? 2 : 4" :key="index" class="h-20 w-full rounded-6" />
 					</div>
-				</template>
 
-				<template v-else-if="tab === 'unmatched'">
-					<RuleOffers
-						v-if="ruleOffers.length"
-						:offers="ruleOffers"
-						:bank-account="bankAccount"
-						@answered="refresh"
-					/>
 					<section v-for="group in unmatchedGroups" :key="group.key" class="mb-14">
 						<h2 class="text-2xl-semibold text-ink-gray-9">
 							{{ group.title() }}
@@ -858,9 +831,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 							</div>
 						</div>
 					</section>
-					<p v-if="pairings.data && !pairings.loading && !unmatched.length" class="py-16 text-center text-p-sm text-ink-gray-4">
-						{{ __("Every line has a proposal") }}
-					</p>
 				</template>
 
 				<ReconciledTab
