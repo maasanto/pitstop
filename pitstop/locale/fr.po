@@ -609,6 +609,9 @@ msgstr "Même compte que des paiements passés"
 msgid "You picked another party for similar lines"
 msgstr "Vous avez choisi un autre tiers pour des lignes semblables"
 
+msgid "Posted well after the payment"
+msgstr "Comptabilisé bien après le paiement"
+
 msgid "Dokos no longer offers a rule for {0}: reload the page"
 msgstr "Dokos ne propose plus de règle pour {0} : rechargez la page"
 
