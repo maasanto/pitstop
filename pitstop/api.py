@@ -24,7 +24,9 @@ PARTY_TYPES = ("Payable", "Receivable")
 MAX_LINES = 200
 # The page asks for its lines a page at a time, so the first ones show while the others are scored
 PAGE_LENGTH = 25
-SEARCH_LIMIT = 20
+# The picker lists every open document and filters them in the browser
+# ponytail: one payload of up to 500 rows, page it server-side if a company keeps more open
+SEARCH_LIMIT = 500
 # An operation the bank feed only announces is not booked yet: nothing to reconcile, nothing to count
 BOOKED_LINES = {"docstatus": 1, "status": ("!=", PENDING_STATUS)}
 
@@ -226,6 +228,19 @@ def get_progress(bank_account: str, months: int = 12) -> list[dict]:
 		if not flt(row.unallocated_amount):
 			month["reconciled"] += 1
 	return sorted(by_month.values(), key=lambda month: month["month"], reverse=True)
+
+
+@frappe.whitelist()
+def get_period_totals(bank_account: str, from_date: str, to_date: str) -> dict:
+	"""Money in and money out over the period, each with the amount already reconciled."""
+	lines = get_lines(bank_account, from_date, to_date, {})
+	totals = {direction: {"total": 0.0, "reconciled": 0.0, "lines": 0} for direction in ("in", "out")}
+	for line in lines:
+		direction = totals["in" if flt(line.credit) else "out"]
+		direction["total"] += flt(line.credit) or flt(line.debit)
+		direction["reconciled"] += flt(line.allocated_amount)
+		direction["lines"] += 1
+	return {**totals, "currency": lines[0].currency if lines else None}
 
 
 def roll_back_pairing(savepoint: str) -> None:

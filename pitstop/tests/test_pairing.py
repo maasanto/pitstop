@@ -16,6 +16,7 @@ from pitstop.api import (
 	create_rule,
 	decline_rule_offer,
 	get_pairings,
+	get_period_totals,
 	reconcile_pairings,
 	search,
 	set_refused_proposals,
@@ -218,6 +219,20 @@ class TestPairings(ERPNextTestSuite):
 		self.assertIsNone(results[0]["error"])
 		self.assertEqual(frappe.db.get_value("Bank Transaction", line.name, "unallocated_amount"), 0)
 		self.assertEqual(frappe.db.get_value("Sales Invoice", invoice.name, "outstanding_amount"), 0)
+
+	def test_period_totals_split_money_in_and_out_with_what_is_reconciled(self):
+		invoice = self.create_invoice(500)
+		paid = self.create_line(500, f"VIR SEPA RECU /DE JOHN DOE /MOTIF {invoice.name}")
+		self.create_line(120, "VIR SEPA RECU /DE UNKNOWN")
+		self.create_line(-80, "CB FICTIVE SHOP")
+		self.create_line(40, "VIR ANNONCE", status=PENDING_STATUS)
+		documents = [{"doctype": "Sales Invoice", "name": invoice.name}]
+		with self.set_user(ACCOUNTANT):
+			reconcile_pairings([{"bank_transaction": paid.name, "documents": documents}])
+			totals = get_period_totals(self.bank_account, str(PAYMENT_DATE), str(PAYMENT_DATE))
+
+		self.assertEqual(totals["in"], {"total": 620, "reconciled": 500, "lines": 2})
+		self.assertEqual(totals["out"], {"total": 80, "reconciled": 0, "lines": 1})
 
 	def test_undo_reopens_the_invoice_and_cancels_the_payment_it_created(self):
 		invoice = self.create_invoice(765.43)

@@ -1,6 +1,6 @@
 <script setup>
-import { Button, Dialog, LoadingText, TextInput, useCall } from "frappe-ui";
-import { computed, ref, toRef, watch } from "vue";
+import { Button, Dialog, LoadingText, Switch, TextInput, useCall } from "frappe-ui";
+import { computed, reactive, ref, toRef, watch } from "vue";
 import { descriptionText, formatMoney } from "../format";
 import { usePicking } from "../picking";
 import { __, _n } from "../translation";
@@ -35,10 +35,22 @@ watch(open, (isOpen) => {
 
 const showLeads = computed(() => !query.value.trim());
 const leadKeys = computed(() => new Set(props.leads.map((lead) => lead.key)));
-// Until something is typed, only the documents with some signal: the rest is every open document
+
+const exactAmountOnly = ref(false);
+const hiddenDoctypes = reactive(new Set());
+const doctypesFound = computed(() => [
+	...new Set((results.data || []).map((proposal) => proposal.documents[0].doctype)),
+]);
+
+function passesFilters(document) {
+	if (hiddenDoctypes.has(document.doctype)) return false;
+	return !exactAmountOnly.value || Math.abs(document.amount - Math.abs(props.line.amount)) < 0.005;
+}
+
 const otherDocuments = computed(() =>
 	(results.data || []).filter(
-		(proposal) => !showLeads.value || (proposal.score > 0 && !leadKeys.value.has(proposal.key)),
+		(proposal) =>
+			(!showLeads.value || !leadKeys.value.has(proposal.key)) && passesFilters(proposal.documents[0]),
 	),
 );
 
@@ -64,6 +76,17 @@ function choose(proposal) {
 		<p class="mt-2 text-p-sm text-ink-gray-5">
 			{{ __("Select one document, or several when this line pays them together.") }}
 		</p>
+		<div class="mt-3 flex flex-wrap items-center gap-x-6 gap-y-1">
+			<Switch v-model="exactAmountOnly" size="sm" :label="__('Show only exact amount')" />
+			<Switch
+				v-for="doctype in doctypesFound"
+				:key="doctype"
+				size="sm"
+				:label="__(doctype)"
+				:model-value="!hiddenDoctypes.has(doctype)"
+				@update:model-value="(isShown) => (isShown ? hiddenDoctypes.delete(doctype) : hiddenDoctypes.add(doctype))"
+			/>
+		</div>
 		<div v-if="line" class="mt-4 max-h-[55vh] space-y-5 overflow-y-auto">
 			<section v-if="showLeads">
 				<h3 class="mb-2 text-sm-medium text-ink-gray-6">{{ __("Leads from Dokos") }}</h3>
@@ -94,7 +117,7 @@ function choose(proposal) {
 				</h3>
 				<LoadingText v-if="results.loading && !results.data" />
 				<p v-else-if="results.data && !otherDocuments.length" class="py-6 text-center text-p-sm text-ink-gray-4">
-					{{ showLeads ? __("Type a number, a party or an amount to search every open document") : __("No open document matches") }}
+					{{ __("No open document matches") }}
 				</p>
 				<div class="space-y-2">
 					<ProposalOption
