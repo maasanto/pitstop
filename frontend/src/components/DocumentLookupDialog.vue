@@ -143,12 +143,12 @@ async function reconcileWith(match) {
 							/>
 						</div>
 					</div>
-					<span class="flex items-center gap-1.5 text-base-semibold tabular-nums text-ink-gray-9">
+					<span class="flex items-center gap-1 text-base-semibold tabular-nums text-ink-gray-9">
+						{{ formatMoney(match.line.amount, match.line.currency) }}
 						<MatchHint
 							:reasons="reasonsAbout(match.proposal, 'amount')"
 							:mismatch="__('Different amount')"
 						/>
-						{{ formatMoney(match.line.amount, match.line.currency) }}
 					</span>
 					<ConfidencePill :proposal="match.proposal" />
 					<Button

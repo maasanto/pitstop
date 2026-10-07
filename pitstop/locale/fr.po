@@ -636,6 +636,12 @@ msgstr "Vous avez choisi un autre tiers pour des lignes semblables"
 msgid "Posted well after the payment"
 msgstr "Comptabilisé bien après le paiement"
 
+msgid "Posted near the payment"
+msgstr "Comptabilisé près de la date du paiement"
+
+msgid "The date gives no hint"
+msgstr "La date n'apporte pas d'indice"
+
 msgid "Dokos no longer offers a rule for {0}: reload the page"
 msgstr "Dokos ne propose plus de règle pour {0} : rechargez la page"
 
