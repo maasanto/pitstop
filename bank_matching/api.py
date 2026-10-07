@@ -6,7 +6,14 @@ from erpnext.accounts.doctype.bank_transaction.bank_transaction import (
 from frappe import _
 from frappe.utils import add_months, cint, flt, get_first_day, getdate, nowdate
 
-from bank_matching.pairing import LINE_FIELDS, as_matchable, build_pairing, reconcile, search_documents
+from bank_matching.pairing import (
+	LINE_FIELDS,
+	PAYMENT_FILES,
+	as_matchable,
+	build_pairing,
+	reconcile,
+	search_documents,
+)
 from bank_matching.refusals import get_refused, set_refused
 from bank_matching.rules import ACCEPTED, REJECTED, answer_rule_offer, apply_rule, rule_offers
 from bank_matching.rules import create_rule as create_bank_rule
@@ -93,12 +100,15 @@ def reconcile_pairings(pairings: list[dict]) -> list[dict]:
 			# A later refusal must not undo this pairing; the reconciliation commits its payments alike
 			frappe.db.commit()  # nosemgrep
 		chosen = {(document["doctype"], document["name"]) for document in pairing.get("documents") or []}
-		created = linked_vouchers(name) - linked_before - chosen
+		is_file = any(doctype in PAYMENT_FILES for doctype, _name in chosen)
+		# A file's payments belong to the file: an undo may unlink them, never cancel them
+		created = set() if is_file else linked_vouchers(name) - linked_before - chosen
 		results.append(
 			{
 				"bank_transaction": name,
 				"error": None,
 				"created": [{"doctype": doctype, "name": voucher} for doctype, voucher in sorted(created)],
+				"undoable": not (is_file and cleared_file(name)),
 			}
 		)
 	return results
@@ -127,6 +137,9 @@ def undo_pairings(pairings: list[dict]) -> list[dict]:
 
 
 def undo_pairing(name: str, created: set) -> None:
+	file = cleared_file(name)
+	if file:
+		frappe.throw(_("Bank Transaction {0} cleared {1}, which this page cannot undo").format(name, file))
 	# Only vouchers still linked to this line: the request must not cancel any document it names
 	to_cancel = created & linked_vouchers(name)
 	unreconcile_transaction(name)
@@ -135,6 +148,21 @@ def undo_pairing(name: str, created: set) -> None:
 		if document.docstatus == 1:
 			document.check_permission("cancel")
 			document.cancel()
+
+
+def cleared_file(bank_transaction: str) -> str | None:
+	"""The Payment Order or direct debit file whose transit account the line cleared.
+
+	Unlinking would leave the file marked as executed and its clearing entry booked.
+	"""
+	entries = [voucher for doctype, voucher in linked_vouchers(bank_transaction) if doctype == "Journal Entry"]
+	if not entries:
+		return None
+	for doctype in PAYMENT_FILES:
+		file = frappe.db.get_value(doctype, {"clearing_journal_entry": ("in", entries)})
+		if file:
+			return file
+	return None
 
 
 def linked_vouchers(bank_transaction: str) -> set:
