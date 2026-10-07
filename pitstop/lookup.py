@@ -22,11 +22,10 @@ from pitstop.pairing import (
 	document_proposal,
 	reconcile,
 )
-from pitstop.ranking import LOOK_BACK_DAYS, SuggestionRanking
+from pitstop.ranking import LOOK_BACK_DAYS, AccountContext, SuggestionRanking
 
 DOCUMENT_TYPES = ("Sales Invoice", "Purchase Invoice", "Payment Entry")
-# ponytail: each scored line costs about 10 ms, so 60 lines keep the dialog under a second; a document
-# whose line sits beyond the 60 closest amounts is not found, score in a background job if that bites.
+# ponytail: a document whose line sits beyond the 60 closest amounts is not found; score more lines if that bites.
 MAX_SCORED_LINES = 60
 MAX_LINES = 10
 SEARCH_LIMIT = 5
@@ -43,9 +42,14 @@ def get_lines_for_document(doctype: str, name: str) -> dict:
 	document = get_open_document(doctype, name)
 	frappe.has_permission("Bank Transaction", "read", throw=True)
 	amount = open_amount(document)
+	lines = list(map(as_matchable, closest_lines(document, amount)))
+	contexts = {
+		bank_account: AccountContext([line for line in lines if line.bank_account == bank_account])
+		for bank_account in {line.bank_account for line in lines}
+	}
 	matches = []
-	for line in map(as_matchable, closest_lines(document, amount)):
-		candidate = score_document(line, document)
+	for line in lines:
+		candidate = score_document(line, document, contexts[line.bank_account])
 		if candidate and flt(candidate.get("match_score")) > 0:
 			matches.append((line, candidate))
 	# Stable sort: equal scores keep the closest amount first
@@ -167,9 +171,9 @@ def company_bank_accounts(company: str, account: str | None) -> list[str]:
 	return frappe.get_all("Bank Account", filters=filters, pluck="name")
 
 
-def score_document(line, document):
+def score_document(line, document, context: AccountContext):
 	"""The document as the scorer sees it from this line, or None when it is no candidate there."""
-	ranking = SuggestionRanking(BankTransactionMatch([line], None))
+	ranking = SuggestionRanking(BankTransactionMatch([line], None), context)
 	ranking.rank()
 	return next(
 		(
