@@ -14,15 +14,16 @@ from pitstop.pairing import (
 	reconcile,
 	search_documents,
 )
+from pitstop.ranking import AccountContext
 from pitstop.refusals import get_refused, set_refused
 from pitstop.rules import ACCEPTED, REJECTED, answer_rule_offer, apply_rule, rule_offers
 from pitstop.rules import create_rule as create_bank_rule
 
 PARTY_TYPES = ("Payable", "Receivable")
 
-# ponytail: every open line of the period is scored on each load, about 10 ms a line on a small site;
-# score per page or cache per line if large accounts feel it.
 MAX_LINES = 200
+# The page asks for its lines a page at a time, so the first ones show while the others are scored
+PAGE_LENGTH = 25
 SEARCH_LIMIT = 20
 # An operation the bank feed only announces is not booked yet: nothing to reconcile, nothing to count
 BOOKED_LINES = {"docstatus": 1, "status": ("!=", PENDING_STATUS)}
@@ -39,15 +40,19 @@ def get_bank_accounts() -> list[dict]:
 
 
 @frappe.whitelist()
-def get_pairings(bank_account: str, from_date: str, to_date: str) -> dict:
+def get_pairings(bank_account: str, from_date: str, to_date: str, start: int = 0) -> dict:
+	"""The pairings of a page of the period's open lines, latest first; the first page also brings the rule
+	offers, drawn from every line the page would show."""
 	lines = get_lines(bank_account, from_date, to_date, {"unallocated_amount": ("!=", 0)})
-	refused = get_refused([line.name for line in lines[:MAX_LINES]])
+	shown = lines[:MAX_LINES]
+	page = [as_matchable(line) for line in shown[cint(start) : cint(start) + PAGE_LENGTH]]
+	refused = get_refused([line.name for line in page])
+	context = AccountContext(page) if page else None
 	return {
-		"pairings": [
-			build_pairing(as_matchable(line), refused.get(line.name, [])) for line in lines[:MAX_LINES]
-		],
+		"pairings": [build_pairing(line, refused.get(line.name, []), context) for line in page],
+		"total": len(shown),
 		"truncated": len(lines) > MAX_LINES,
-		"rule_offers": rule_offers(bank_account, lines[:MAX_LINES]),
+		"rule_offers": rule_offers(bank_account, shown) if not cint(start) else None,
 	}
 
 

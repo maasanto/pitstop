@@ -17,7 +17,7 @@ from frappe import _
 from frappe.utils import flt, getdate
 
 from pitstop.match_scoring import PRESELECT_THRESHOLD, Receipt, settlement_batches
-from pitstop.ranking import EXTRA_NUMBER_FIELD, SuggestionRanking, proposal_key
+from pitstop.ranking import EXTRA_NUMBER_FIELD, AccountContext, SuggestionRanking, proposal_key
 from pitstop.rules import matching_rule, rule_proposal
 
 LEVELS = ("high", "medium", "low")
@@ -81,9 +81,9 @@ def as_matchable(line):
 	)
 
 
-def build_pairing(line, refused: list[str]) -> dict:
+def build_pairing(line, refused: list[str], context: AccountContext | None = None) -> dict:
 	"""Every way Dokos sees to reconcile the line, the one it would pick first among those not refused."""
-	ranking = SuggestionRanking(BankTransactionMatch([line], None))
+	ranking = SuggestionRanking(BankTransactionMatch([line], None), context)
 	suggestions = ranking.rank(set(refused))
 	proposals = file_proposals(line)
 	proposals += [document_proposal(suggestion) for suggestion in shortlist(suggestions)]
