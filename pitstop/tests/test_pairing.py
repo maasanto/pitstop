@@ -108,14 +108,14 @@ class TestPairings(ERPNextTestSuite):
 		invoice.submit()
 		return invoice
 
-	def create_receipt(self, amount, reference):
+	def create_receipt(self, amount, reference, customer=None):
 		payment = frappe.get_doc(
 			{
 				"doctype": "Payment Entry",
 				"payment_type": "Receive",
 				"company": COMPANY,
 				"party_type": "Customer",
-				"party": self.customer,
+				"party": customer or self.customer,
 				"posting_date": PAYMENT_DATE,
 				"paid_to": "_Test Bank - _TC",
 				"paid_amount": amount,
@@ -375,6 +375,18 @@ class TestPairings(ERPNextTestSuite):
 		)
 		self.assertEqual(settlements[0]["settlement"]["fee"], 12)
 		self.assertEqual(settlements[0]["level"], "low", "a fee-deducted batch is never confident")
+
+	def test_a_transfer_naming_its_payer_is_no_settlement_of_other_payers(self):
+		globex = self.get_customer("Globex Leasing", contact=("Jane", "Roe"))
+		for amount in (60.5, 60.5, 968, 968):
+			self.create_receipt(amount, f"GLX-{amount}", customer=globex)
+		acme_invoice = self.create_invoice(308.55)
+		line = self.create_line(2057, "VERSEMENT INSTANTANE DE ACME RENTALS")
+
+		proposals = self.pairing_of(line)["proposals"]
+
+		self.assertEqual([p for p in proposals if p.get("settlement")], [], "Globex's receipts only add up")
+		self.assertEqual(proposals[0]["documents"][0]["name"], acme_invoice.name)
 
 	def test_a_refused_pairing_leaves_the_others_reconciled(self):
 		invoice = self.create_invoice(321.09)
