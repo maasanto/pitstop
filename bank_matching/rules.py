@@ -6,6 +6,7 @@ created voucher is flagged as such and an undo cancels it.
 """
 
 import frappe
+from erpnext.accounts.cash_flow_forecast.recurring_patterns import ACCEPTED
 from erpnext.accounts.doctype.bank_reconciliation_tool.bank_reconciliation_tool import (
 	create_bulk_bank_entry_and_reconcile,
 	create_bulk_payment_entry_and_reconcile,
@@ -17,8 +18,13 @@ from frappe.utils.caching import request_cache
 
 @request_cache
 def company_rules(company: str) -> list:
+	# The forecast's weekly job proposes rules on a guessed account, and its declined ones keep their
+	# conditions: only rules a user wrote or accepted book lines
 	names = frappe.get_all(
-		"Bank Transaction Rule", filters={"company": company}, order_by="priority asc", pluck="name"
+		"Bank Transaction Rule",
+		filters={"company": company, "proposal_status": ("in", ["", ACCEPTED])},
+		order_by="priority asc",
+		pluck="name",
 	)
 	return [frappe.get_doc("Bank Transaction Rule", name) for name in names]
 
