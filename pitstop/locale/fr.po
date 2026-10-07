@@ -420,6 +420,12 @@ msgstr "{0} lignes remises à rapprocher"
 msgid "{0} of {1} lines reconciled"
 msgstr "{0} lignes rapprochées sur {1}"
 
+msgid "Reconciled over the period"
+msgstr "Rapproché sur la période"
+
+msgid "{0} reconciled · {1} left · {2} lines"
+msgstr "{0} rapprochés · {1} restants · {2} lignes"
+
 msgid "1 month up to date"
 msgstr "1 mois à jour"
 
