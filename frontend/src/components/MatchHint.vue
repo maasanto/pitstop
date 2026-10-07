@@ -12,9 +12,12 @@ const props = defineProps({
 const HINTS = {
 	exact: { icon: "lucide-check", color: "bg-surface-green-7 text-ink-green-1" },
 	approximate: { icon: "lucide-minus", color: "bg-surface-amber-7 text-ink-amber-1" },
+	// Evidence against the value, muted: it explains a demotion, it does not alarm
+	against: { icon: "lucide-arrow-down", color: "bg-surface-gray-3 text-ink-gray-6" },
 };
 const state = computed(() => {
 	if (!props.reasons.length) return props.missing && "missing";
+	if (props.reasons.every((reason) => reason.against)) return "against";
 	return props.reasons.some((reason) => reason.exact) ? "exact" : "approximate";
 });
 const description = computed(() =>

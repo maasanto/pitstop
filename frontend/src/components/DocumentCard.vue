@@ -60,6 +60,7 @@ const reasonsAbout = (...signals) =>
 		<div class="flex items-center gap-1.5">
 			<span class="truncate text-base-medium text-ink-gray-9">{{ title }}</span>
 			<MatchHint v-if="party" :reasons="reasonsAbout('name', 'history')" :missing="__('Name not in the label')" />
+			<MatchHint :reasons="reasonsAbout('corrected')" />
 			<span class="ml-auto shrink-0 pl-2 text-base tabular-nums text-ink-gray-7">
 				{{ formatMoney(document.amount, currency) }}
 			</span>
