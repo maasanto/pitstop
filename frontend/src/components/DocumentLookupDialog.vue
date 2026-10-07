@@ -50,12 +50,15 @@ function pick(row) {
 const reasonsAbout = (proposal, ...signals) =>
 	proposal.documents[0].reasons.filter((reason) => signals.includes(reason.signal));
 
+const reconcilingLine = ref(null);
 async function reconcileWith(match) {
+	reconcilingLine.value = match.line.name;
 	await reconcile.submit({
 		doctype: document.value.doctype,
 		name: document.value.name,
 		bank_transaction: match.line.name,
 	});
+	reconcilingLine.value = null;
 	if (reconcile.error) return;
 	toast.success(__("{0} reconciled with {1}", [document.value.name, match.line.description]));
 	open.value = false;
@@ -140,14 +143,19 @@ async function reconcileWith(match) {
 						</div>
 					</div>
 					<span class="flex items-center gap-1.5 text-base-semibold tabular-nums text-ink-gray-9">
-						{{ formatMoney(match.line.amount, match.line.currency) }}
 						<MatchHint
 							:reasons="reasonsAbout(match.proposal, 'amount')"
-							:missing="__('Different amount')"
+							:mismatch="__('Different amount')"
 						/>
+						{{ formatMoney(match.line.amount, match.line.currency) }}
 					</span>
 					<ConfidencePill :proposal="match.proposal" />
-					<Button :label="__('Reconcile')" :loading="reconcile.loading" @click="reconcileWith(match)" />
+					<Button
+						:label="__('Reconcile')"
+						:loading="reconcilingLine === match.line.name"
+						:disabled="reconcile.loading"
+						@click="reconcileWith(match)"
+					/>
 				</div>
 			</div>
 			<ErrorMessage v-if="reconcile.error" class="mt-3" :message="reconcile.error" />

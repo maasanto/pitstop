@@ -1,5 +1,5 @@
 <script setup>
-import { Button, Dropdown, Tooltip } from "frappe-ui";
+import { Button, Dropdown, KeyboardShortcut, Tooltip } from "frappe-ui";
 import { computed } from "vue";
 import { formatDate, formatMoney } from "../format";
 import { __ } from "../translation";
@@ -28,18 +28,24 @@ const actions = computed(() => [
 	{ label: __("Not this one"), icon: "lucide-thumbs-down", shortcut: "X", onClick: () => emit("refuse") },
 	{ label: __("Always book such lines…"), icon: "lucide-wand-sparkles", onClick: () => emit("create-rule") },
 ]);
+
+// Selecting the label or a number to copy it is not a decision about the line
+function toggleUnlessSelecting() {
+	if (window.getSelection()?.isCollapsed === false) return;
+	emit("toggle");
+}
 </script>
 
 <template>
 	<div
-		class="group grid cursor-pointer grid-cols-[1.5rem_minmax(0,0.85fr)_7rem_minmax(0,1.4fr)_6.5rem] items-start gap-x-6 rounded-6 border px-6 py-5 transition-colors"
+		class="group grid cursor-pointer grid-cols-[1.5rem_minmax(0,1fr)_auto] items-start gap-x-4 rounded-6 border px-4 py-4 transition-colors md:grid-cols-[1.5rem_minmax(0,1fr)_7rem] md:gap-x-5 md:px-5 xl:grid-cols-[1.5rem_minmax(0,0.85fr)_7rem_minmax(0,1.4fr)_6.5rem]"
 		:class="[
 			approved
 				? 'border-outline-green-3 bg-surface-green-1'
 				: 'border-outline-gray-1 bg-surface-base hover:border-outline-gray-3',
 			focused && 'ring-2 ring-outline-gray-4 ring-offset-1',
 		]"
-		@click="$emit('toggle')"
+		@click="toggleUnlessSelecting"
 	>
 		<button
 			role="checkbox"
@@ -79,7 +85,9 @@ const actions = computed(() => [
 			{{ formatMoney(line.amount, line.currency) }}
 		</div>
 
-		<div class="min-w-0 border-l border-outline-gray-1 pl-6">
+		<div
+			class="col-span-2 col-start-2 mt-3 min-w-0 border-t border-outline-gray-1 pt-3 md:col-span-1 md:col-start-2 xl:col-start-auto xl:mt-0 xl:border-l xl:border-t-0 xl:pl-5 xl:pt-0"
+		>
 			<div v-if="chosen.rule" class="min-w-0">
 				<div class="flex items-center gap-1.5">
 					<span class="lucide-wand-sparkles size-4 shrink-0 text-ink-blue-6" aria-hidden="true" />
@@ -103,10 +111,12 @@ const actions = computed(() => [
 						__("{0} payments settled at once", [chosen.documents.length])
 					}}</span>
 					<MatchHint :reasons="settlementReasons('batch')" />
-					<span class="ml-auto shrink-0 pl-2 text-base tabular-nums text-ink-gray-7">
-						{{ formatMoney(chosen.settlement.total, line.currency) }}
+					<span class="ml-auto flex shrink-0 items-center gap-1.5 pl-2">
+						<MatchHint :reasons="settlementReasons('amount')" />
+						<span class="text-base tabular-nums text-ink-gray-7">
+							{{ formatMoney(chosen.settlement.total, line.currency) }}
+						</span>
 					</span>
-					<MatchHint :reasons="settlementReasons('amount')" />
 				</div>
 				<div class="mt-2 divide-y divide-outline-gray-1">
 					<DocumentCard
@@ -166,7 +176,10 @@ const actions = computed(() => [
 		</div>
 
 		<!-- The section already names the confidence, and a rule shows its wand: only a pick of yours is flagged -->
-		<div class="flex items-center justify-end gap-1" @click.stop>
+		<div
+			class="col-span-2 col-start-2 mt-2 flex items-center justify-end gap-1 md:col-span-1 md:col-start-3 md:mt-5 xl:col-start-auto xl:mt-0"
+			@click.stop
+		>
 			<Tooltip v-if="chosen.manual" :text="__('Chosen by you')">
 				<span class="lucide-user-check size-4 shrink-0 text-ink-blue-6" role="img" :aria-label="__('Chosen by you')" />
 			</Tooltip>
@@ -194,7 +207,7 @@ const actions = computed(() => [
 						<Button variant="ghost" icon="lucide-ellipsis" :active="open" :label="__('More actions')" />
 					</template>
 					<template #item-suffix="{ item }">
-						<kbd v-if="item.shortcut" class="font-sans text-xs text-ink-gray-5">{{ item.shortcut }}</kbd>
+						<KeyboardShortcut v-if="item.shortcut" :combo="item.shortcut" />
 					</template>
 				</Dropdown>
 			</div>

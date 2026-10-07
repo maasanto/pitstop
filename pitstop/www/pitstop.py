@@ -17,5 +17,6 @@ def get_context():
 			"user": frappe.session.user,
 			"default_currency": frappe.db.get_default("currency"),
 			"date_format": frappe.db.get_default("date_format"),
+			"desk_theme": frappe.db.get_value("User", frappe.session.user, "desk_theme"),
 		}
 	)

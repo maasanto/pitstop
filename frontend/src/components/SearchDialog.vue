@@ -54,7 +54,6 @@ function isPickable(proposal) {
 	return !pickedDoctype.value || proposal.documents[0]?.doctype === pickedDoctype.value;
 }
 
-// Set rather than toggled: frappe-ui's Checkbox emits each change twice
 function setPick(proposal, isPicked) {
 	isPicked ? picked.set(proposal.key, proposal) : picked.delete(proposal.key);
 }
@@ -89,6 +88,9 @@ function choosePicked() {
 		<TextInput v-model="query" :debounce="300" :placeholder="__('Number, party or amount')" autofocus>
 			<template #prefix><span class="lucide-search size-4" aria-hidden="true" /></template>
 		</TextInput>
+		<p class="mt-2 text-p-sm text-ink-gray-5">
+			{{ __("Select one document, or several when this line pays them together.") }}
+		</p>
 		<div v-if="line" class="mt-4 max-h-[55vh] space-y-5 overflow-y-auto">
 			<section v-if="showLeads">
 				<h3 class="mb-2 text-sm-medium text-ink-gray-6">{{ __("Leads from Dokos") }}</h3>
