@@ -11,7 +11,6 @@ import {
 	Skeleton,
 	TabButtons,
 	TextInput,
-	Tooltip,
 	call,
 	dayjs,
 	toast,
@@ -374,7 +373,17 @@ const monthlyProgress = useCall({
 	params: () => ({ bank_account: bankAccount.value }),
 });
 watch(bankAccount, (account) => account && monthlyProgress.reload());
-const thisMonth = computed(() => monthlyProgress.data?.[0]);
+const periodTotals = useCall({
+	url: "/api/v2/method/pitstop.api.get_period_totals",
+	immediate: false,
+	params: () => ({ bank_account: bankAccount.value, from_date: period.value[0], to_date: period.value[1] }),
+});
+watch([bankAccount, period], () => bankAccount.value && period.value.length === 2 && periodTotals.reload());
+const DIRECTIONS = [
+	{ key: "in", label: () => __("Money in"), icon: "lucide-arrow-down-left", tint: "text-ink-green-6" },
+	{ key: "out", label: () => __("Money out"), icon: "lucide-arrow-up-right", tint: "text-ink-red-5" },
+];
+const reconciledShare = (direction) => (direction.total ? direction.reconciled / direction.total : 1);
 const isComplete = (month) => month.lines && month.reconciled === month.lines;
 // Consecutive past months fully reconciled; the current one counts once it is complete too
 const streak = computed(() => {
@@ -383,12 +392,11 @@ const streak = computed(() => {
 	const firstGap = past.findIndex((month) => !isComplete(month));
 	return firstGap === -1 ? past.length : firstGap;
 });
-const monthLabel = (month) =>
-	new Intl.DateTimeFormat(window.lang || "en", { month: "long" }).format(new Date(`${month}-01`));
 
 function refresh() {
 	loadPairings();
 	monthlyProgress.reload();
+	periodTotals.reload();
 }
 
 // A section whose pairings are all pre-approved folds into one line, unless the user reopens it
@@ -542,34 +550,61 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 					<BankAccountPicker v-model="bankAccount" :accounts="accounts.data || []" />
 					<PeriodPicker v-model="period" :company="company" />
 					<div class="ml-auto flex items-center gap-1">
-						<Tooltip
-							v-if="thisMonth?.lines"
-							:text="__('{0} of {1} lines reconciled', [thisMonth.reconciled, thisMonth.lines])"
-						>
-							<div class="mr-3 flex items-center gap-2 text-sm text-ink-gray-6">
-								<svg viewBox="0 0 20 20" class="size-5 -rotate-90" aria-hidden="true">
-									<circle cx="10" cy="10" r="8" fill="none" stroke-width="3" class="stroke-outline-gray-2" />
-									<circle
-										cx="10"
-										cy="10"
-										r="8"
-										fill="none"
-										stroke-width="3"
-										stroke-linecap="round"
-										class="stroke-ink-green-6 transition-all"
-										:stroke-dasharray="`${(50.27 * thisMonth.reconciled) / thisMonth.lines} 50.27`"
-									/>
-								</svg>
-								<span class="tabular-nums">
-									{{ monthLabel(thisMonth.month) }} ·
-									{{ formatPercent(thisMonth.reconciled / thisMonth.lines) }}
-								</span>
-								<span v-if="streak" class="flex items-center gap-0.5 text-ink-amber-7">
-									<span class="lucide-flame size-3.5" aria-hidden="true" />
-									{{ _n(streak, __("1 month up to date"), __("{0} months up to date", [streak])) }}
-								</span>
+						<span v-if="streak" class="mr-2 flex items-center gap-0.5 text-sm text-ink-amber-7">
+							<span class="lucide-flame size-3.5" aria-hidden="true" />
+							{{ _n(streak, __("1 month up to date"), __("{0} months up to date", [streak])) }}
+						</span>
+						<Popover v-if="periodTotals.data" align="end">
+							<template #trigger>
+								<button
+									type="button"
+									class="mr-2 flex items-center gap-4 rounded px-2 py-1 text-sm text-ink-gray-6 hover:bg-surface-gray-2"
+								>
+									<span v-for="direction in DIRECTIONS" :key="direction.key" class="flex items-center gap-1.5">
+										<span :class="[direction.icon, direction.tint, 'size-3.5']" aria-hidden="true" />
+										{{ direction.label() }}
+										<span class="tabular-nums text-ink-gray-8">
+											{{ formatMoney(periodTotals.data[direction.key].total, periodTotals.data.currency) }}
+										</span>
+										<span class="tabular-nums">
+											· {{ formatPercent(reconciledShare(periodTotals.data[direction.key])) }}
+										</span>
+									</span>
+								</button>
+							</template>
+							<div class="w-80 space-y-3 p-3">
+								<p class="text-sm-medium text-ink-gray-9">{{ __("Reconciled over the period") }}</p>
+								<div v-for="direction in DIRECTIONS" :key="direction.key" class="space-y-1.5">
+									<div class="flex items-center justify-between text-sm text-ink-gray-7">
+										<span class="flex items-center gap-1.5">
+											<span :class="[direction.icon, direction.tint, 'size-3.5']" aria-hidden="true" />
+											{{ direction.label() }}
+										</span>
+										<span class="tabular-nums text-ink-gray-9">
+											{{ formatMoney(periodTotals.data[direction.key].total, periodTotals.data.currency) }}
+										</span>
+									</div>
+									<div class="h-1.5 overflow-hidden rounded-full bg-surface-gray-3">
+										<div
+											class="h-full rounded-full bg-surface-green-6"
+											:style="{ width: `${100 * reconciledShare(periodTotals.data[direction.key])}%` }"
+										/>
+									</div>
+									<p class="text-xs text-ink-gray-6 tabular-nums">
+										{{
+											__("{0} reconciled · {1} left · {2} lines", [
+												formatMoney(periodTotals.data[direction.key].reconciled, periodTotals.data.currency),
+												formatMoney(
+													periodTotals.data[direction.key].total - periodTotals.data[direction.key].reconciled,
+													periodTotals.data.currency,
+												),
+												periodTotals.data[direction.key].lines,
+											])
+										}}
+									</p>
+								</div>
 							</div>
-						</Tooltip>
+						</Popover>
 						<Popover align="end">
 							<template #trigger>
 								<Button
