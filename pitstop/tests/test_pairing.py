@@ -3,6 +3,7 @@ from datetime import date
 import frappe
 from erpnext.accounts.doctype.bank_reconciliation_tool.bank_reconciliation_tool import (
 	create_bulk_bank_entry_and_reconcile,
+	create_bulk_payment_entry_and_reconcile,
 )
 from erpnext.accounts.doctype.bank_transaction.bank_transaction import PENDING_STATUS
 from erpnext.tests.utils import ERPNextTestSuite
@@ -175,8 +176,12 @@ class TestPairings(ERPNextTestSuite):
 	def pairing_of(self, line):
 		return next(pairing for pairing in self.get_pairings()["pairings"] if pairing["line"]["name"] == line.name)
 
+	def rule_proposal_of(self, line):
+		return next((p for p in self.pairing_of(line)["proposals"] if p.get("rule")), None)
+
 	def rule_of(self, line):
-		return next((p["rule"]["name"] for p in self.pairing_of(line)["proposals"] if p.get("rule")), None)
+		proposal = self.rule_proposal_of(line)
+		return proposal and proposal["rule"]["name"]
 
 	def by_document(self, line, field):
 		"""Each single-document proposal of the line: document name -> the proposal's field."""
@@ -404,6 +409,38 @@ class TestPairings(ERPNextTestSuite):
 
 		self.assertEqual(self.rule_of(line), rule)
 		self.assertEqual(self.get_pairings()["rule_offers"], [], "an accepted offer is not made again")
+
+	def test_a_label_always_paid_by_one_party_is_offered_as_a_payment_rule_that_yields_to_its_invoices(self):
+		label = "VIR SEPA RECU /DE HOLDING FICTIVE /MOTIF ABONNEMENT {}"
+		for month in ("JUILLET", "AOUT"):
+			line = self.create_line(845.5, label.format(month))
+			with self.set_user(ACCOUNTANT):
+				create_bulk_payment_entry_and_reconcile([line.name], "Customer", self.customer, "Debtors - _TC")
+		line = self.create_line(845.5, label.format("SEPTEMBRE"))
+
+		[offer] = self.get_pairings()["rule_offers"]
+		self.assertEqual(
+			(offer["classify_as"], offer["party"], offer["account"]),
+			("Payment Entry", self.customer, "Debtors - _TC"),
+		)
+		with self.set_user(ACCOUNTANT):
+			rule = accept_rule_offer(self.bank_account, offer["key"], offer["transaction_type"])
+		self.assertEqual(self.rule_proposal_of(line)["level"], "high")
+
+		self.create_invoice(900)
+		proposal = self.rule_proposal_of(line)
+		self.assertEqual((proposal["rule"]["name"], proposal["level"]), (rule, "low"), "its party's invoice comes first")
+
+	def test_a_label_that_paid_invoices_gets_no_payment_rule(self):
+		label = "VIR SEPA RECU /DE HOLDING FICTIVE /MOTIF ABONNEMENT {}"
+		for month in ("JUILLET", "AOUT"):
+			documents = [{"doctype": "Sales Invoice", "name": self.create_invoice(845.5).name}]
+			line = self.create_line(845.5, label.format(month))
+			with self.set_user(ACCOUNTANT):
+				reconcile_pairings([{"bank_transaction": line.name, "documents": documents}])
+		self.create_line(845.5, label.format("SEPTEMBRE"))
+
+		self.assertEqual(self.get_pairings()["rule_offers"], [], "the scorer finds its next invoice without a rule")
 
 	def test_a_declined_rule_offer_books_nothing_and_never_comes_back(self):
 		line = self.book_water_bills(self.expense_accounts()[0])
