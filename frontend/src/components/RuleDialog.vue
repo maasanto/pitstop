@@ -1,7 +1,7 @@
 <script setup>
 import { Button, Dialog, ErrorMessage, FormControl, toast, useCall } from "frappe-ui";
 import { computed, ref, watch } from "vue";
-import { formatMoney } from "../format";
+import { descriptionText, formatMoney } from "../format";
 import { __ } from "../translation";
 
 const props = defineProps({ line: { type: Object, default: null } });
@@ -57,7 +57,7 @@ async function submit() {
 <template>
 	<Dialog v-model:open="open" size="xl" :title="__('Always book such lines')">
 		<p v-if="line" class="mb-4 text-p-sm text-ink-gray-6">
-			{{ line.description }} · {{ formatMoney(line.amount, line.currency) }}
+			{{ descriptionText(line.description) }} · {{ formatMoney(line.amount, line.currency) }}
 		</p>
 		<div class="space-y-4">
 			<FormControl v-model="contains" :label="__('When the label contains')" />
