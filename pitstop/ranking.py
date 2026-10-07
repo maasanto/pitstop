@@ -45,12 +45,146 @@ EXTRA_NUMBER_FIELD = {
 }
 
 
+class AccountContext:
+	"""What scoring reads about a bank account, the same for each of its lines: loaded once for a batch of lines.
+
+	The account's labels and history cover a year before the batch's oldest line, so a newer line of the batch
+	sees a few more months of them than it would scored alone.
+	"""
+
+	def __init__(self, bank_transactions):
+		self.matcher = BankTransactionMatch(bank_transactions[:1], None)
+		dates = [getdate(t.get("date")) for t in bank_transactions if t.get("date")]
+		self.since = add_days(min(dates, default=getdate()), -LOOK_BACK_DAYS)
+		self.candidates = self.get_candidates()
+		self.account_lines = self.get_account_lines()
+		self.contacts = get_contacts()
+		self.vocabulary = Vocabulary(
+			[line.label for line in self.account_lines], get_party_names(self.contacts)
+		)
+		self.references = self.get_references()
+		self.history, self.corrections = self.get_history()
+
+	def get_candidates(self):
+		"""Open documents of every type, with the amount they move into the bank or out of it."""
+		candidates = []
+		for document_type in DOCUMENT_TYPES:
+			if not frappe.db.exists("DocType", document_type) or not frappe.has_permission(
+				document_type, "read"
+			):
+				continue
+			matcher = BankTransactionMatch(self.matcher.bank_transactions, document_type, match=False)
+			for row in matcher.get_linked_documents():
+				candidate = frappe._dict(row, doctype=document_type, **describe_document(document_type, row))
+				if candidate.signed_amount:
+					candidates.append(candidate)
+		journal_entries = [c for c in candidates if c.doctype == "Journal Entry"]
+		set_journal_entry_parties(journal_entries)
+		add_cheque_numbers(journal_entries)
+		return candidates
+
+	def get_account_lines(self):
+		"""The bank account's lines over the look-back period, labels normalized for comparison."""
+		lines = frappe.get_all(
+			"Bank Transaction",
+			filters={
+				"bank_account": self.matcher.bank_account,
+				"docstatus": 1,
+				"date": (">=", self.since),
+			},
+			fields=[
+				"name",
+				"description",
+				"reference_number",
+				"bank_party_name",
+				"bank_party_iban",
+				"bank_party_account_number",
+				"allocated_amount",
+			],
+		)
+		for line in lines:
+			line.label = " ".join(
+				filter(None, (line.description, line.reference_number, line.bank_party_name))
+			)
+			line.compact_label = normalize(line.label).replace(" ", "")
+			line.account = counterparty_account(line.bank_party_iban, line.bank_party_account_number)
+		return lines
+
+	def get_references(self):
+		"""Document numbers to look for in the label: the candidates', and recent closed invoices'.
+
+		An invoice already settled by an open payment is found through that payment.
+		"""
+		candidates = self.candidates
+		compact_labels = [line.compact_label for line in self.account_lines]
+		references = [
+			Reference.parse(candidate.name, number)
+			for candidate in candidates
+			for number in candidate.numbers
+			if number and (number == candidate.name or is_identifier(number, compact_labels))
+		]
+		open_names = {candidate.name for candidate in candidates}
+		held_by_payment = {
+			row.reference_name: row.parent
+			for row in frappe.get_all(
+				"Payment Entry Reference",
+				filters={
+					"parent": ("in", [c.name for c in candidates if c.doctype == "Payment Entry"] or [""])
+				},
+				fields=["parent", "reference_name"],
+			)
+			if row.reference_name not in open_names
+		}
+		for doctype in ("Sales Invoice", "Purchase Invoice"):
+			number_field = EXTRA_NUMBER_FIELD[doctype]
+			for invoice in frappe.get_all(
+				doctype,
+				filters={"docstatus": 1, "company": self.matcher.company, "posting_date": (">=", self.since)},
+				fields=["name", number_field],
+			):
+				key = held_by_payment.get(invoice.name, invoice.name)
+				references.append(Reference.parse(key, invoice.name))
+				number = invoice.get(number_field)
+				if number and is_identifier(number, compact_labels):
+					references.append(Reference.parse(key, number))
+		return references
+
+	def get_history(self):
+		"""The account's lines already reconciled, twice, by line: with the parties they went to, and with the
+		parties the user refused on them before choosing another."""
+		reconciled = {line.name: line for line in self.account_lines if line.allocated_amount}
+		links = frappe.get_all(
+			"Bank Transaction Payments",
+			filters={"parenttype": "Bank Transaction", "parent": ("in", list(reconciled) or [""])},
+			fields=["parent", "payment_document", "payment_entry"],
+		)
+		party_of = get_document_parties(links)
+		parties_by_line = {}
+		for link in links:
+			party_type, party = party_of.get((link.payment_document, link.payment_entry), (None, None))
+			if party:
+				parties_by_line.setdefault(link.parent, set()).add((party_type, party))
+
+		def past_lines(parties_by):
+			return {
+				name: PastLine(
+					frozenset(self.vocabulary.label_words(reconciled[name].label)),
+					reconciled[name].account,
+					frozenset(parties),
+				)
+				for name, parties in parties_by.items()
+			}
+
+		return past_lines(parties_by_line), past_lines(get_corrections(parties_by_line))
+
+
 class SuggestionRanking:
 	"""Score every open document of every type against the selected bank lines, best first."""
 
-	def __init__(self, bank_transaction_match):
+	def __init__(self, bank_transaction_match, context: AccountContext | None = None):
 		self.matcher = bank_transaction_match
 		transactions = bank_transaction_match.bank_transactions
+		self.context = context or AccountContext(transactions)
 		self.amount = flt(bank_transaction_match.amount, 2)
 		self.label = " ".join(
 			filter(
@@ -68,24 +202,25 @@ class SuggestionRanking:
 		)
 		self.dates = [getdate(t.get("date")) for t in transactions if t.get("date")]
 		self.selected = {t.get("name") for t in transactions}
-		self.since = add_days(min(self.dates, default=getdate()), -LOOK_BACK_DAYS)
 
 	def rank(self, refused=()):
 		"""Suggestions best first; `refused` proposal keys stay listed but never preselected."""
-		# Kept for callers that also look for settlements among documents too weak to suggest alone
-		self.candidates = candidates = self.get_candidates()
+		context = self.context
+		# Copies: scoring writes onto them, and the context serves every line of the batch.
+		# Kept for callers that also look for settlements among documents too weak to suggest alone.
+		self.candidates = candidates = [
+			frappe._dict(candidate)
+			for candidate in context.candidates
+			if (candidate.signed_amount > 0) == (self.amount > 0)
+		]
 		if not candidates:
 			return []
 
-		account_lines = self.get_account_lines()
-		contacts = get_contacts()
-		other_labels = [line.label for line in account_lines if line.name not in self.selected]
-		vocabulary = Vocabulary(other_labels, get_party_names(contacts))
+		contacts, vocabulary = context.contacts, context.vocabulary
 		label_words = vocabulary.label_words(self.label)
-		evidence = reference_evidence(
-			self.label, self.get_references(candidates, account_lines), self.amount, self.dates
-		)
-		history, corrections = self.get_history(account_lines, vocabulary)
+		evidence = reference_evidence(self.label, context.references, self.amount, self.dates)
+		history = self.others(context.history)
+		corrections = self.others(context.corrections)
 		ignored_accounts = shared_accounts(history)
 		learned = frappe._dict(
 			payers=similar_line_parties(label_words, self.account, history, ignored_accounts),
@@ -139,120 +274,9 @@ class SuggestionRanking:
 			return LOOK_BACK_DAYS
 		return abs((getdate(candidate.posting_date) - self.dates[0]).days)
 
-	def get_candidates(self):
-		"""Open documents of every type moving money in the same direction as the bank lines."""
-		candidates = []
-		for document_type in DOCUMENT_TYPES:
-			if not frappe.db.exists("DocType", document_type) or not frappe.has_permission(
-				document_type, "read"
-			):
-				continue
-			matcher = BankTransactionMatch(self.matcher.bank_transactions, document_type, match=False)
-			for row in matcher.get_linked_documents():
-				candidate = frappe._dict(row, doctype=document_type, **describe_document(document_type, row))
-				if candidate.signed_amount and (candidate.signed_amount > 0) == (self.amount > 0):
-					candidates.append(candidate)
-		journal_entries = [c for c in candidates if c.doctype == "Journal Entry"]
-		set_journal_entry_parties(journal_entries)
-		add_cheque_numbers(journal_entries)
-		return candidates
-
-	def get_account_lines(self):
-		"""The bank account's lines over the look-back period, labels normalized for comparison."""
-		lines = frappe.get_all(
-			"Bank Transaction",
-			filters={
-				"bank_account": self.matcher.bank_account,
-				"docstatus": 1,
-				"date": (">=", self.since),
-			},
-			fields=[
-				"name",
-				"description",
-				"reference_number",
-				"bank_party_name",
-				"bank_party_iban",
-				"bank_party_account_number",
-				"allocated_amount",
-			],
-		)
-		for line in lines:
-			line.label = " ".join(
-				filter(None, (line.description, line.reference_number, line.bank_party_name))
-			)
-			line.compact_label = normalize(line.label).replace(" ", "")
-			line.account = counterparty_account(line.bank_party_iban, line.bank_party_account_number)
-		return lines
-
-	def get_references(self, candidates, account_lines):
-		"""Document numbers to look for in the label: the candidates', and recent closed invoices'.
-
-		An invoice already settled by an open payment is found through that payment.
-		"""
-		compact_labels = [line.compact_label for line in account_lines]
-		references = [
-			Reference.parse(candidate.name, number)
-			for candidate in candidates
-			for number in candidate.numbers
-			if number and (number == candidate.name or is_identifier(number, compact_labels))
-		]
-		open_names = {candidate.name for candidate in candidates}
-		held_by_payment = {
-			row.reference_name: row.parent
-			for row in frappe.get_all(
-				"Payment Entry Reference",
-				filters={
-					"parent": ("in", [c.name for c in candidates if c.doctype == "Payment Entry"] or [""])
-				},
-				fields=["parent", "reference_name"],
-			)
-			if row.reference_name not in open_names
-		}
-		for doctype in ("Sales Invoice", "Purchase Invoice"):
-			number_field = EXTRA_NUMBER_FIELD[doctype]
-			for invoice in frappe.get_all(
-				doctype,
-				filters={"docstatus": 1, "company": self.matcher.company, "posting_date": (">=", self.since)},
-				fields=["name", number_field],
-			):
-				key = held_by_payment.get(invoice.name, invoice.name)
-				references.append(Reference.parse(key, invoice.name))
-				number = invoice.get(number_field)
-				if number and is_identifier(number, compact_labels):
-					references.append(Reference.parse(key, number))
-		return references
-
-	def get_history(self, account_lines, vocabulary):
-		"""The account's lines already reconciled, twice: with the parties they went to, and with the
-		parties the user refused on them before choosing another."""
-		reconciled = {
-			line.name: line
-			for line in account_lines
-			if line.allocated_amount and line.name not in self.selected
-		}
-		links = frappe.get_all(
-			"Bank Transaction Payments",
-			filters={"parenttype": "Bank Transaction", "parent": ("in", list(reconciled) or [""])},
-			fields=["parent", "payment_document", "payment_entry"],
-		)
-		party_of = get_document_parties(links)
-		parties_by_line = {}
-		for link in links:
-			party_type, party = party_of.get((link.payment_document, link.payment_entry), (None, None))
-			if party:
-				parties_by_line.setdefault(link.parent, set()).add((party_type, party))
-
-		def past_lines(parties_by):
-			return [
-				PastLine(
-					frozenset(vocabulary.label_words(reconciled[name].label)),
-					reconciled[name].account,
-					frozenset(parties),
-				)
-				for name, parties in parties_by.items()
-			]
-
-		return past_lines(parties_by_line), past_lines(get_corrections(parties_by_line))
+	def others(self, past_lines: dict) -> list:
+		"""The past lines but the ones being scored: a line teaches nothing about itself."""
+		return [past for name, past in past_lines.items() if name not in self.selected]
 
 
 def get_corrections(parties_by_line):
