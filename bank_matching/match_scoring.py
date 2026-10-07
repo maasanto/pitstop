@@ -108,10 +108,14 @@ def confidence(
 		* (1 - NAME_WEIGHT * name)
 		* (1 - HISTORY_WEIGHT * history)
 	)
-	# A label quoting the document's number outweighs any past correction
-	if reference >= YEAR_AND_COUNTER:
-		return score
-	return score * (1 - CORRECTION_DAMPING * corrected)
+	if is_damped(reference, corrected):
+		return score * (1 - CORRECTION_DAMPING * corrected)
+	return score
+
+
+def is_damped(reference: float, corrected: float) -> bool:
+	"""A label quoting the document's number outweighs any past correction."""
+	return bool(corrected) and reference < YEAR_AND_COUNTER
 
 
 def amount_grade(paid: float, outstanding: float, grand_total: float) -> float:
@@ -404,6 +408,13 @@ def shared_accounts(past_lines: list[PastLine]) -> set[str]:
 		for account, parties in parties_by_account.items()
 		if len(parties) > MAX_PARTIES_SHARING_AN_ACCOUNT
 	}
+
+
+def account_parties(account: str, past_lines: list[PastLine], ignored_accounts: set[str]) -> set:
+	"""Parties that past lines from this very counterparty account went to."""
+	if not account or account in ignored_accounts:
+		return set()
+	return {party for past in past_lines if past.account == account for party in past.parties}
 
 
 def similar_line_parties(

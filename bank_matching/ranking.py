@@ -22,9 +22,11 @@ from bank_matching.match_scoring import (
 	PastLine,
 	Reference,
 	Vocabulary,
+	account_parties,
 	amount_grade,
 	confidence,
 	counterparty_account,
+	is_damped,
 	is_identifier,
 	name_grade,
 	normalize,
@@ -85,10 +87,13 @@ class SuggestionRanking:
 		)
 		history, corrections = self.get_history(account_lines, vocabulary)
 		ignored_accounts = shared_accounts(history)
-		payers = similar_line_parties(label_words, self.account, history, ignored_accounts)
-		corrected = similar_line_parties(label_words, self.account, corrections, ignored_accounts)
+		learned = frappe._dict(
+			payers=similar_line_parties(label_words, self.account, history, ignored_accounts),
+			corrected=similar_line_parties(label_words, self.account, corrections, ignored_accounts),
+			account_payers=account_parties(self.account, history, ignored_accounts),
+		)
 		for candidate in candidates:
-			self.score(candidate, evidence, label_words, vocabulary, payers, corrected, contacts)
+			self.score(candidate, evidence, label_words, vocabulary, learned, contacts)
 
 		suggestions = sorted(
 			(c for c in candidates if c.match_score >= SHOW_THRESHOLD),
@@ -97,7 +102,7 @@ class SuggestionRanking:
 		self.preselect([s for s in suggestions if proposal_key(s) not in refused])
 		return suggestions
 
-	def score(self, candidate, evidence, label_words, vocabulary, payers, corrected, contacts):
+	def score(self, candidate, evidence, label_words, vocabulary, learned, contacts):
 		party = (candidate.party_type, candidate.party)
 		signals = frappe._dict(
 			reference=evidence.get(candidate.name, 0),
@@ -111,13 +116,15 @@ class SuggestionRanking:
 				contacts.get(party, []),
 				vocabulary,
 			),
-			history=payers.get(party, 0),
-			corrected=corrected.get(party, 0),
+			history=learned.payers.get(party, 0),
+			corrected=learned.corrected.get(party, 0),
 		)
 		if signals.reference < WEAK_REFERENCE and not (signals.amount or signals.name or signals.history):
 			signals.reference = 0
 		candidate.match_score = flt(confidence(**signals), 3)
-		candidate.match_reasons = describe_signals(signals)
+		candidate.match_reasons = describe_signals(
+			frappe._dict(signals, same_account=party in learned.account_payers)
+		)
 
 	def preselect(self, suggestions):
 		if not suggestions or suggestions[0].match_score < PRESELECT_THRESHOLD:
@@ -428,6 +435,22 @@ def describe_signals(signals):
 		)
 	if signals.history:
 		reasons.append(
-			{"signal": "history", "exact": True, "description": _("Recognized from past payments")}
+			{
+				"signal": "history",
+				"exact": True,
+				"description": _("Same account as past payments")
+				if signals.same_account
+				else _("Recognized from past payments"),
+			}
+		)
+	if is_damped(signals.reference, signals.corrected):
+		# Evidence against the party: shown so that a demoted lead does not look arbitrary
+		reasons.append(
+			{
+				"signal": "corrected",
+				"exact": False,
+				"against": True,
+				"description": _("You picked another party for similar lines"),
+			}
 		)
 	return reasons
