@@ -37,6 +37,11 @@ from pitstop.match_scoring import (
 
 DOCUMENT_TYPES = ("Payment Entry", "Journal Entry", "Sales Invoice", "Purchase Invoice", "Expense Claim")
 LOOK_BACK_DAYS = 365
+# An amount alone matches too many documents: it needs another signal, or a document dated near the line.
+# Most invoices reconciled on production sites were paid within this window of their posting date.
+AMOUNT_ALONE_DAYS_BEFORE = 30
+AMOUNT_ALONE_DAYS_AFTER = 7
+CORROBORATING_SIGNALS = {"reference", "name", "history"}
 # The number the other side writes in its transfer label, next to the document's own name
 EXTRA_NUMBER_FIELD = {
 	"Payment Entry": "reference_no",
@@ -231,7 +236,7 @@ class SuggestionRanking:
 			self.score(candidate, evidence, label_words, vocabulary, learned, contacts)
 
 		suggestions = sorted(
-			(c for c in candidates if c.match_score >= SHOW_THRESHOLD),
+			(c for c in candidates if c.match_score >= SHOW_THRESHOLD and self.is_corroborated(c)),
 			key=lambda c: (-c.match_score, self.days_apart(c)),
 		)
 		self.preselect([s for s in suggestions if proposal_key(s) not in refused])
@@ -268,6 +273,14 @@ class SuggestionRanking:
 		other_parties = [s.match_score for s in suggestions if payer(s) != payer(best)]
 		if flt(best.match_score - max(other_parties, default=0), 3) >= PRESELECT_LEAD:
 			best.vgtSelected = True
+
+	def is_corroborated(self, candidate):
+		if any(reason["signal"] in CORROBORATING_SIGNALS for reason in candidate.match_reasons):
+			return True
+		if not self.dates or not candidate.posting_date:
+			return False
+		days_before_line = (self.dates[0] - getdate(candidate.posting_date)).days
+		return -AMOUNT_ALONE_DAYS_AFTER <= days_before_line <= AMOUNT_ALONE_DAYS_BEFORE
 
 	def days_apart(self, candidate):
 		if not self.dates or not candidate.posting_date:
