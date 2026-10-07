@@ -112,6 +112,9 @@ export function parseDateRange(value) {
 	if (!result) return undefined;
 
 	const startKnownValues = knownValuesOf(result.start);
+	// chrono leaves the day unknown on "last 12 months" as on "last month", but a counted period
+	// rolls back from today, it is not the calendar month it lands in.
+	const isCountedPeriod = result.tags().has("result/relativeDate") && /\d/.test(result.text);
 
 	// Anchor the shift on the start and apply it to both ends, so an explicit range like
 	// "1st Sept to 30th Sept" keeps its shape instead of having only its end rolled back.
@@ -127,7 +130,7 @@ export function parseDateRange(value) {
 		// chrono ends "Apr 2025 to Jun 2025" on the 1st of June, but the user means all of it.
 		const rangeEnd = endKnownValues.month && !endKnownValues.day ? dayjs(endDate).endOf("month").toDate() : endDate;
 		range = { fromDate: startDate, toDate: rangeEnd };
-	} else if (startKnownValues.month && !startKnownValues.day) {
+	} else if (startKnownValues.month && !startKnownValues.day && !isCountedPeriod) {
 		// The user only wants a specific month like "May 2025" - span the whole month
 		range = {
 			fromDate: dayjs(startDate).startOf("month").toDate(),
