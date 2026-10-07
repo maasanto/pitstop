@@ -5,7 +5,7 @@ from frappe.utils import add_months, cint, flt, get_first_day, getdate, nowdate
 
 from bank_matching.pairing import LINE_FIELDS, as_matchable, build_pairing, reconcile, search_documents
 from bank_matching.refusals import get_refused, set_refused
-from bank_matching.rules import apply_rule
+from bank_matching.rules import ACCEPTED, REJECTED, answer_rule_offer, apply_rule, rule_offers
 from bank_matching.rules import create_rule as create_bank_rule
 
 PARTY_TYPES = ("Payable", "Receivable")
@@ -35,7 +35,20 @@ def get_pairings(bank_account: str, from_date: str, to_date: str) -> dict:
 			build_pairing(as_matchable(line), refused.get(line.name, [])) for line in lines[:MAX_LINES]
 		],
 		"truncated": len(lines) > MAX_LINES,
+		"rule_offers": rule_offers(bank_account, lines[:MAX_LINES]),
 	}
+
+
+@frappe.whitelist(methods=["POST"])
+def accept_rule_offer(bank_account: str, key: str, transaction_type: str) -> str:
+	frappe.has_permission("Bank Account", "read", bank_account, throw=True)
+	return answer_rule_offer(bank_account, key, transaction_type, ACCEPTED)
+
+
+@frappe.whitelist(methods=["POST"])
+def decline_rule_offer(bank_account: str, key: str, transaction_type: str) -> str:
+	frappe.has_permission("Bank Account", "read", bank_account, throw=True)
+	return answer_rule_offer(bank_account, key, transaction_type, REJECTED)
 
 
 @frappe.whitelist(methods=["POST"])
