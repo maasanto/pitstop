@@ -52,49 +52,58 @@ const reasonsAbout = (...signals) =>
 		/>
 		<span class="shrink-0 tabular-nums text-ink-gray-7">{{ formatMoney(document.amount, currency) }}</span>
 	</div>
+	<!-- Each hint follows the value it judges, the pair kept tight and set apart from the next one -->
 	<div v-else class="flex min-w-0 items-start gap-3">
 		<DocumentTypeIcon :doctype="document.doctype" size="lg" />
-		<div class="min-w-0 flex-1">
-			<div class="flex items-center gap-1.5">
-				<span class="truncate text-base-medium text-ink-gray-9">{{ title }}</span>
-				<MatchHint
-					v-if="party"
-					:reasons="reasonsAbout('name', 'history')"
-					:missing="__('Name not in the label')"
-				/>
-				<MatchHint :reasons="reasonsAbout('corrected')" />
-				<!-- Hints sit before amounts, so amounts line up down the page whether a hint backs them or not -->
-				<span class="ml-auto flex shrink-0 items-center gap-1.5 pl-2">
+		<div class="flex min-w-0 flex-1 flex-col self-stretch">
+			<div class="flex items-center gap-4">
+				<span class="flex min-w-0 items-center gap-1">
+					<span class="truncate text-base-medium text-ink-gray-9">{{ title }}</span>
 					<MatchHint
-						v-if="lineAmount !== null"
-						:reasons="reasonsAbout('amount')"
-						:mismatch="__('Different amount')"
+						v-if="party"
+						:reasons="reasonsAbout('name', 'history')"
+						:missing="__('Name not in the label')"
 					/>
-					<span class="text-base tabular-nums text-ink-gray-7">{{
-						formatMoney(document.amount, currency)
-					}}</span>
+					<MatchHint :reasons="reasonsAbout('corrected')" />
+				</span>
+				<!-- The hint slot keeps its width, so amounts line up down the page whether a hint backs them or not -->
+				<span class="ml-auto flex shrink-0 items-center gap-1">
+					<span class="text-base tabular-nums text-ink-gray-7">{{ formatMoney(document.amount, currency) }}</span>
+					<span class="flex w-4 justify-center">
+						<MatchHint
+							v-if="lineAmount !== null"
+							:reasons="reasonsAbout('amount')"
+							:mismatch="__('Different amount')"
+						/>
+					</span>
 				</span>
 			</div>
-			<div class="mt-2 flex items-center gap-1.5 text-sm text-ink-gray-5">
-				<a
-					:href="deskUrl(document.doctype, document.name)"
-					target="_blank"
-					class="shrink-0 text-ink-gray-6 hover:text-ink-gray-8 hover:underline"
-					@click.stop
-					>{{ document.name }}</a
-				>
-				<MatchHint :reasons="reasonsAbout('reference')" :missing="__('Number not in the label')" />
-				<DateLabel :date="document.posting_date" />
-				<span v-if="reference" class="truncate">· {{ reference }}</span>
+			<div class="mt-2 flex items-center gap-4 text-sm text-ink-gray-5">
+				<span class="flex shrink-0 items-center gap-1">
+					<a
+						:href="deskUrl(document.doctype, document.name)"
+						target="_blank"
+						class="text-ink-gray-6 hover:text-ink-gray-8 hover:underline"
+						@click.stop
+						>{{ document.name }}</a
+					>
+					<MatchHint :reasons="reasonsAbout('reference')" :missing="__('Number not in the label')" />
+				</span>
+				<span v-if="reference" class="truncate">{{ reference }}</span>
 				<slot name="note" />
 				<span
 					v-if="gap"
-					class="ml-auto shrink-0 rounded-3 bg-surface-amber-2 px-1 tabular-nums text-ink-amber-7"
+					class="ml-auto mr-5 shrink-0 rounded-3 bg-surface-amber-2 px-1 tabular-nums text-ink-amber-7"
 					:title="__('Gap between the bank line and the document')"
 				>
 					{{ gap > 0 ? "+" : "−" }}{{ formatMoney(Math.abs(gap), currency) }}
 				</span>
 			</div>
+			<!-- At the card's foot, level with the bank line's date beside it -->
+			<span v-if="document.posting_date" class="mt-2 flex items-center gap-1 xl:mt-auto xl:pt-2">
+				<DateLabel :date="document.posting_date" />
+				<MatchHint :reasons="reasonsAbout('date')" :missing="__('The date gives no hint')" />
+			</span>
 		</div>
 	</div>
 </template>

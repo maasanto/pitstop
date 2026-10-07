@@ -413,12 +413,12 @@ class TestPairings(ERPNextTestSuite):
 		line = self.create_line(318.20, "VIR ACME RENTALS GLOBEX LEASING")
 
 		self.assertEqual(self.by_document(line, "level")[earlier_invoice.name], "high")
-		later = next(
-			p["documents"][0]
+		date_hints = {
+			p["documents"][0]["name"]: [r for r in p["documents"][0]["reasons"] if r["signal"] == "date"]
 			for p in self.pairing_of(line)["proposals"]
-			if p["documents"][0]["name"] == later_invoice.name
-		)
-		self.assertIn("date", [reason["signal"] for reason in later["reasons"]])
+		}
+		self.assertTrue(date_hints[later_invoice.name][0]["against"], "a late document says why it lost")
+		self.assertEqual(date_hints[earlier_invoice.name][0]["description"], "Posted near the payment")
 
 	def test_a_correction_teaches_which_party_an_account_pays_for(self):
 		globex = self.get_customer("Globex Leasing", contact=("Jane", "Roe"))

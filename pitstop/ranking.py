@@ -266,7 +266,7 @@ class SuggestionRanking:
 			signals.reference = 0
 		candidate.match_score = flt(confidence(**signals), 3)
 		candidate.match_reasons = describe_signals(
-			frappe._dict(signals, same_account=party in learned.account_payers)
+			frappe._dict(signals, same_account=party in learned.account_payers, is_near=self.is_near(candidate))
 		)
 
 	def preselect(self, suggestions):
@@ -280,6 +280,9 @@ class SuggestionRanking:
 	def is_corroborated(self, candidate):
 		if any(reason["signal"] in CORROBORATING_SIGNALS for reason in candidate.match_reasons):
 			return True
+		return self.is_near(candidate)
+
+	def is_near(self, candidate):
 		if not self.dates or not candidate.posting_date:
 			return False
 		return -AMOUNT_ALONE_DAYS_BEFORE <= self.days_after(candidate) <= MAX_DAYS_POSTED_AFTER_PAYMENT
@@ -507,4 +510,6 @@ def describe_signals(signals):
 				"description": _("Posted well after the payment"),
 			}
 		)
+	elif signals.is_near:
+		reasons.append({"signal": "date", "exact": True, "description": _("Posted near the payment")})
 	return reasons

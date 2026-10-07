@@ -19,6 +19,9 @@ const line = computed(() => props.pairing.line);
 const otherLeads = computed(() => props.pairing.proposals.length - 1);
 const documentsTotal = computed(() => props.chosen.documents.reduce((sum, d) => sum + d.amount, 0));
 const settlementReasons = (signal) => props.chosen.settlement.reasons.filter((r) => r.signal === signal);
+const isSingleDocument = computed(
+	() => !props.chosen.rule && !props.chosen.settlement && props.chosen.documents.length === 1,
+);
 const actions = computed(() => [
 	{
 		label: otherLeads.value > 0 ? __("Other leads ({0})", [otherLeads.value]) : __("Search a document"),
@@ -63,14 +66,18 @@ function toggleUnlessSelecting() {
 			<span class="lucide-check size-3.5" aria-hidden="true" />
 		</button>
 
-		<div class="min-w-0">
+		<div class="min-w-0" :class="isSingleDocument && 'xl:flex xl:flex-col xl:self-stretch'">
 			<div
 				class="line-clamp-3 break-words text-xs-medium !leading-4 text-ink-gray-9"
 				:title="descriptionText(line.description)"
 			>
 				<span class="whitespace-pre-line">{{ descriptionText(line.description) }}</span>
 			</div>
-			<div class="mt-2 flex items-center gap-1.5 text-sm text-ink-gray-5">
+			<!-- Beside a single document, the two dates sit level at the foot of the card -->
+			<div
+				class="mt-2 flex items-center gap-1.5 text-sm text-ink-gray-5"
+				:class="isSingleDocument && 'xl:mt-auto xl:pt-2'"
+			>
 				<span
 					:class="
 						line.amount > 0
@@ -91,12 +98,13 @@ function toggleUnlessSelecting() {
 
 		<div
 			class="col-span-2 col-start-2 mt-3 min-w-0 border-t border-outline-gray-1 pt-3 md:col-span-1 md:col-start-2 xl:col-start-auto xl:mt-0 xl:border-l xl:border-t-0 xl:pl-5 xl:pt-0"
+			:class="isSingleDocument && 'xl:flex xl:flex-col xl:self-stretch'"
 		>
 			<div v-if="chosen.rule" class="min-w-0">
 				<div class="flex items-center gap-1.5">
 					<span class="lucide-wand-sparkles size-4 shrink-0 text-ink-blue-6" aria-hidden="true" />
 					<span class="truncate text-base-medium text-ink-gray-9">{{ chosen.rule.rule_name }}</span>
-					<span class="ml-auto shrink-0 pl-2 text-base tabular-nums text-ink-gray-7">
+					<span class="ml-auto shrink-0 pl-2 pr-5 text-base tabular-nums text-ink-gray-7">
 						{{ formatMoney(Math.abs(line.amount), line.currency) }}
 					</span>
 				</div>
@@ -115,11 +123,11 @@ function toggleUnlessSelecting() {
 						__("{0} payments settled at once", [chosen.documents.length])
 					}}</span>
 					<MatchHint :reasons="settlementReasons('batch')" />
-					<span class="ml-auto flex shrink-0 items-center gap-1.5 pl-2">
-						<MatchHint :reasons="settlementReasons('amount')" />
+					<span class="ml-auto flex shrink-0 items-center gap-1 pl-2">
 						<span class="text-base tabular-nums text-ink-gray-7">
 							{{ formatMoney(chosen.settlement.total, line.currency) }}
 						</span>
+						<span class="flex w-4 justify-center"><MatchHint :reasons="settlementReasons('amount')" /></span>
 					</span>
 				</div>
 				<div class="mt-2 divide-y divide-outline-gray-1">
@@ -146,7 +154,7 @@ function toggleUnlessSelecting() {
 					<span class="truncate text-base-medium text-ink-gray-9">{{
 						__("{0} documents paid at once", [chosen.documents.length])
 					}}</span>
-					<span class="ml-auto shrink-0 pl-2 text-base tabular-nums text-ink-gray-7">
+					<span class="ml-auto shrink-0 pl-2 pr-5 text-base tabular-nums text-ink-gray-7">
 						{{ formatMoney(documentsTotal, line.currency) }}
 					</span>
 				</div>
@@ -163,6 +171,7 @@ function toggleUnlessSelecting() {
 			</div>
 			<DocumentCard
 				v-else
+				class="xl:flex-1"
 				:document="chosen.documents[0]"
 				:currency="line.currency"
 				:line-amount="line.amount"
