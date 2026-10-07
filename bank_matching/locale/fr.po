@@ -592,3 +592,39 @@ msgstr "1 sur {0} pré-approuvée"
 
 msgid "{0} of {1} pre-approved"
 msgstr "{0} sur {1} pré-approuvées"
+
+msgid "Same account as past payments"
+msgstr "Même compte que des paiements passés"
+
+msgid "You picked another party for similar lines"
+msgstr "Vous avez choisi un autre tiers pour des lignes semblables"
+
+msgid "Dokos no longer offers a rule for {0}: reload the page"
+msgstr "Dokos ne propose plus de règle pour {0} : rechargez la page"
+
+msgid "Offered after {0} lines booked on {1}"
+msgstr "Proposée après {0} lignes comptabilisées sur {1}"
+
+msgid "Rules to create"
+msgstr "Règles à créer"
+
+msgid "Always book “{0}” lines on {1}?"
+msgstr "Toujours comptabiliser les lignes « {0} » sur {1} ?"
+
+msgid "You booked them there the last {0} times"
+msgstr "Vous les y avez comptabilisées les {0} dernières fois"
+
+msgid "the rule books 1 open line"
+msgstr "la règle comptabilise 1 ligne ouverte"
+
+msgid "the rule books {0} open lines"
+msgstr "la règle comptabilise {0} lignes ouvertes"
+
+msgid "No, never"
+msgstr "Non, jamais"
+
+msgid "Dokos will not offer this rule again"
+msgstr "Dokos ne proposera plus cette règle"
+
+msgid "Rule created: these lines are now proposed for validation"
+msgstr "Règle créée : ces lignes sont désormais proposées à la validation"
