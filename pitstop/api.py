@@ -21,7 +21,7 @@ from pitstop.rules import create_rule as create_bank_rule
 
 PARTY_TYPES = ("Payable", "Receivable")
 
-MAX_LINES = 200
+MAX_LINES = 300
 # The page asks for its lines a page at a time, so the first ones show while the others are scored
 PAGE_LENGTH = 25
 # The picker lists every open document and filters them in the browser

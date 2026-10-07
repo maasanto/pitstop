@@ -133,13 +133,13 @@ class TestPairings(ERPNextTestSuite):
 		payment.submit()
 		return payment
 
-	def create_line(self, amount, description, iban=None, status=None):
+	def create_line(self, amount, description, iban=None, status=None, line_date=PAYMENT_DATE):
 		"""A positive amount is money in."""
 		return (
 			frappe.get_doc(
 				{
 					"doctype": "Bank Transaction",
-					"date": PAYMENT_DATE,
+					"date": line_date,
 					"bank_account": self.bank_account,
 					"credit": max(amount, 0),
 					"debit": max(-amount, 0),
@@ -219,6 +219,43 @@ class TestPairings(ERPNextTestSuite):
 		self.assertIsNone(results[0]["error"])
 		self.assertEqual(frappe.db.get_value("Bank Transaction", line.name, "unallocated_amount"), 0)
 		self.assertEqual(frappe.db.get_value("Sales Invoice", invoice.name, "outstanding_amount"), 0)
+
+	def create_year_of_lines(self, count, year_start):
+		return {
+			self.create_line(
+				10 + index,
+				f"VIR SEPA ACME FICTIVE {index:04}",
+				line_date=add_days(year_start, index * 364 // (count - 1)),
+			).name
+			for index in range(count)
+		}
+
+	def list_every_page(self, from_date):
+		"""What the page loads for the period, a page at a time: the lines listed and the last page."""
+		listed, start = [], 0
+		with self.set_user(ACCOUNTANT):
+			while True:
+				page = get_pairings(self.bank_account, str(from_date), str(PAYMENT_DATE), start)
+				listed += [pairing["line"]["name"] for pairing in page["pairings"]]
+				start += len(page["pairings"])
+				if not page["pairings"] or start >= page["total"]:
+					return listed, page
+
+	# The cap is lowered so a few dozen lines stand for a busy year
+	@patch("pitstop.api.MAX_LINES", 40)
+	def test_a_year_under_the_cap_lists_every_line_and_above_it_says_so(self):
+		year_start = add_days(PAYMENT_DATE, -364)
+		created = self.create_year_of_lines(30, year_start)
+
+		listed, page = self.list_every_page(year_start)
+		self.assertEqual(created - set(listed), set())
+		self.assertEqual(len(listed), len(set(listed)))
+		self.assertFalse(page["truncated"])
+
+		self.create_year_of_lines(15, year_start)
+		listed, page = self.list_every_page(year_start)
+		self.assertEqual(len(listed), 40)
+		self.assertTrue(page["truncated"])
 
 	def test_period_totals_split_money_in_and_out_with_what_is_reconciled(self):
 		invoice = self.create_invoice(500)
