@@ -17,8 +17,14 @@ msgstr "Une ligne bancaire se rapproche avec des documents d'un seul type, reçu
 msgid "Already reconciled"
 msgstr "Déjà rapprochées"
 
+msgid "Bank Transaction {0} cleared {1}, which this page cannot undo"
+msgstr "La transaction bancaire {0} a soldé {1}, ce que cette page ne peut pas annuler"
+
 msgid "Bank Transaction {0} is not submitted"
 msgstr "La transaction bancaire {0} n'est pas validée"
+
+msgid "Bank Transaction {0} is only announced by the bank: reconcile it once the bank books it"
+msgstr "La transaction bancaire {0} est seulement annoncée par la banque : rapprochez-la une fois qu'elle sera comptabilisée"
 
 msgid "Bank account"
 msgstr "Compte bancaire"
@@ -211,6 +217,9 @@ msgstr "{0} annulé"
 
 msgid "{0} is no longer open for reconciliation: reload the page"
 msgstr "{0} n'est plus ouvert au rapprochement : rechargez la page"
+
+msgid "{0} {1} no longer matches this line exactly: reload the page"
+msgstr "{0} {1} ne correspond plus exactement à cette ligne : rechargez la page"
 
 msgid "{0} less than the payments, likely card fees: it stays open on the last payment"
 msgstr "{0} de moins que les paiements, sans doute des frais de carte : cet écart reste ouvert sur le dernier paiement"
