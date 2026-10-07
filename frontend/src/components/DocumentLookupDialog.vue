@@ -1,9 +1,10 @@
 <script setup>
 import { Button, Dialog, ErrorMessage, LoadingText, TextInput, toast, useCall } from "frappe-ui";
 import { ref, watch } from "vue";
-import { DOCTYPE_ICONS, formatDate, formatMoney } from "../format";
+import { formatDate, formatMoney } from "../format";
 import { __ } from "../translation";
 import ConfidencePill from "./ConfidencePill.vue";
+import DocumentTypeIcon from "./DocumentTypeIcon.vue";
 import MatchHint from "./MatchHint.vue";
 
 const props = defineProps({
@@ -88,7 +89,7 @@ async function reconcileWith(match) {
 					class="flex w-full items-center gap-2 rounded-4 px-2 py-2.5 text-left hover:bg-surface-gray-2"
 					@click="pick(row)"
 				>
-					<span :class="DOCTYPE_ICONS[row.doctype]" class="size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+					<DocumentTypeIcon :doctype="row.doctype" />
 					<span class="text-base-medium text-ink-gray-9">{{ row.party_name }}</span>
 					<span class="truncate text-sm text-ink-gray-5">
 						{{ row.name }} · {{ __(row.doctype) }} · {{ formatDate(row.posting_date) }}

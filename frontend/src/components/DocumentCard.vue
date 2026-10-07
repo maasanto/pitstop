@@ -1,8 +1,9 @@
 <script setup>
-import { Button, Tooltip } from "frappe-ui";
+import { Button } from "frappe-ui";
 import { computed } from "vue";
-import { DOCTYPE_ICONS, deskUrl, formatDate, formatMoney } from "../format";
+import { deskUrl, formatDate, formatMoney } from "../format";
 import { __ } from "../translation";
+import DocumentTypeIcon from "./DocumentTypeIcon.vue";
 import MatchHint from "./MatchHint.vue";
 
 const props = defineProps({
@@ -38,6 +39,7 @@ const reasonsAbout = (...signals) =>
 
 <template>
 	<div v-if="compact" class="flex items-center gap-1.5 py-2 text-sm">
+		<DocumentTypeIcon :doctype="document.doctype" class="mr-1" />
 		<a
 			:href="deskUrl(document.doctype, document.name)"
 			target="_blank"
@@ -56,42 +58,48 @@ const reasonsAbout = (...signals) =>
 		/>
 		<span class="shrink-0 tabular-nums text-ink-gray-7">{{ formatMoney(document.amount, currency) }}</span>
 	</div>
-	<div v-else class="min-w-0">
-		<div class="flex items-center gap-1.5">
-			<span class="truncate text-base-medium text-ink-gray-9">{{ title }}</span>
-			<MatchHint v-if="party" :reasons="reasonsAbout('name', 'history')" :missing="__('Name not in the label')" />
-			<MatchHint :reasons="reasonsAbout('corrected')" />
-			<!-- Hints sit before amounts, so amounts line up down the page whether a hint backs them or not -->
-			<span class="ml-auto flex shrink-0 items-center gap-1.5 pl-2">
+	<div v-else class="flex min-w-0 items-start gap-3">
+		<DocumentTypeIcon :doctype="document.doctype" size="lg" />
+		<div class="min-w-0 flex-1">
+			<div class="flex items-center gap-1.5">
+				<span class="truncate text-base-medium text-ink-gray-9">{{ title }}</span>
 				<MatchHint
-					v-if="lineAmount !== null"
-					:reasons="reasonsAbout('amount')"
-					:mismatch="__('Different amount')"
+					v-if="party"
+					:reasons="reasonsAbout('name', 'history')"
+					:missing="__('Name not in the label')"
 				/>
-				<span class="text-base tabular-nums text-ink-gray-7">{{ formatMoney(document.amount, currency) }}</span>
-			</span>
-		</div>
-		<div class="mt-2 flex items-center gap-1.5 text-sm text-ink-gray-5">
-			<Tooltip :text="__(document.doctype)">
-				<span :class="DOCTYPE_ICONS[document.doctype]" class="size-3.5 shrink-0" :aria-label="__(document.doctype)" />
-			</Tooltip>
-			<a
-				:href="deskUrl(document.doctype, document.name)"
-				target="_blank"
-				class="shrink-0 text-ink-gray-6 hover:text-ink-gray-8 hover:underline"
-				@click.stop
-				>{{ document.name }}</a
-			>
-			<MatchHint :reasons="reasonsAbout('reference')" :missing="__('Number not in the label')" />
-			<span v-if="details" class="truncate">· {{ details }}</span>
-			<slot name="note" />
-			<span
-				v-if="gap"
-				class="ml-auto shrink-0 rounded-3 bg-surface-amber-2 px-1 tabular-nums text-ink-amber-7"
-				:title="__('Gap between the bank line and the document')"
-			>
-				{{ gap > 0 ? "+" : "−" }}{{ formatMoney(Math.abs(gap), currency) }}
-			</span>
+				<MatchHint :reasons="reasonsAbout('corrected')" />
+				<!-- Hints sit before amounts, so amounts line up down the page whether a hint backs them or not -->
+				<span class="ml-auto flex shrink-0 items-center gap-1.5 pl-2">
+					<MatchHint
+						v-if="lineAmount !== null"
+						:reasons="reasonsAbout('amount')"
+						:mismatch="__('Different amount')"
+					/>
+					<span class="text-base tabular-nums text-ink-gray-7">{{
+						formatMoney(document.amount, currency)
+					}}</span>
+				</span>
+			</div>
+			<div class="mt-2 flex items-center gap-1.5 text-sm text-ink-gray-5">
+				<a
+					:href="deskUrl(document.doctype, document.name)"
+					target="_blank"
+					class="shrink-0 text-ink-gray-6 hover:text-ink-gray-8 hover:underline"
+					@click.stop
+					>{{ document.name }}</a
+				>
+				<MatchHint :reasons="reasonsAbout('reference')" :missing="__('Number not in the label')" />
+				<span v-if="details" class="truncate">· {{ details }}</span>
+				<slot name="note" />
+				<span
+					v-if="gap"
+					class="ml-auto shrink-0 rounded-3 bg-surface-amber-2 px-1 tabular-nums text-ink-amber-7"
+					:title="__('Gap between the bank line and the document')"
+				>
+					{{ gap > 0 ? "+" : "−" }}{{ formatMoney(Math.abs(gap), currency) }}
+				</span>
+			</div>
 		</div>
 	</div>
 </template>

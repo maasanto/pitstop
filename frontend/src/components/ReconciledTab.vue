@@ -1,8 +1,9 @@
 <script setup>
 import { Button, Dropdown, Skeleton, TextInput, Tooltip, dialog, toast, useCall } from "frappe-ui";
 import { computed, ref } from "vue";
-import { DOCTYPE_ICONS, deskUrl, formatDate, formatMoney } from "../format";
+import { deskUrl, formatDate, formatMoney } from "../format";
 import { __ } from "../translation";
+import DocumentTypeIcon from "./DocumentTypeIcon.vue";
 
 const props = defineProps({
 	bankAccount: { type: String, required: true },
@@ -128,11 +129,7 @@ function done(message) {
 				</div>
 				<div class="col-span-2 min-w-0 md:col-span-1">
 					<div v-for="document in documents" :key="document.payment_entry" class="flex items-center gap-2">
-						<span
-							:class="DOCTYPE_ICONS[document.payment_document]"
-							class="size-4 shrink-0 text-ink-gray-5"
-							aria-hidden="true"
-						/>
+						<DocumentTypeIcon :doctype="document.payment_document" />
 						<a
 							:href="deskUrl(document.payment_document, document.payment_entry)"
 							target="_blank"
