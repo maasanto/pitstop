@@ -9,6 +9,7 @@ from erpnext.accounts.doctype.bank_reconciliation_tool.bank_reconciliation_tool 
 from erpnext.accounts.doctype.bank_transaction.bank_transaction import PENDING_STATUS
 from erpnext.accounts.page.bank_reconciliation.auto_bank_reconciliation import auto_bank_reconciliation
 from erpnext.tests.utils import ERPNextTestSuite
+from frappe.utils import add_days
 
 from pitstop.api import (
 	accept_rule_offer,
@@ -87,15 +88,15 @@ class TestPairings(ERPNextTestSuite):
 		).insert()
 		return customer
 
-	def create_invoice(self, amount, customer=None):
+	def create_invoice(self, amount, customer=None, posting_date=PAYMENT_DATE):
 		invoice = frappe.get_doc(
 			{
 				"doctype": "Sales Invoice",
 				"customer": customer or self.customer,
 				"company": COMPANY,
 				"set_posting_time": 1,
-				"posting_date": PAYMENT_DATE,
-				"due_date": PAYMENT_DATE,
+				"posting_date": posting_date,
+				"due_date": posting_date,
 				"debit_to": "Debtors - _TC",
 				"currency": "INR",
 				"conversion_rate": 1,
@@ -334,6 +335,20 @@ class TestPairings(ERPNextTestSuite):
 
 		self.assertEqual(self.pairing_of(line)["refused"], [f"Sales Invoice:{acme_invoice.name}"])
 		self.assertEqual(self.by_document(line, "level")[globex_invoice.name], "high")
+
+	def test_an_invoice_posted_weeks_after_the_payment_no_longer_ties_with_one_posted_before(self):
+		globex = self.get_customer("Globex Leasing", contact=("Jane", "Roe"))
+		earlier_invoice = self.create_invoice(318.20, posting_date=add_days(PAYMENT_DATE, -7))
+		later_invoice = self.create_invoice(318.20, customer=globex, posting_date=add_days(PAYMENT_DATE, 20))
+		line = self.create_line(318.20, "VIR ACME RENTALS GLOBEX LEASING")
+
+		self.assertEqual(self.by_document(line, "level")[earlier_invoice.name], "high")
+		later = next(
+			p["documents"][0]
+			for p in self.pairing_of(line)["proposals"]
+			if p["documents"][0]["name"] == later_invoice.name
+		)
+		self.assertIn("date", [reason["signal"] for reason in later["reasons"]])
 
 	def test_a_correction_teaches_which_party_an_account_pays_for(self):
 		globex = self.get_customer("Globex Leasing", contact=("Jane", "Roe"))
