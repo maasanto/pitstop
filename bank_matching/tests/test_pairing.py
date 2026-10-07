@@ -1,10 +1,15 @@
 from datetime import date
 
 import frappe
+from erpnext.accounts.doctype.bank_reconciliation_tool.bank_reconciliation_tool import (
+	create_bulk_bank_entry_and_reconcile,
+)
 from erpnext.tests.utils import ERPNextTestSuite
 
 from bank_matching.api import (
+	accept_rule_offer,
 	create_rule,
+	decline_rule_offer,
 	get_pairings,
 	reconcile_pairings,
 	set_refused_proposals,
@@ -134,19 +139,42 @@ class TestPairings(ERPNextTestSuite):
 			.submit()
 		)
 
-	def create_bank_fees_rule(self):
-		account = frappe.db.get_value(
-			"Account", {"company": COMPANY, "root_type": "Expense", "is_group": 0, "account_type": ""}
+	def expense_accounts(self):
+		return frappe.get_all(
+			"Account",
+			filters={"company": COMPANY, "root_type": "Expense", "is_group": 0, "account_type": ""},
+			pluck="name",
+			limit=2,
 		)
+
+	def create_bank_fees_rule(self):
 		with self.set_user(ACCOUNTANT):
 			return create_rule(
-				self.create_line(-1, "FRAIS TENUE DE COMPTE AOUT").name, "Bank fees", "FRAIS TENUE", account
+				self.create_line(-1, "FRAIS TENUE DE COMPTE AOUT").name,
+				"Bank fees",
+				"FRAIS TENUE",
+				self.expense_accounts()[0],
 			)
 
-	def pairing_of(self, line):
+	def book_water_bills(self, account):
+		"""Two water bills booked on the account from /banking, and the third one, still open."""
+		for month in ("JUILLET", "AOUT"):
+			line = self.create_line(-38.4, f"PRLV SEPA EAU FICTIVE CONTRAT 0042 {month}")
+			with self.set_user(ACCOUNTANT):
+				create_bulk_bank_entry_and_reconcile([line.name], account)
+		return self.create_line(-41.75, "PRLV SEPA EAU FICTIVE CONTRAT 0042 SEPTEMBRE")
+
+	def get_pairings(self):
+		# Each call stands for a page load: the rules cached for the previous request are read again
+		frappe.local.request_cache.clear()
 		with self.set_user(ACCOUNTANT):
-			pairings = get_pairings(self.bank_account, str(PAYMENT_DATE), str(PAYMENT_DATE))["pairings"]
-		return next(pairing for pairing in pairings if pairing["line"]["name"] == line.name)
+			return get_pairings(self.bank_account, str(PAYMENT_DATE), str(PAYMENT_DATE))
+
+	def pairing_of(self, line):
+		return next(pairing for pairing in self.get_pairings()["pairings"] if pairing["line"]["name"] == line.name)
+
+	def rule_of(self, line):
+		return next((p["rule"]["name"] for p in self.pairing_of(line)["proposals"] if p.get("rule")), None)
 
 	def by_document(self, line, field):
 		"""Each single-document proposal of the line: document name -> the proposal's field."""
@@ -283,6 +311,14 @@ class TestPairings(ERPNextTestSuite):
 		self.assertGreater(scores[next_globex_invoice.name], 0.6, "the account's past payer gains")
 		self.assertLess(scores[acme_invoice.name], 0.6, "the party corrected away loses")
 
+		hints = {
+			name: {reason["signal"]: reason["description"] for reason in documents[0]["reasons"]}
+			for name, documents in self.by_document(second, "documents").items()
+		}
+		self.assertEqual(hints[next_globex_invoice.name]["history"], "Same account as past payments")
+		self.assertIn("corrected", hints[acme_invoice.name], "a demoted lead says why")
+		self.assertNotIn("corrected", hints[next_globex_invoice.name])
+
 	def test_a_card_batch_is_proposed_as_one_settlement_less_its_fee(self):
 		receipts = [self.create_receipt(amount, f"TPE-{amount}") for amount in (130, 150, 120)]
 		line = self.create_line(388, "REMISE CB 0000123")
@@ -316,3 +352,55 @@ class TestPairings(ERPNextTestSuite):
 		self.assertEqual(
 			frappe.db.get_value("Bank Transaction", late_line.name, "unallocated_amount"), 321.09
 		)
+
+	def test_a_label_always_booked_on_one_account_is_offered_as_a_rule(self):
+		account = self.expense_accounts()[0]
+		line = self.book_water_bills(account)
+
+		[offer] = self.get_pairings()["rule_offers"]
+		self.assertEqual((offer["account"], offer["booked"], offer["lines"]), (account, 2, [line.name]))
+		with self.set_user(ACCOUNTANT):
+			rule = accept_rule_offer(self.bank_account, offer["key"], offer["transaction_type"])
+
+		self.assertEqual(self.rule_of(line), rule)
+		self.assertEqual(self.get_pairings()["rule_offers"], [], "an accepted offer is not made again")
+
+	def test_a_declined_rule_offer_books_nothing_and_never_comes_back(self):
+		line = self.book_water_bills(self.expense_accounts()[0])
+
+		[offer] = self.get_pairings()["rule_offers"]
+		with self.set_user(ACCOUNTANT):
+			decline_rule_offer(self.bank_account, offer["key"], offer["transaction_type"])
+
+		self.assertEqual(self.get_pairings()["rule_offers"], [])
+		self.assertIsNone(self.rule_of(line))
+
+	def test_a_rule_the_forecast_only_proposed_books_nothing_until_accepted(self):
+		booked_on, guessed = self.expense_accounts()
+		line = self.book_water_bills(booked_on)
+		proposed = frappe.get_doc(
+			{
+				"doctype": "Bank Transaction Rule",
+				"rule_name": "Recurring: EAU FICTIVE CONTRAT",
+				"company": COMPANY,
+				"transaction_type": "Withdrawal",
+				"classify_as": "Bank Entry",
+				"bank_entry_type": "Single Account",
+				"account": guessed,
+				"description_rules": [{"check": "Contains", "value": "eau fictive"}],
+				"proposal_status": "Proposed",
+				"detected_from_description": "EAU FICTIVE CONTRAT",
+			}
+		).insert()
+
+		self.assertIsNone(self.rule_of(line))
+		[offer] = self.get_pairings()["rule_offers"]
+		with self.set_user(ACCOUNTANT):
+			rule = accept_rule_offer(self.bank_account, offer["key"], offer["transaction_type"])
+
+		self.assertEqual(rule, proposed.name, "the forecast's proposal carries the answer")
+		self.assertEqual(
+			frappe.db.get_value("Bank Transaction Rule", rule, ["proposal_status", "account"]),
+			("Accepted", booked_on),
+		)
+		self.assertEqual(self.rule_of(line), rule)
