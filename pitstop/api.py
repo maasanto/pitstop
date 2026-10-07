@@ -159,6 +159,9 @@ def cleared_file(bank_transaction: str) -> str | None:
 	if not entries:
 		return None
 	for doctype in PAYMENT_FILES:
+		# Dokos v5 clears a Payment Order without booking a clearing entry: the line cleared no file
+		if not frappe.get_meta(doctype).has_field("clearing_journal_entry"):
+			continue
 		file = frappe.db.get_value(doctype, {"clearing_journal_entry": ("in", entries)})
 		if file:
 			return file
