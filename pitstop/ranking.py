@@ -14,6 +14,7 @@ from frappe import _
 from frappe.utils import add_days, flt, getdate
 
 from pitstop.match_scoring import (
+	MAX_DAYS_POSTED_AFTER_PAYMENT,
 	PRESELECT_LEAD,
 	PRESELECT_THRESHOLD,
 	SHOW_THRESHOLD,
@@ -28,6 +29,7 @@ from pitstop.match_scoring import (
 	counterparty_account,
 	is_damped,
 	is_identifier,
+	is_posted_after_payment,
 	name_grade,
 	normalize,
 	reference_evidence,
@@ -38,9 +40,9 @@ from pitstop.match_scoring import (
 DOCUMENT_TYPES = ("Payment Entry", "Journal Entry", "Sales Invoice", "Purchase Invoice", "Expense Claim")
 LOOK_BACK_DAYS = 365
 # An amount alone matches too many documents: it needs another signal, or a document dated near the line.
-# Most invoices reconciled on production sites were paid within this window of their posting date.
+# Most invoices reconciled on production sites were paid within this window of their posting date; past
+# MAX_DAYS_POSTED_AFTER_PAYMENT, scoring also damps a document backed by other signals.
 AMOUNT_ALONE_DAYS_BEFORE = 30
-AMOUNT_ALONE_DAYS_AFTER = 7
 CORROBORATING_SIGNALS = {"reference", "name", "history"}
 # The number the other side writes in its transfer label, next to the document's own name
 EXTRA_NUMBER_FIELD = {
@@ -258,6 +260,7 @@ class SuggestionRanking:
 			),
 			history=learned.payers.get(party, 0),
 			corrected=learned.corrected.get(party, 0),
+			days_after=self.days_after(candidate),
 		)
 		if signals.reference < WEAK_REFERENCE and not (signals.amount or signals.name or signals.history):
 			signals.reference = 0
@@ -279,13 +282,18 @@ class SuggestionRanking:
 			return True
 		if not self.dates or not candidate.posting_date:
 			return False
-		days_before_line = (self.dates[0] - getdate(candidate.posting_date)).days
-		return -AMOUNT_ALONE_DAYS_AFTER <= days_before_line <= AMOUNT_ALONE_DAYS_BEFORE
+		return -AMOUNT_ALONE_DAYS_BEFORE <= self.days_after(candidate) <= MAX_DAYS_POSTED_AFTER_PAYMENT
 
 	def days_apart(self, candidate):
 		if not self.dates or not candidate.posting_date:
 			return LOOK_BACK_DAYS
 		return abs((getdate(candidate.posting_date) - self.dates[0]).days)
+
+	def days_after(self, candidate):
+		"""How long after the latest selected line the document was posted, negative when before."""
+		if not self.dates or not candidate.posting_date:
+			return 0
+		return (getdate(candidate.posting_date) - max(self.dates)).days
 
 	def others(self, past_lines: dict) -> list:
 		"""The past lines but the ones being scored: a line teaches nothing about itself."""
@@ -488,6 +496,15 @@ def describe_signals(signals):
 				"exact": False,
 				"against": True,
 				"description": _("You picked another party for similar lines"),
+			}
+		)
+	if is_posted_after_payment(signals.reference, signals.days_after):
+		reasons.append(
+			{
+				"signal": "date",
+				"exact": False,
+				"against": True,
+				"description": _("Posted well after the payment"),
 			}
 		)
 	return reasons

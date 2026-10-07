@@ -81,6 +81,12 @@ SIMILAR_LABEL = 0.5
 MAX_PARTIES_SHARING_AN_ACCOUNT = 2
 # How much of its confidence a party loses once the user corrected it away on similar lines
 CORRECTION_DAMPING = 0.5
+# On three sites' reconciled history, 95 to 99% of invoices are posted at most 3 to 5 days after the money
+# arrives (prepayments, value-date lag). Later than that, a document is likelier the next bill than this one's,
+# yet one site still had 4% of its matches invoiced weeks or months later: a mild cut, not a veto. Documents
+# posted long BEFORE the line are routine (arrears paid late) and backtested no better with a penalty.
+MAX_DAYS_POSTED_AFTER_PAYMENT = 5
+POSTED_AFTER_PAYMENT_DAMPING = 0.2
 
 # A card or platform settlement pays out the receipts of one to three days, within a week
 MAX_BATCH_DAYS = 3
@@ -100,8 +106,14 @@ def words(text: str | None) -> set[str]:
 
 
 def confidence(
-	reference: float = 0, amount: float = 0, name: float = 0, history: float = 0, corrected: float = 0
+	reference: float = 0,
+	amount: float = 0,
+	name: float = 0,
+	history: float = 0,
+	corrected: float = 0,
+	days_after: int = 0,
 ) -> float:
+	"""`days_after`: how long after the bank line the document was posted, negative when before."""
 	score = 1 - (
 		(1 - REFERENCE_WEIGHT * reference)
 		* (1 - AMOUNT_WEIGHT * amount)
@@ -109,13 +121,20 @@ def confidence(
 		* (1 - HISTORY_WEIGHT * history)
 	)
 	if is_damped(reference, corrected):
-		return score * (1 - CORRECTION_DAMPING * corrected)
+		score *= 1 - CORRECTION_DAMPING * corrected
+	if is_posted_after_payment(reference, days_after):
+		score *= 1 - POSTED_AFTER_PAYMENT_DAMPING
 	return score
 
 
 def is_damped(reference: float, corrected: float) -> bool:
 	"""A label quoting the document's number outweighs any past correction."""
 	return bool(corrected) and reference < YEAR_AND_COUNTER
+
+
+def is_posted_after_payment(reference: float, days_after: int) -> bool:
+	"""A label quoting the document's number outweighs its date."""
+	return days_after > MAX_DAYS_POSTED_AFTER_PAYMENT and reference < YEAR_AND_COUNTER
 
 
 def amount_grade(paid: float, outstanding: float, grand_total: float) -> float:
