@@ -32,7 +32,7 @@ const actions = computed(() => [
 
 <template>
 	<div
-		class="group grid cursor-pointer grid-cols-[1.5rem_minmax(0,0.85fr)_7rem_minmax(0,1.4fr)_6.5rem] items-center gap-x-6 rounded-6 border px-6 py-5 transition-colors"
+		class="group grid cursor-pointer grid-cols-[1.5rem_minmax(0,0.85fr)_7rem_minmax(0,1.4fr)_6.5rem] items-start gap-x-6 rounded-6 border px-6 py-5 transition-colors"
 		:class="[
 			approved
 				? 'border-outline-green-3 bg-surface-green-1'
@@ -57,17 +57,17 @@ const actions = computed(() => [
 		</button>
 
 		<div class="min-w-0">
-			<div class="truncate text-base-medium text-ink-gray-9" :title="line.description">
+			<div class="line-clamp-2 break-words text-base-medium !leading-5 text-ink-gray-9" :title="line.description">
 				{{ line.description }}
 			</div>
 			<div class="mt-2 flex items-center gap-1.5 text-sm text-ink-gray-5">
 				<span
 					:class="
 						line.amount > 0
-							? 'lucide-arrow-down-left text-ink-green-6'
-							: 'lucide-arrow-up-right text-ink-red-5'
+							? 'lucide-arrow-down-left text-ink-green-7'
+							: 'lucide-arrow-up-right text-ink-red-6'
 					"
-					class="size-3.5 shrink-0"
+					class="size-4 shrink-0"
 					aria-hidden="true"
 				/>
 				{{ formatDate(line.date) }}

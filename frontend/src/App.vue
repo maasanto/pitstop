@@ -68,8 +68,8 @@ const directionOptions = [
 ];
 // The same arrows as on each line's date, so the filter reads as "lines like these"
 const DIRECTION_ICONS = {
-	in: "lucide-arrow-down-left text-ink-green-6",
-	out: "lucide-arrow-up-right text-ink-red-5",
+	in: "lucide-arrow-down-left text-ink-green-7",
+	out: "lucide-arrow-up-right text-ink-red-6",
 };
 const isFiltered = computed(
 	() => filters.direction !== "all" || filters.text.trim() || filters.min !== "" || filters.max !== "",
@@ -588,8 +588,12 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 					>
 						<template #prefix><span class="lucide-search size-4" aria-hidden="true" /></template>
 					</TextInput>
-					<TextInput v-model="filters.min" class="w-24" type="number" min="0" :placeholder="__('Min')" />
-					<TextInput v-model="filters.max" class="w-24" type="number" min="0" :placeholder="__('Max')" />
+					<div class="flex items-center gap-1.5" role="group" :aria-label="__('Amount')">
+						<span class="pl-2 pr-0.5 text-sm text-ink-gray-5">{{ __("Amount") }}</span>
+						<TextInput v-model="filters.min" class="w-24" type="number" min="0" :placeholder="__('Min')" />
+						<span class="text-ink-gray-4" aria-hidden="true">–</span>
+						<TextInput v-model="filters.max" class="w-24" type="number" min="0" :placeholder="__('Max')" />
+					</div>
 					<Button v-if="isFiltered" variant="ghost" :label="__('Clear filters')" @click="clearFilters" />
 				</div>
 
@@ -653,18 +657,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 					</div>
 
 					<template v-else>
-						<div class="mb-12 flex items-center gap-4">
-							<div class="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-gray-2">
-								<div
-									class="h-full rounded-full bg-surface-green-6 transition-all"
-									:style="{ width: `${progress}%` }"
-								/>
-							</div>
-							<span class="shrink-0 text-sm tabular-nums text-ink-gray-6">
-								{{ __("Pre-approved: {0} of {1}", [toValidate.length, lines.length]) }}
-							</span>
-						</div>
-
 						<section v-for="section in sections" :key="section.level" class="mb-14">
 							<div
 								v-if="isFolded(section)"
@@ -808,9 +800,16 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 					role="region"
 					:aria-label="__('Pre-approved pairings')"
 				>
-					<span class="text-base text-ink-gray-8">
+					<div class="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-surface-gray-3" aria-hidden="true">
+						<div class="h-full rounded-full bg-surface-green-6 transition-all" :style="{ width: `${progress}%` }" />
+					</div>
+					<span class="text-base tabular-nums text-ink-gray-8">
 						<b class="text-ink-gray-9">{{
-							_n(toValidate.length, __("1 pre-approved"), __("{0} pre-approved", [toValidate.length]))
+							_n(
+								toValidate.length,
+								__("1 of {0} pre-approved", [lines.length]),
+								__("{0} of {1} pre-approved", [toValidate.length, lines.length]),
+							)
 						}}</b>
 						· {{ formatMoney(totalToValidate, currency) }}
 						<template v-if="paymentsToCreate">
