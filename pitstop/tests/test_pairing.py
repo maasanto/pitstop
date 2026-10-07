@@ -18,6 +18,7 @@ from pitstop.api import (
 	get_pairings,
 	get_period_totals,
 	reconcile_pairings,
+	search,
 	set_refused_proposals,
 	undo_pairings,
 )
@@ -283,6 +284,23 @@ class TestPairings(ERPNextTestSuite):
 		self.assertIsNone(result["error"])
 		for invoice in invoices:
 			self.assertEqual(frappe.db.get_value("Sales Invoice", invoice.name, "outstanding_amount"), 0)
+
+	def test_the_matcher_filters_open_documents_by_type_and_exact_amount(self):
+		exact, other = self.create_invoice(333.33), self.create_invoice(100)
+		line = self.create_line(333.33, "VIR SEPA RECU /DE JOHN DOE")
+
+		with self.set_user(ACCOUNTANT):
+			everything = search(line.name)
+			exact_only = search(line.name, exact_amount=True)
+			journals_only = search(line.name, doctypes=["Journal Entry"])
+
+		def names(results):
+			return {document["name"] for result in results for document in result["documents"]}
+
+		self.assertTrue({exact.name, other.name} <= names(everything))
+		self.assertIn(exact.name, names(exact_only))
+		self.assertNotIn(other.name, names(exact_only))
+		self.assertFalse({exact.name, other.name} & names(journals_only))
 
 	def test_invoices_of_two_parties_get_a_payment_each_and_undo_cancels_both(self):
 		globex = self.get_customer("Globex Leasing", contact=("Jane", "Roe"))

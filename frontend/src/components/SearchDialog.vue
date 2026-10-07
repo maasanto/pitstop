@@ -1,7 +1,8 @@
 <script setup>
 import { Button, Dialog, LoadingText, Switch, TextInput, useCall } from "frappe-ui";
-import { computed, reactive, ref, watch } from "vue";
+import { computed, reactive, ref, toRef, watch } from "vue";
 import { descriptionText, formatMoney } from "../format";
+import { usePicking } from "../picking";
 import { __, _n } from "../translation";
 import ProposalOption from "./ProposalOption.vue";
 
@@ -23,7 +24,7 @@ const results = useCall({
 });
 
 // Documents picked to pay the line together, kept across searches
-const picked = reactive(new Map());
+const { picked, pickedTotal, pickedGap, isPickable, setPick, pickedProposal } = usePicking(toRef(props, "line"));
 
 watch([open, query], () => open.value && props.line && results.reload());
 watch(open, (isOpen) => {
@@ -53,23 +54,6 @@ const otherDocuments = computed(() =>
 	),
 );
 
-// The reconciliation takes documents of a single type
-const pickedDoctype = computed(() => [...picked.values()][0]?.documents[0].doctype);
-const pickedTotal = computed(() =>
-	[...picked.values()].reduce((sum, proposal) => sum + proposal.documents[0].amount, 0),
-);
-const pickedGap = computed(() =>
-	props.line ? Math.round((Math.abs(props.line.amount) - pickedTotal.value) * 100) / 100 : 0,
-);
-
-function isPickable(proposal) {
-	return !pickedDoctype.value || proposal.documents[0]?.doctype === pickedDoctype.value;
-}
-
-function setPick(proposal, isPicked) {
-	isPicked ? picked.set(proposal.key, proposal) : picked.delete(proposal.key);
-}
-
 function actionLabel(proposal) {
 	if (proposal.key === props.currentKey) return __("Proposed");
 	return props.refused.includes(proposal.key) ? __("Restore") : __("Use this one");
@@ -78,17 +62,6 @@ function actionLabel(proposal) {
 function choose(proposal) {
 	emit("choose", proposal);
 	open.value = false;
-}
-
-function choosePicked() {
-	const proposals = [...picked.values()];
-	choose({
-		key: `manual:${proposals.map((proposal) => proposal.key).join(",")}`,
-		level: "high",
-		score: null,
-		documents: proposals.map((proposal) => proposal.documents[0]),
-		creates_payment: proposals.some((proposal) => proposal.creates_payment),
-	});
 }
 </script>
 
@@ -177,7 +150,7 @@ function choosePicked() {
 				<Button
 					variant="solid"
 					:label="_n(picked.size, __('Use this document'), __('Use these {0} documents', [picked.size]))"
-					@click="picked.size > 1 ? choosePicked() : choose([...picked.values()][0])"
+					@click="choose(pickedProposal())"
 				/>
 			</div>
 		</div>
