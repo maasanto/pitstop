@@ -623,11 +623,20 @@ msgstr "Proposée après {0} lignes comptabilisées sur {1}"
 msgid "Rules to create"
 msgstr "Règles à créer"
 
-msgid "Always book “{0}” lines on {1}?"
-msgstr "Toujours comptabiliser les lignes « {0} » sur {1} ?"
+msgid "Always book “{0}” lines on the account {1}?"
+msgstr "Toujours comptabiliser les lignes « {0} » sur le compte {1} ?"
 
-msgid "You booked them there the last {0} times"
-msgstr "Vous les y avez comptabilisées les {0} dernières fois"
+msgid "Always record “{0}” lines as payments from {1}?"
+msgstr "Toujours enregistrer les lignes « {0} » comme des paiements de {1} ?"
+
+msgid "Always record “{0}” lines as payments to {1}?"
+msgstr "Toujours enregistrer les lignes « {0} » comme des paiements à {1} ?"
+
+msgid "You booked them that way the last {0} times"
+msgstr "Vous les avez comptabilisées ainsi les {0} dernières fois"
+
+msgid "Offered after {0} payments of {1}"
+msgstr "Proposée après {0} paiements de {1}"
 
 msgid "the rule books 1 open line"
 msgstr "la règle comptabilise 1 ligne ouverte"
