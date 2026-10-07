@@ -92,6 +92,12 @@ msgstr "Pas celui-ci"
 msgid "Nothing left to review over this period"
 msgstr "Plus rien à vérifier sur cette période"
 
+msgid "Pairing your bank lines…"
+msgstr "Rapprochement de vos lignes bancaires…"
+
+msgid "Pairing your bank lines: {0} of {1}"
+msgstr "Rapprochement de vos lignes bancaires : {0} sur {1}"
+
 msgid "Number, party or amount"
 msgstr "Numéro, tiers ou montant"
 
