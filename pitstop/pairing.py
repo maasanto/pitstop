@@ -192,7 +192,14 @@ def creates_payment(document) -> bool:
 
 
 def settlement_proposals(line, candidates) -> list[dict]:
-	payments = {c.name: c for c in candidates or [] if c.doctype == "Payment Entry"}
+	candidates = candidates or []
+	# A label naming its payer is that payer's own transfer, never a batch other payers' receipts add up to
+	named = named_payers(candidates)
+	payments = {
+		c.name: c
+		for c in candidates
+		if c.doctype == "Payment Entry" and (not named or (c.party_type, c.party) in named)
+	}
 	receipts = [
 		Receipt(name, payment.signed_amount, getdate(payment.posting_date), payment.mode_of_payment)
 		for name, payment in payments.items()
@@ -218,6 +225,16 @@ def settlement_proposals(line, candidates) -> list[dict]:
 			},
 		}
 	]
+
+
+def named_payers(candidates) -> set[tuple]:
+	return {
+		(candidate.party_type, candidate.party)
+		for candidate in candidates
+		if any(
+			reason["signal"] == "name" and reason["exact"] for reason in candidate.get("match_reasons") or []
+		)
+	}
 
 
 def describe_settlement(settlement, documents) -> list[dict]:
