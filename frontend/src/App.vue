@@ -36,6 +36,9 @@ const period = ref([dayjs().subtract(89, "day").format("YYYY-MM-DD"), dayjs().fo
 const bankAccount = ref(null);
 const tab = ref("high");
 const showGuide = ref(!readStored("pitstop:guide-dismissed"));
+const isFullWidth = ref(readStored("pitstop:full-width") ?? true);
+watch(isFullWidth, (value) => writeStored("pitstop:full-width", value));
+const pageWidth = computed(() => (isFullWidth.value ? "" : "max-w-[1280px]"));
 
 const accounts = useCall({
 	url: "/api/v2/method/pitstop.api.get_bank_accounts",
@@ -559,7 +562,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 	<FrappeUIProvider>
 		<div class="min-h-screen bg-surface-base pb-32 text-ink-gray-8">
 			<header class="border-b border-outline-gray-1">
-				<div class="mx-auto flex max-w-[1280px] flex-wrap items-center gap-3 px-4 pb-3 pt-7 sm:px-8">
+				<div :class="pageWidth" class="mx-auto flex flex-wrap items-center gap-3 px-4 pb-3 pt-7 sm:px-8">
 					<h1 class="mr-4 text-4xl-semibold text-ink-gray-9">{{ __("Bank reconciliation") }}</h1>
 					<BankAccountPicker v-model="bankAccount" :accounts="accounts.data || []" />
 					<PeriodPicker v-model="period" :company="company" />
@@ -642,7 +645,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 								</div>
 							</div>
 						</Popover>
-						<AutoReconciliationSettings />
+						<AutoReconciliationSettings v-model:full-width="isFullWidth" />
 						<Button
 							variant="ghost"
 							icon="lucide-external-link"
@@ -652,7 +655,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 						/>
 					</div>
 				</div>
-				<nav class="mx-auto mt-2 flex max-w-[1280px] flex-wrap items-center justify-between gap-x-3 px-4 sm:px-8">
+				<nav :class="pageWidth" class="mx-auto mt-2 flex flex-wrap items-center justify-between gap-x-3 px-4 sm:px-8">
 					<TabButtons v-model="tab" type="underline" size="md" :options="tabOptions" />
 					<Button
 						variant="ghost"
@@ -663,7 +666,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 				</nav>
 			</header>
 
-			<main class="mx-auto max-w-[1280px] px-4 pt-8 sm:px-8">
+			<main :class="pageWidth" class="mx-auto px-4 pt-8 sm:px-8">
 				<ErrorMessage v-if="pairings.error" :message="pairings.error" class="mb-4" />
 				<LoadingText
 					v-if="tab !== 'reconciled' && pairings.loading"

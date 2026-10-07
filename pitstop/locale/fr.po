@@ -714,6 +714,12 @@ msgstr "Si activé, le rapprochement automatique s'exécutera toutes les heures 
 msgid "Settings"
 msgstr "Paramètres"
 
+msgid "Full width"
+msgstr "Pleine largeur"
+
+msgid "Use the whole width of the screen."
+msgstr "Utiliser toute la largeur de l'écran."
+
 msgid "Reconcile automatically every hour"
 msgstr "Rapprocher automatiquement toutes les heures"
 
