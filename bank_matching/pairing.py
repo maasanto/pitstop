@@ -7,6 +7,11 @@ settlement of several receipts, and a confidence level drawn from the scorer's o
 import frappe
 from erpnext.accounts.page.bank_reconciliation.bank_reconciliation import BankReconciliation
 from erpnext.accounts.page.bank_reconciliation.bank_transaction_match import BankTransactionMatch
+from erpnext.accounts.page.bank_reconciliation.multi_party_reconciliation import (
+	PROPOSE,
+	get_reconciliation_mode,
+	reconcile_multi_party_proposal,
+)
 from frappe import _
 from frappe.utils import flt, getdate
 
@@ -233,4 +238,9 @@ def reconcile(line, documents: list[dict]) -> None:
 		frappe.throw(
 			_("{0} is no longer open for reconciliation: reload the page").format(", ".join(missing))
 		)
-	BankReconciliation([line], [rows[name] for name in names]).reconcile()
+	selected = [rows[name] for name in names]
+	if get_reconciliation_mode(selected) == PROPOSE:
+		# Invoices of several parties: one payment each, the oldest due first
+		reconcile_multi_party_proposal(line.name, documents)
+	else:
+		BankReconciliation([line], selected).reconcile()
