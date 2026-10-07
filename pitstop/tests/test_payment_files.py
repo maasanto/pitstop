@@ -1,9 +1,15 @@
+import importlib
+from unittest.mock import patch
+
 import frappe
+from erpnext.accounts.doctype.bank_transaction import bank_reconciliation
 from erpnext.accounts.doctype.payment_order import test_payment_order_release as payment_orders
 from erpnext.accounts.doctype.payment_order.test_payment_order import create_test_bank_transaction
 from erpnext.accounts.doctype.sepa_direct_debit import test_sepa_direct_debit_collection as direct_debits
 from frappe.utils import flt
 
+import pitstop.api
+import pitstop.pairing
 from pitstop.api import get_pairings, reconcile_pairings, undo_pairings
 
 
@@ -42,6 +48,27 @@ class TestPaymentOrderProposals(payment_orders.PaymentOrderReleaseTestCase):
 		self.assertEqual(frappe.db.get_value("Payment Order", order.name, "status"), "Executed")
 		self.assertIn("cannot undo", undo(line, result)["error"])
 		self.assertEqual(frappe.db.get_value("Bank Transaction", line.name, "status"), "Reconciled")
+
+	def test_a_dokos_without_transfer_file_matching_still_lists_the_line(self):
+		"""Dokos before v5.18 has no get_matching_payment_order: the page loaded nothing at all on it."""
+		order, line = released_order_and_its_line(self)
+		self.addCleanup(reload_pitstop)
+		with patch.dict(bank_reconciliation.__dict__):
+			del bank_reconciliation.get_matching_payment_order
+			reload_pitstop()
+
+		pairings = pitstop.api.get_pairings(line.bank_account, str(line.date), str(line.date))["pairings"]
+
+		[pairing] = [pairing for pairing in pairings if pairing["line"]["name"] == line.name]
+		proposed = [
+			document["name"] for proposal in pairing["proposals"] for document in proposal["documents"]
+		]
+		self.assertNotIn(order.name, proposed)
+
+
+def reload_pitstop():
+	importlib.reload(pitstop.pairing)
+	importlib.reload(pitstop.api)
 
 
 class TestPaymentOrderWithoutTransitProposals(payment_orders.PaymentOrderReleaseTestCase):
