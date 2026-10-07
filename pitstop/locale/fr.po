@@ -191,6 +191,15 @@ msgstr "Le paiement est annulé, les factures qu'il réglait sont de nouveau ouv
 msgid "To check"
 msgstr "À vérifier"
 
+msgid "Every line here is pre-approved."
+msgstr "Toutes les lignes de cet onglet sont pré-approuvées."
+
+msgid "Nothing left here."
+msgstr "Plus rien à traiter ici."
+
+msgid "Next: {0}"
+msgstr "Suivant : {0}"
+
 msgid "Total less card fees"
 msgstr "Total moins les frais de carte"
 
