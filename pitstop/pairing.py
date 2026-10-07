@@ -9,10 +9,6 @@ from erpnext.accounts.doctype.bank_transaction.bank_reconciliation import (
 	get_matching_payment_order,
 	reconcile_from_payment_order,
 )
-from erpnext.accounts.doctype.sepa_direct_debit.services.settlement import (
-	get_matching_direct_debit,
-	reconcile_from_direct_debit,
-)
 from erpnext.accounts.page.bank_reconciliation.bank_reconciliation import BankReconciliation
 from erpnext.accounts.page.bank_reconciliation.bank_transaction_match import BankTransactionMatch
 from erpnext.accounts.page.bank_reconciliation.multi_party_reconciliation import (
@@ -36,8 +32,21 @@ INVOICE_TYPES = ("Sales Invoice", "Purchase Invoice", "Expense Claim")
 # (the one file of exactly the line's amount, how the line clears it, the file's date)
 PAYMENT_FILES = {
 	"Payment Order": (get_matching_payment_order, reconcile_from_payment_order, "posting_date"),
-	"Sepa Direct Debit": (get_matching_direct_debit, reconcile_from_direct_debit, "collection_date"),
 }
+try:
+	from erpnext.accounts.doctype.sepa_direct_debit.services.settlement import (
+		get_matching_direct_debit,
+		reconcile_from_direct_debit,
+	)
+
+	PAYMENT_FILES["Sepa Direct Debit"] = (
+		get_matching_direct_debit,
+		reconcile_from_direct_debit,
+		"collection_date",
+	)
+except ImportError:
+	# Dokos v5 collects direct debits without a file to clear: its deposits get no file proposal
+	pass
 LINE_FIELDS = [
 	"name",
 	"company",
@@ -92,6 +101,8 @@ def file_proposals(line) -> list[dict]:
 	erpnext only names a file whose total is exactly the line's amount and the only one to be.
 	"""
 	doctype = "Payment Order" if line.amount < 0 else "Sepa Direct Debit"
+	if doctype not in PAYMENT_FILES:
+		return []
 	find_file, _clear, date_field = PAYMENT_FILES[doctype]
 	name = find_file(line.name)
 	if not name:
