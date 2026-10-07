@@ -2,7 +2,6 @@
 import {
 	Alert,
 	Button,
-	Dropdown,
 	ErrorMessage,
 	FrappeUIProvider,
 	KeyboardShortcut,
@@ -29,7 +28,8 @@ import ReconciledTab from "./components/ReconciledTab.vue";
 import RuleDialog from "./components/RuleDialog.vue";
 import RuleOffers from "./components/RuleOffers.vue";
 import SearchDialog from "./components/SearchDialog.vue";
-import { DOCUMENT_TYPES, descriptionText, formatDate, formatMoney, formatPercent } from "./format";
+import UnmatchedMatcher from "./components/UnmatchedMatcher.vue";
+import { DOCUMENT_TYPES, descriptionText, formatMoney, formatPercent } from "./format";
 import { readStored, writeStored } from "./storage";
 import { __, _n } from "./translation";
 
@@ -439,25 +439,6 @@ function unmatchedActions(pairing) {
 	];
 }
 
-// A line without a lead and a line whose leads were all refused call for different actions
-const unmatchedGroups = computed(() =>
-	[
-		{
-			key: "refused",
-			title: () => __("Leads you refused"),
-			hint: () => __("Dokos had a lead for these lines and you refused it. Restore it, or pick another document."),
-			pairings: unmatched.value.filter((pairing) => pairing.proposals.length),
-		},
-		{
-			key: "empty",
-			title: () => __("Nothing convincing"),
-			hint: () =>
-				__("Dokos found nothing convincing for these lines. Search a document, or record what the money is."),
-			pairings: unmatched.value.filter((pairing) => !pairing.proposals.length),
-		},
-	].filter((group) => group.pairings.length),
-);
-
 function leadLabel(proposal) {
 	if (proposal.rule) return proposal.rule.rule_name;
 	if (proposal.settlement) return __("{0} payments settled at once", [proposal.documents.length]);
@@ -777,59 +758,21 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 						<Skeleton v-for="index in proposed.length ? 2 : 4" :key="index" class="h-20 w-full rounded-6" />
 					</div>
 
-					<section v-for="group in unmatchedGroups" :key="group.key" class="mb-14">
+					<section v-if="unmatched.length" class="mb-14">
 						<h2 class="text-2xl-semibold text-ink-gray-9">
-							{{ group.title() }}
-							<span class="ml-1.5 text-lg text-ink-gray-4">{{ group.pairings.length }}</span>
+							{{ __("Without proposal") }}
+							<span class="ml-1.5 text-lg text-ink-gray-4">{{ unmatched.length }}</span>
 						</h2>
-						<p class="mb-4 mt-2 text-p-base text-ink-gray-5">{{ group.hint() }}</p>
-						<div class="divide-y divide-outline-gray-1 border-y border-outline-gray-1">
-							<div
-								v-for="pairing in group.pairings"
-								:key="pairing.line.name"
-								class="flex flex-wrap items-center gap-x-5 gap-y-2 py-4"
-							>
-								<div class="w-24 shrink-0 text-sm text-ink-gray-5">{{ formatDate(pairing.line.date) }}</div>
-								<div class="min-w-0 flex-1 basis-60">
-									<div class="truncate text-base-medium text-ink-gray-9">{{ descriptionText(pairing.line.description) }}</div>
-									<div
-										v-if="group.key === 'refused'"
-										class="mt-1 flex items-center gap-1 text-sm text-ink-gray-5"
-									>
-										<span class="lucide-thumbs-down size-3.5 shrink-0" aria-hidden="true" />
-										<span class="truncate">{{
-											__("Refused: {0}", [leadLabel(pairing.proposals[0])])
-										}}</span>
-										<Button
-											class="ml-1 shrink-0"
-											variant="ghost"
-											size="xs"
-											icon-left="lucide-undo-2"
-											:label="__('Restore')"
-											@click="restoreLeads(pairing)"
-										/>
-									</div>
-								</div>
-								<div class="w-28 shrink-0 text-right text-base-semibold tabular-nums text-ink-gray-9">
-									{{ formatMoney(pairing.line.amount, pairing.line.currency) }}
-								</div>
-								<Button
-									icon-left="lucide-search"
-									:label="__('Search a document')"
-									@click="openSearch(pairing)"
-								/>
-								<Dropdown align="end" :options="unmatchedActions(pairing)">
-									<template #trigger="{ open }">
-										<Button
-											variant="ghost"
-											icon="lucide-ellipsis"
-											:active="open"
-											:label="__('More actions')"
-										/>
-									</template>
-								</Dropdown>
-							</div>
-						</div>
+						<p class="mb-4 mt-2 text-p-base text-ink-gray-5">
+							{{ __("Pick a line, then the document it pays. Or record what the money is from its menu.") }}
+						</p>
+						<UnmatchedMatcher
+							:pairings="unmatched"
+							:actions-for="unmatchedActions"
+							@choose="choose"
+							@preview="showPreview"
+							@restore="restoreLeads"
+						/>
 					</section>
 				</template>
 

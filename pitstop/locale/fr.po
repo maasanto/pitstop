@@ -83,6 +83,21 @@ msgstr "Ligne suivante"
 msgid "No open document matches"
 msgstr "Aucun document ouvert ne correspond"
 
+msgid "Leads refused"
+msgstr "Pistes refusées"
+
+msgid "Show only exact amount"
+msgstr "Montant exact uniquement"
+
+msgid "Documents to show"
+msgstr "Documents à afficher"
+
+msgid "Turn on a document type to see its open documents"
+msgstr "Activez un type de document pour voir ses documents ouverts"
+
+msgid "Pick a line, then the document it pays. Or record what the money is from its menu."
+msgstr "Choisissez une ligne, puis le document qu'elle règle. Ou indiquez d'où vient l'argent depuis son menu."
+
 msgid "No reconciled line over this period"
 msgstr "Aucune ligne rapprochée sur cette période"
 
