@@ -11,7 +11,7 @@ const props = defineProps({
 
 const HINTS = {
 	exact: { icon: "lucide-check", color: "bg-surface-green-7 text-ink-green-1" },
-	approximate: { icon: "lucide-minus", color: "bg-surface-amber-7 text-ink-amber-1" },
+	approximate: { icon: "lucide-equal-approximately", color: "bg-surface-amber-7 text-ink-amber-1" },
 	// Evidence against the value, muted: it explains a demotion, it does not alarm
 	against: { icon: "lucide-arrow-down", color: "bg-surface-gray-3 text-ink-gray-6" },
 };
@@ -29,7 +29,7 @@ const description = computed(() =>
 	<Tooltip v-if="state" :text="description">
 		<span
 			v-if="state === 'missing'"
-			class="lucide-circle-x size-4 shrink-0 text-ink-gray-4"
+			class="lucide-circle-x size-4 shrink-0 text-ink-red-6"
 			role="img"
 			:aria-label="description"
 		/>
