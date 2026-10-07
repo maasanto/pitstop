@@ -4,6 +4,7 @@ import frappe
 from erpnext.accounts.doctype.bank_reconciliation_tool.bank_reconciliation_tool import (
 	create_bulk_bank_entry_and_reconcile,
 )
+from erpnext.accounts.doctype.bank_transaction.bank_transaction import PENDING_STATUS
 from erpnext.tests.utils import ERPNextTestSuite
 
 from bank_matching.api import (
@@ -120,7 +121,7 @@ class TestPairings(ERPNextTestSuite):
 		payment.submit()
 		return payment
 
-	def create_line(self, amount, description, iban=None):
+	def create_line(self, amount, description, iban=None, status=None):
 		"""A positive amount is money in."""
 		return (
 			frappe.get_doc(
@@ -133,6 +134,7 @@ class TestPairings(ERPNextTestSuite):
 					"currency": "INR",
 					"description": description,
 					"bank_party_iban": iban,
+					"status": status,
 				}
 			)
 			.insert()
@@ -352,6 +354,20 @@ class TestPairings(ERPNextTestSuite):
 		self.assertEqual(
 			frappe.db.get_value("Bank Transaction", late_line.name, "unallocated_amount"), 321.09
 		)
+
+	def test_a_line_the_bank_only_announced_is_neither_listed_nor_reconciled(self):
+		invoice = self.create_invoice(654.32)
+		pending = self.create_line(654.32, f"VIR JOHN DOE {invoice.name}", status=PENDING_STATUS)
+		documents = [{"doctype": "Sales Invoice", "name": invoice.name}]
+
+		self.assertNotIn(pending.name, [p["line"]["name"] for p in self.get_pairings()["pairings"]])
+		with self.set_user(ACCOUNTANT):
+			found = get_lines_for_document("Sales Invoice", invoice.name)["lines"]
+			[result] = reconcile_pairings([{"bank_transaction": pending.name, "documents": documents}])
+
+		self.assertNotIn(pending.name, [match["line"]["name"] for match in found])
+		self.assertIn("only announced", result["error"])
+		self.assertEqual(frappe.db.get_value("Sales Invoice", invoice.name, "outstanding_amount"), 654.32)
 
 	def test_a_label_always_booked_on_one_account_is_offered_as_a_rule(self):
 		account = self.expense_accounts()[0]
