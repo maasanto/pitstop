@@ -1,8 +1,9 @@
 <script setup>
 import { Button, Dropdown, KeyboardShortcut, Tooltip } from "frappe-ui";
 import { computed } from "vue";
-import { descriptionText, formatDate, formatMoney } from "../format";
+import { descriptionText, formatMoney } from "../format";
 import { __ } from "../translation";
+import DateLabel from "./DateLabel.vue";
 import DocumentCard from "./DocumentCard.vue";
 import MatchHint from "./MatchHint.vue";
 
@@ -79,7 +80,7 @@ function toggleUnlessSelecting() {
 					class="size-4 shrink-0"
 					aria-hidden="true"
 				/>
-				{{ formatDate(line.date) }}
+				<DateLabel :date="line.date" />
 				<span v-if="line.bank_party_name" class="truncate">· {{ line.bank_party_name }}</span>
 			</div>
 		</div>

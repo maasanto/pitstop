@@ -1,8 +1,9 @@
 <script setup>
 import { Button } from "frappe-ui";
 import { computed } from "vue";
-import { deskUrl, formatDate, formatMoney } from "../format";
+import { deskUrl, formatMoney } from "../format";
 import { __ } from "../translation";
+import DateLabel from "./DateLabel.vue";
 import DocumentTypeIcon from "./DocumentTypeIcon.vue";
 import MatchHint from "./MatchHint.vue";
 
@@ -23,16 +24,8 @@ const gap = computed(() =>
 const party = computed(() => props.document.party_name || props.document.party);
 // Who the money is from or to is what the user recognizes first; a journal entry has only its reference
 const title = computed(() => party.value || props.document.reference || __(props.document.doctype));
-const details = computed(() =>
-	[
-		party.value && props.document.reference,
-		props.document.due_date
-			? __("due {0}", [formatDate(props.document.due_date)])
-			: formatDate(props.document.posting_date),
-	]
-		.filter(Boolean)
-		.join(" · "),
-);
+// Without a party the reference is already the title
+const reference = computed(() => party.value && props.document.reference);
 const reasonsAbout = (...signals) =>
 	props.document.reasons.filter((reason) => signals.includes(reason.signal));
 </script>
@@ -47,7 +40,8 @@ const reasonsAbout = (...signals) =>
 			@click.stop
 			>{{ document.name }}</a
 		>
-		<span class="truncate text-ink-gray-5">· {{ party }} · {{ formatDate(document.posting_date) }}</span>
+		<DateLabel :date="document.posting_date" />
+		<span class="truncate text-ink-gray-5">· {{ party }}</span>
 		<Button
 			variant="ghost"
 			size="sm"
@@ -90,7 +84,8 @@ const reasonsAbout = (...signals) =>
 					>{{ document.name }}</a
 				>
 				<MatchHint :reasons="reasonsAbout('reference')" :missing="__('Number not in the label')" />
-				<span v-if="details" class="truncate">· {{ details }}</span>
+				<DateLabel :date="document.posting_date" />
+				<span v-if="reference" class="truncate">· {{ reference }}</span>
 				<slot name="note" />
 				<span
 					v-if="gap"
