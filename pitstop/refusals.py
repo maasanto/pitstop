@@ -6,7 +6,7 @@ also tells the matcher which party lines from that counterparty are not (see `ra
 
 import frappe
 
-from bank_matching.ranking import get_document_parties
+from pitstop.ranking import get_document_parties
 
 
 def get_refused(line_names: list[str]) -> dict[str, list[str]]:

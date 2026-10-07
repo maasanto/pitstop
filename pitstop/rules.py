@@ -25,7 +25,7 @@ from frappe import _
 from frappe.utils import add_days, flt, getdate
 from frappe.utils.caching import request_cache
 
-from bank_matching.ranking import LOOK_BACK_DAYS
+from pitstop.ranking import LOOK_BACK_DAYS
 
 # Booked on one same account this many times, a recurring label is worth a rule
 MIN_BOOKINGS_FOR_A_RULE = 2

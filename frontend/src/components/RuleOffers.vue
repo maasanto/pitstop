@@ -15,7 +15,7 @@ const offerId = (offer) => `${offer.transaction_type}:${offer.key}`;
 async function answer(offer, method, message) {
 	answering.value = offerId(offer);
 	try {
-		await call(`bank_matching.api.${method}`, {
+		await call(`pitstop.api.${method}`, {
 			bank_account: props.bankAccount,
 			key: offer.key,
 			transaction_type: offer.transaction_type,

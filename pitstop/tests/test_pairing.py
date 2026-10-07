@@ -7,7 +7,7 @@ from erpnext.accounts.doctype.bank_reconciliation_tool.bank_reconciliation_tool 
 from erpnext.accounts.doctype.bank_transaction.bank_transaction import PENDING_STATUS
 from erpnext.tests.utils import ERPNextTestSuite
 
-from bank_matching.api import (
+from pitstop.api import (
 	accept_rule_offer,
 	create_rule,
 	decline_rule_offer,
@@ -16,11 +16,11 @@ from bank_matching.api import (
 	set_refused_proposals,
 	undo_pairings,
 )
-from bank_matching.lookup import get_lines_for_document, reconcile_document
+from pitstop.lookup import get_lines_for_document, reconcile_document
 
 PAYMENT_DATE = date(2026, 9, 15)
 COMPANY = "_Test Company"
-ACCOUNTANT = "bank-matching-accountant@example.com"
+ACCOUNTANT = "pitstop-accountant@example.com"
 
 
 class TestPairings(ERPNextTestSuite):

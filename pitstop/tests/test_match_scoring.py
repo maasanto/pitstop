@@ -5,7 +5,7 @@ from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_ent
 from erpnext.accounts.page.bank_reconciliation.bank_transaction_match import BankTransactionMatch
 from erpnext.tests.utils import ERPNextTestSuite
 
-from bank_matching.match_scoring import (
+from pitstop.match_scoring import (
 	ONE_TYPO,
 	YEAR_AND_COUNTER,
 	PastLine,
@@ -21,7 +21,7 @@ from bank_matching.match_scoring import (
 	shared_accounts,
 	similar_line_parties,
 )
-from bank_matching.ranking import SuggestionRanking, payer
+from pitstop.ranking import SuggestionRanking, payer
 
 PAYMENT_DATE = date(2026, 9, 15)
 INVOICES = [

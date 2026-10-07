@@ -6,7 +6,7 @@ from erpnext.accounts.doctype.bank_transaction.bank_transaction import (
 from frappe import _
 from frappe.utils import add_months, cint, flt, get_first_day, getdate, nowdate
 
-from bank_matching.pairing import (
+from pitstop.pairing import (
 	LINE_FIELDS,
 	PAYMENT_FILES,
 	as_matchable,
@@ -14,9 +14,9 @@ from bank_matching.pairing import (
 	reconcile,
 	search_documents,
 )
-from bank_matching.refusals import get_refused, set_refused
-from bank_matching.rules import ACCEPTED, REJECTED, answer_rule_offer, apply_rule, rule_offers
-from bank_matching.rules import create_rule as create_bank_rule
+from pitstop.refusals import get_refused, set_refused
+from pitstop.rules import ACCEPTED, REJECTED, answer_rule_offer, apply_rule, rule_offers
+from pitstop.rules import create_rule as create_bank_rule
 
 PARTY_TYPES = ("Payable", "Receivable")
 
@@ -83,7 +83,7 @@ def reconcile_pairings(pairings: list[dict]) -> list[dict]:
 	results = []
 	for index, pairing in enumerate(pairings):
 		name = pairing["bank_transaction"]
-		savepoint = f"bank_matching_pairing_{index}"
+		savepoint = f"pitstop_pairing_{index}"
 		frappe.db.savepoint(savepoint)
 		try:
 			line = get_line(name, "write")
@@ -124,7 +124,7 @@ def undo_pairings(pairings: list[dict]) -> list[dict]:
 	results = []
 	for index, pairing in enumerate(pairings):
 		name = pairing["bank_transaction"]
-		savepoint = f"bank_matching_undo_{index}"
+		savepoint = f"pitstop_undo_{index}"
 		frappe.db.savepoint(savepoint)
 		try:
 			undo_pairing(name, {(v["doctype"], v["name"]) for v in pairing.get("created") or []})

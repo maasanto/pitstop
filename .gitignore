@@ -3,7 +3,7 @@ __pycache__/
 *.egg-info/
 node_modules/
 .DS_Store
-bank_matching/public/frontend/
-bank_matching/www/bank-matching.html
+pitstop/public/frontend/
+pitstop/www/pitstop.html
 frontend/auto-imports.d.ts
 frontend/components.d.ts

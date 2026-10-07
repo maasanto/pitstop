@@ -2,7 +2,7 @@
  "actions": [],
  "autoname": "hash",
  "creation": "2026-10-06 16:00:00.000000",
- "description": "A lead the user refused for a bank line on the bank matching page",
+ "description": "A lead the user refused for a bank line on the Pitstop page",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -47,9 +47,9 @@
  ],
  "in_create": 1,
  "links": [],
- "modified": "2026-10-06 16:00:00.000000",
+ "modified": "2026-10-07 20:00:00.000000",
  "modified_by": "Administrator",
- "module": "Bank Matching",
+ "module": "Pitstop",
  "name": "Bank Match Refusal",
  "owner": "Administrator",
  "permissions": [

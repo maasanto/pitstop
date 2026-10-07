@@ -4,7 +4,7 @@ from erpnext.accounts.doctype.payment_order.test_payment_order import create_tes
 from erpnext.accounts.doctype.sepa_direct_debit import test_sepa_direct_debit_collection as direct_debits
 from frappe.utils import flt
 
-from bank_matching.api import get_pairings, reconcile_pairings, undo_pairings
+from pitstop.api import get_pairings, reconcile_pairings, undo_pairings
 
 
 def best_proposal(line):

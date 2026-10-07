@@ -13,7 +13,7 @@ from erpnext.accounts.page.bank_reconciliation.bank_transaction_match import (
 from frappe import _
 from frappe.utils import add_days, flt, getdate
 
-from bank_matching.match_scoring import (
+from pitstop.match_scoring import (
 	PRESELECT_LEAD,
 	PRESELECT_THRESHOLD,
 	SHOW_THRESHOLD,

@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Bank Matching VERSION\n"
+"Project-Id-Version: Pitstop VERSION\n"
 "Report-Msgid-Bugs-To: antoine.maas@gmail.com\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -524,7 +524,7 @@ msgstr "Reconnu d'après les paiements passés"
 msgid "Bank Match Refusal"
 msgstr "Refus de rapprochement"
 
-msgid "A lead the user refused for a bank line on the bank matching page"
+msgid "A lead the user refused for a bank line on the Pitstop page"
 msgstr "Une piste refusée pour une ligne bancaire sur la page de rapprochement"
 
 msgid "Proposal"

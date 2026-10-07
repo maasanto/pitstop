@@ -1,11 +1,11 @@
-# Translations template for Bank Matching.
+# Translations template for Pitstop.
 # Copyright (C) 2026 Antoine Maas
-# This file is distributed under the same license as the Bank Matching project.
+# This file is distributed under the same license as the Pitstop project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Bank Matching VERSION\n"
+"Project-Id-Version: Pitstop VERSION\n"
 "Report-Msgid-Bugs-To: antoine.maas@gmail.com\n"
 "POT-Creation-Date: 2026-10-05 11:58+0009\n"
 "PO-Revision-Date: 2026-10-05 11:58+0009\n"
@@ -36,7 +36,7 @@ msgstr ""
 msgid "1. Check each pairing: the icons say what matched. 2. Click a line to pre-approve it. 3. Validate them all at once; invoices get their payment created."
 msgstr ""
 
-#: bank_matching/pairing.py:213
+#: pitstop/pairing.py:213
 msgid "A bank line is reconciled with documents of a single type, got {0}"
 msgstr ""
 
@@ -49,7 +49,7 @@ msgstr ""
 msgid "Back"
 msgstr ""
 
-#: bank_matching/api.py:116
+#: pitstop/api.py:116
 msgid "Bank Transaction {0} is not submitted"
 msgstr ""
 
@@ -74,7 +74,7 @@ msgstr ""
 msgid "Clear selection"
 msgstr ""
 
-#: bank_matching/pairing.py:141
+#: pitstop/pairing.py:141
 msgid "Consecutive payments"
 msgstr ""
 
@@ -219,7 +219,7 @@ msgstr ""
 msgid "Review without the mouse"
 msgstr ""
 
-#: bank_matching/pairing.py:141
+#: pitstop/pairing.py:141
 msgid "Same days, same mode of payment"
 msgstr ""
 
@@ -259,11 +259,11 @@ msgstr ""
 msgid "To check"
 msgstr ""
 
-#: bank_matching/pairing.py:136
+#: pitstop/pairing.py:136
 msgid "Total less card fees"
 msgstr ""
 
-#: bank_matching/pairing.py:136
+#: pitstop/pairing.py:136
 msgid "Total of the payments"
 msgstr ""
 
@@ -301,7 +301,7 @@ msgstr ""
 msgid "Without proposal"
 msgstr ""
 
-#: bank_matching/www/bank_matching.py:10
+#: pitstop/www/pitstop.py:10
 msgid "You need read access to Bank Transactions to reconcile them"
 msgstr ""
 
@@ -317,7 +317,7 @@ msgstr ""
 msgid "{0} cancelled"
 msgstr ""
 
-#: bank_matching/pairing.py:223
+#: pitstop/pairing.py:223
 msgid "{0} is no longer open for reconciliation: reload the page"
 msgstr ""
 

@@ -33,22 +33,22 @@ import { __, _n } from "./translation";
 const period = ref([dayjs().subtract(89, "day").format("YYYY-MM-DD"), dayjs().format("YYYY-MM-DD")]);
 const bankAccount = ref(null);
 const tab = ref("proposals");
-const showGuide = ref(!readStored("bank_matching:guide-dismissed"));
+const showGuide = ref(!readStored("pitstop:guide-dismissed"));
 
 const accounts = useCall({
-	url: "/api/v2/method/bank_matching.api.get_bank_accounts",
+	url: "/api/v2/method/pitstop.api.get_bank_accounts",
 	onSuccess: (rows) => {
-		const remembered = rows.find((account) => account.name === readStored("bank_matching:bank-account"));
+		const remembered = rows.find((account) => account.name === readStored("pitstop:bank-account"));
 		bankAccount.value ||= (remembered || rows[0])?.name;
 	},
 });
 const company = computed(
 	() => (accounts.data || []).find((account) => account.name === bankAccount.value)?.company,
 );
-watch(bankAccount, (account) => account && writeStored("bank_matching:bank-account", account));
+watch(bankAccount, (account) => account && writeStored("pitstop:bank-account", account));
 
 const pairings = useCall({
-	url: "/api/v2/method/bank_matching.api.get_pairings",
+	url: "/api/v2/method/pitstop.api.get_pairings",
 	immediate: false,
 	params: () => ({ bank_account: bankAccount.value, from_date: period.value[0], to_date: period.value[1] }),
 	onSuccess: restoreReview,
@@ -176,7 +176,7 @@ const refusalSaves = {};
 function saveRefusals(name) {
 	const proposals = [...(refused[name] || [])];
 	refusalSaves[name] = (refusalSaves[name] || Promise.resolve())
-		.then(() => call("bank_matching.api.set_refused_proposals", { bank_transaction: name, proposals }))
+		.then(() => call("pitstop.api.set_refused_proposals", { bank_transaction: name, proposals }))
 		.catch((error) => toast.error(error.messages?.[0] || error.message));
 }
 
@@ -205,7 +205,7 @@ function approveAll(section) {
 	saveReview();
 }
 
-const storageKey = (kind) => `bank_matching:${kind}:${bankAccount.value}`;
+const storageKey = (kind) => `pitstop:${kind}:${bankAccount.value}`;
 
 // Pre-approvals live in this browser only, until validated: a reload keeps them, a colleague does not see
 // them. Lines outside the period on screen keep what was stored for them.
@@ -252,7 +252,7 @@ const progress = computed(() =>
 );
 
 const reconcile = useCall({
-	url: "/api/v2/method/bank_matching.api.reconcile_pairings",
+	url: "/api/v2/method/pitstop.api.reconcile_pairings",
 	method: "POST",
 	immediate: false,
 });
@@ -298,7 +298,7 @@ async function validate() {
 }
 
 const undoCall = useCall({
-	url: "/api/v2/method/bank_matching.api.undo_pairings",
+	url: "/api/v2/method/pitstop.api.undo_pairings",
 	method: "POST",
 	immediate: false,
 });
@@ -324,7 +324,7 @@ async function undo(results, keys) {
 }
 
 const monthlyProgress = useCall({
-	url: "/api/v2/method/bank_matching.api.get_progress",
+	url: "/api/v2/method/pitstop.api.get_progress",
 	immediate: false,
 	params: () => ({ bank_account: bankAccount.value }),
 });
@@ -363,7 +363,7 @@ function openRule(pairing) {
 	rule.open = true;
 }
 
-// The other way round, from a document; /bank-matching?doctype=…&name=… opens it on that document
+// The other way round, from a document; /pitstop?doctype=…&name=… opens it on that document
 const urlParams = new URLSearchParams(window.location.search);
 const lookup = reactive({ open: false, doctype: urlParams.get("doctype"), name: urlParams.get("name") });
 // The dialog animates in only from closed, so it opens once the page is there
@@ -438,7 +438,7 @@ function newPaymentUrl(line) {
 
 function dismissGuide() {
 	showGuide.value = false;
-	writeStored("bank_matching:guide-dismissed", true);
+	writeStored("pitstop:guide-dismissed", true);
 }
 
 // Keyboard review: the list is a queue the user walks through without the mouse

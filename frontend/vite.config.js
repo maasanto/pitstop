@@ -5,10 +5,10 @@ import { defineConfig } from "vite";
 export default defineConfig({
 	plugins: [
 		frappeui({
-			frontendRoute: "/bank-matching",
+			frontendRoute: "/pitstop",
 			buildConfig: {
-				outDir: "../bank_matching/public/frontend",
-				indexHtmlPath: "../bank_matching/www/bank-matching.html",
+				outDir: "../pitstop/public/frontend",
+				indexHtmlPath: "../pitstop/www/pitstop.html",
 			},
 		}),
 		vue(),

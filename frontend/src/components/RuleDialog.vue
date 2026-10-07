@@ -13,7 +13,7 @@ const contains = ref("");
 const account = ref(null);
 
 const accounts = useCall({
-	url: "/api/v2/method/bank_matching.api.get_bookable_accounts",
+	url: "/api/v2/method/pitstop.api.get_bookable_accounts",
 	immediate: false,
 	params: () => ({ bank_transaction: props.line?.name }),
 });
@@ -22,7 +22,7 @@ const accountOptions = computed(() =>
 );
 
 const create = useCall({
-	url: "/api/v2/method/bank_matching.api.create_rule",
+	url: "/api/v2/method/pitstop.api.create_rule",
 	method: "POST",
 	immediate: false,
 });

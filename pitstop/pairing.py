@@ -23,9 +23,9 @@ from erpnext.accounts.page.bank_reconciliation.multi_party_reconciliation import
 from frappe import _
 from frappe.utils import flt, getdate
 
-from bank_matching.match_scoring import PRESELECT_THRESHOLD, Receipt, settlement_batches
-from bank_matching.ranking import EXTRA_NUMBER_FIELD, SuggestionRanking, proposal_key
-from bank_matching.rules import matching_rule, rule_proposal
+from pitstop.match_scoring import PRESELECT_THRESHOLD, Receipt, settlement_batches
+from pitstop.ranking import EXTRA_NUMBER_FIELD, SuggestionRanking, proposal_key
+from pitstop.rules import matching_rule, rule_proposal
 
 LEVELS = ("high", "medium", "low")
 # Beyond five leads the user searches rather than refuses one by one

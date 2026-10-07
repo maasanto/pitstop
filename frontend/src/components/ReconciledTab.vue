@@ -11,7 +11,7 @@ const props = defineProps({
 const emit = defineEmits(["changed"]);
 
 const lines = useCall({
-	url: "/api/v2/method/bank_matching.api.get_reconciled_lines",
+	url: "/api/v2/method/pitstop.api.get_reconciled_lines",
 	params: () => ({ bank_account: props.bankAccount, from_date: props.period[0], to_date: props.period[1] }),
 	refetch: true,
 });

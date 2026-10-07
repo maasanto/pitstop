@@ -13,8 +13,8 @@ from erpnext.accounts.page.bank_reconciliation.bank_transaction_match import (
 from frappe import _
 from frappe.utils import add_days, flt, getdate, today
 
-from bank_matching.api import BOOKED_LINES, get_line
-from bank_matching.pairing import (
+from pitstop.api import BOOKED_LINES, get_line
+from pitstop.pairing import (
 	LINE_FIELDS,
 	as_matchable,
 	describe_document,
@@ -22,7 +22,7 @@ from bank_matching.pairing import (
 	document_proposal,
 	reconcile,
 )
-from bank_matching.ranking import LOOK_BACK_DAYS, SuggestionRanking
+from pitstop.ranking import LOOK_BACK_DAYS, SuggestionRanking
 
 DOCUMENT_TYPES = ("Sales Invoice", "Purchase Invoice", "Payment Entry")
 # ponytail: each scored line costs about 10 ms, so 60 lines keep the dialog under a second; a document

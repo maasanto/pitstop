@@ -17,7 +17,7 @@ const emit = defineEmits(["choose", "preview"]);
 
 const query = ref("");
 const results = useCall({
-	url: "/api/v2/method/bank_matching.api.search",
+	url: "/api/v2/method/pitstop.api.search",
 	immediate: false,
 	params: () => ({ bank_transaction: props.line?.name, query: query.value }),
 });

@@ -1,7 +1,7 @@
-// From an open invoice or payment, the bank lines it may have been paid by, scored as on /bank-matching.
+// From an open invoice or payment, the bank lines it may have been paid by, scored as on /pitstop.
 // The file is loaded once per doctype it is hooked on: register the handlers a single time.
-if (!frappe.bank_matching_find_line) {
-	frappe.bank_matching_find_line = true;
+if (!frappe.pitstop_find_line) {
+	frappe.pitstop_find_line = true;
 	["Sales Invoice", "Purchase Invoice", "Payment Entry"].forEach((doctype) =>
 		frappe.ui.form.on(doctype, { refresh: add_find_bank_line_button }),
 	);
@@ -31,7 +31,7 @@ function show_bank_lines(frm) {
 	dialog.show();
 
 	frappe
-		.call("bank_matching.lookup.get_lines_for_document", { doctype: frm.doc.doctype, name: frm.doc.name })
+		.call("pitstop.lookup.get_lines_for_document", { doctype: frm.doc.doctype, name: frm.doc.name })
 		.then(({ message }) => {
 			wrapper.html(render_lines(message.lines, frm));
 			wrapper.on("click", "[data-bank-transaction]", (event) =>
@@ -42,7 +42,7 @@ function show_bank_lines(frm) {
 
 function render_lines(lines, frm) {
 	const query = new URLSearchParams({ doctype: frm.doc.doctype, name: frm.doc.name });
-	const page_link = `<p class="mt-3"><a href="/bank-matching?${query}" target="_blank">${__(
+	const page_link = `<p class="mt-3"><a href="/pitstop?${query}" target="_blank">${__(
 		"Open the reconciliation page",
 	)}</a></p>`;
 	if (!lines.length) {
@@ -76,7 +76,7 @@ function render_line({ line, proposal }) {
 function reconcile(frm, dialog, bank_transaction) {
 	frappe
 		.call({
-			method: "bank_matching.lookup.reconcile_document",
+			method: "pitstop.lookup.reconcile_document",
 			args: { doctype: frm.doc.doctype, name: frm.doc.name, bank_transaction },
 			freeze: true,
 		})

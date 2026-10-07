@@ -1,5 +1,5 @@
 [project]
-name = "bank_matching"
+name = "pitstop"
 authors = [
     { name = "Antoine Maas", email = "antoine.maas@gmail.com"}
 ]

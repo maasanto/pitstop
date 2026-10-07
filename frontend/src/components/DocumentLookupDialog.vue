@@ -18,17 +18,17 @@ const query = ref("");
 const document = ref(null);
 
 const documents = useCall({
-	url: "/api/v2/method/bank_matching.lookup.search_open_documents",
+	url: "/api/v2/method/pitstop.lookup.search_open_documents",
 	immediate: false,
 	params: () => ({ query: query.value }),
 });
 const lines = useCall({
-	url: "/api/v2/method/bank_matching.lookup.get_lines_for_document",
+	url: "/api/v2/method/pitstop.lookup.get_lines_for_document",
 	immediate: false,
 	params: () => ({ doctype: document.value?.doctype, name: document.value?.name }),
 });
 const reconcile = useCall({
-	url: "/api/v2/method/bank_matching.lookup.reconcile_document",
+	url: "/api/v2/method/pitstop.lookup.reconcile_document",
 	method: "POST",
 	immediate: false,
 });

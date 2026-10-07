@@ -1,6 +1,6 @@
-# Bank Matching
+# Pitstop
 
-Prototype of a bank reconciliation page at `/bank-matching` that opens on the pairings Dokos already found:
+Prototype of a bank reconciliation page at `/pitstop` that opens on the pairings Dokos already found:
 each unreconciled bank line comes with its best document, a confidence level and the signals behind it.
 One click pre-approves a pairing, one more validates every pre-approved pairing.
 
@@ -15,5 +15,5 @@ yarn install
 yarn build
 ```
 
-`bench build --app bank_matching` runs the same build. `yarn dev` serves the page with hot reload against
+`bench build --app pitstop` runs the same build. `yarn dev` serves the page with hot reload against
 the bench's `webserver_port`, or `FRAPPE_WEB_SERVER_PORT` when set.

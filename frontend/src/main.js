@@ -6,7 +6,7 @@ import { __, loadTranslations } from "./translation";
 
 // frappe-ui's Button and Tabs expect a router; the page itself has a single route
 const router = createRouter({
-	history: createWebHistory("/bank-matching"),
+	history: createWebHistory("/pitstop"),
 	routes: [{ path: "/:pathMatch(.*)*", component: { render: () => null } }],
 });
 
