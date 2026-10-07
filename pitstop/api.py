@@ -75,8 +75,12 @@ def set_refused_proposals(bank_transaction: str, proposals: list[str]) -> None:
 
 
 @frappe.whitelist()
-def search(bank_transaction: str, query: str = "") -> list[dict]:
-	return search_documents(get_line(bank_transaction, "read"), query, SEARCH_LIMIT)
+def search(
+	bank_transaction: str, query: str = "", doctypes: list[str] | None = None, exact_amount: bool = False
+) -> list[dict]:
+	return search_documents(
+		get_line(bank_transaction, "read"), query, SEARCH_LIMIT, doctypes, bool(cint(exact_amount))
+	)
 
 
 @frappe.whitelist(methods=["POST"])

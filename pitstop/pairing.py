@@ -292,14 +292,23 @@ def document_reference(document) -> str | None:
 	return document.get(EXTRA_NUMBER_FIELD.get(document.doctype, "")) or None
 
 
-def search_documents(line, query: str, limit: int) -> list[dict]:
-	"""Open documents of every type matching the query, the scorer's favourites first."""
+def search_documents(
+	line, query: str, limit: int, doctypes: list[str] | None = None, exact_amount: bool = False
+) -> list[dict]:
+	"""Open documents matching the query, the scorer's favourites first; the filters apply before the limit,
+	so a narrowed search still fills its page."""
 	ranking = SuggestionRanking(BankTransactionMatch([line], None))
 	ranking.rank()
 	query = (query or "").strip().lower()
 	matches = [
 		candidate
 		for candidate in ranking.candidates
+		if (not doctypes or candidate.doctype in doctypes)
+		and (not exact_amount or abs(abs(flt(candidate.signed_amount)) - abs(flt(line.amount))) < 0.005)
+	]
+	matches = [
+		candidate
+		for candidate in matches
 		if not query
 		or any(
 			query in str(value or "").lower()
