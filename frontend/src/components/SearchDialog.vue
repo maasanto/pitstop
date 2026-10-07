@@ -1,7 +1,7 @@
 <script setup>
 import { Button, Dialog, LoadingText, TextInput, useCall } from "frappe-ui";
 import { computed, reactive, ref, watch } from "vue";
-import { formatMoney } from "../format";
+import { descriptionText, formatMoney } from "../format";
 import { __, _n } from "../translation";
 import ProposalOption from "./ProposalOption.vue";
 
@@ -83,7 +83,7 @@ function choosePicked() {
 <template>
 	<Dialog v-model:open="open" size="3xl" :title="__('Pick the right document')">
 		<p v-if="line" class="mb-3 text-p-sm text-ink-gray-6">
-			{{ line.description }} · {{ formatMoney(line.amount, line.currency) }}
+			{{ descriptionText(line.description) }} · {{ formatMoney(line.amount, line.currency) }}
 		</p>
 		<TextInput v-model="query" :debounce="300" :placeholder="__('Number, party or amount')" autofocus>
 			<template #prefix><span class="lucide-search size-4" aria-hidden="true" /></template>

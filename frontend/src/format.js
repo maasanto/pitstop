@@ -28,6 +28,12 @@ export function formatPercent(ratio) {
 	return new Intl.NumberFormat(locale(), { style: "percent" }).format(ratio);
 }
 
+// Bank imports can carry HTML such as `<br>`: show it as plain text, line breaks kept, never as markup
+export function descriptionText(description) {
+	const html = (description || "").replace(/<br\s*\/?>|<\/(p|div|li)>/gi, "\n");
+	return new DOMParser().parseFromString(html, "text/html").body.textContent.trim();
+}
+
 export const DOCTYPE_ICONS = {
 	"Sales Invoice": "lucide-file-text",
 	"Purchase Invoice": "lucide-receipt",
