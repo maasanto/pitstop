@@ -7,6 +7,7 @@ import {
 	KeyboardShortcut,
 	LoadingText,
 	Popover,
+	Progress,
 	Skeleton,
 	TabButtons,
 	TextInput,
@@ -424,6 +425,28 @@ const DIRECTIONS = [
 	{ key: "in", label: () => __("Money in"), icon: "lucide-arrow-down-left", tint: "text-ink-green-6" },
 	{ key: "out", label: () => __("Money out"), icon: "lucide-arrow-up-right", tint: "text-ink-red-5" },
 ];
+const accountProgress = useCall({
+	url: "/api/v2/method/pitstop.api.get_account_progress",
+	immediate: false,
+	params: () => ({ bank_account: bankAccount.value }),
+});
+watch(bankAccount, (account) => account && accountProgress.reload());
+// The whole account, every period: of the filters, only the direction narrows it
+const globalProgress = computed(() => {
+	const directions = accountProgress.data;
+	if (!directions) return null;
+	const counted = filters.direction === "all" ? [directions.in, directions.out] : [directions[filters.direction]];
+	const lines = counted.reduce((sum, direction) => sum + direction.lines, 0);
+	const reconciled = counted.reduce((sum, direction) => sum + direction.reconciled, 0);
+	// Rounded down: one line left out of thousands must not read as 100 %
+	return { lines, reconciled, share: lines ? Math.floor((100 * reconciled) / lines) / 100 : 1 };
+});
+// The direction filter hides on some tabs but still narrows the bar, so the label names it
+const GLOBAL_PROGRESS_LABELS = {
+	all: () => __("Reconciled on the whole account"),
+	in: () => __("Money in reconciled on the whole account"),
+	out: () => __("Money out reconciled on the whole account"),
+};
 const reconciledShare = (direction) => (direction.total ? direction.reconciled / direction.total : 1);
 const isComplete = (month) => month.lines && month.reconciled === month.lines;
 // Consecutive past months fully reconciled; the current one counts once it is complete too
@@ -438,6 +461,7 @@ function refresh() {
 	loadPairings();
 	monthlyProgress.reload();
 	periodTotals.reload();
+	accountProgress.reload();
 }
 
 const preview = reactive({ open: false, document: null });
@@ -654,6 +678,27 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 							link="/app/bank-reconciliation"
 						/>
 					</div>
+				</div>
+				<div v-if="globalProgress" :class="pageWidth" class="mx-auto mb-3 mt-4 px-4 sm:px-8">
+					<Progress
+						:value="100 * globalProgress.share"
+						size="md"
+						:label="GLOBAL_PROGRESS_LABELS[filters.direction]()"
+						hint
+					>
+						<template #hint>
+							<span class="text-base tabular-nums text-ink-gray-6">
+								{{
+									__("{0} · {1} of {2} lines · {3} left", [
+										formatPercent(globalProgress.share),
+										globalProgress.reconciled,
+										globalProgress.lines,
+										globalProgress.lines - globalProgress.reconciled,
+									])
+								}}
+							</span>
+						</template>
+					</Progress>
 				</div>
 				<nav :class="pageWidth" class="mx-auto mt-2 flex flex-wrap items-center justify-between gap-x-3 px-4 sm:px-8">
 					<TabButtons
