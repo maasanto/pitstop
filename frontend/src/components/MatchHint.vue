@@ -21,6 +21,7 @@ const HINTS = {
 };
 const state = computed(() => {
 	if (!props.reasons.length) return (props.mismatch && "mismatch") || (props.missing && "missing");
+	if (props.reasons.some((reason) => reason.mismatch)) return "mismatch";
 	if (props.reasons.every((reason) => reason.against)) return "against";
 	return props.reasons.some((reason) => reason.exact) ? "exact" : "approximate";
 });
