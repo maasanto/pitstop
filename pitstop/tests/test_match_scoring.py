@@ -312,12 +312,16 @@ class TestSuggestions(ERPNextTestSuite):
 		self.assertNotIn(later.name, suggested, "nor for one issued weeks after the payment")
 		self.assertFalse(any(d.get("vgtSelected") for d in suggested.values()))
 
-	def test_an_old_invoice_with_its_amount_and_a_name_in_the_label_is_still_suggested(self):
+	def test_an_old_invoice_named_in_the_label_is_still_suggested_with_its_date_flagged(self):
 		old = self.create_invoice(self.customer, 4321.09, posting_date=add_days(PAYMENT_DATE, -120))
 
 		suggestions = self.suggest(4321.09, "VIR SEPA RECU /DE JOHN DOE")
 
-		self.assertIn(old.name, [d.name for d in suggestions])
+		suggested = {d.name: d for d in suggestions}
+		self.assertIn(old.name, suggested)
+		date_hints = [reason for reason in suggested[old.name].match_reasons if reason["signal"] == "date"]
+		self.assertEqual(date_hints[0]["description"], "Posted well before the payment")
+		self.assertTrue(date_hints[0]["mismatch"], "a date months away disagrees with the line")
 
 	def test_an_accountant_without_hr_roles_still_gets_suggestions(self):
 		# Expense Claims are unreadable to a plain accountant: they are skipped, not an error

@@ -29,7 +29,6 @@ from pitstop.match_scoring import (
 	counterparty_account,
 	is_damped,
 	is_identifier,
-	is_posted_after_payment,
 	name_grade,
 	normalize,
 	reference_evidence,
@@ -501,15 +500,18 @@ def describe_signals(signals):
 				"description": _("You picked another party for similar lines"),
 			}
 		)
-	if is_posted_after_payment(signals.reference, signals.days_after):
+	if signals.is_near:
+		reasons.append({"signal": "date", "exact": True, "description": _("Posted near the payment")})
+	elif signals.days_after:
+		# A disagreement even when the score ignores it, like a different amount; 0 means a date is unknown
 		reasons.append(
 			{
 				"signal": "date",
 				"exact": False,
-				"against": True,
-				"description": _("Posted well after the payment"),
+				"mismatch": True,
+				"description": _("Posted well after the payment")
+				if signals.days_after > 0
+				else _("Posted well before the payment"),
 			}
 		)
-	elif signals.is_near:
-		reasons.append({"signal": "date", "exact": True, "description": _("Posted near the payment")})
 	return reasons

@@ -645,6 +645,9 @@ msgstr "Vous avez choisi un autre tiers pour des lignes semblables"
 msgid "Posted well after the payment"
 msgstr "Comptabilisé bien après le paiement"
 
+msgid "Posted well before the payment"
+msgstr "Comptabilisé bien avant le paiement"
+
 msgid "Posted near the payment"
 msgstr "Comptabilisé près de la date du paiement"
 
