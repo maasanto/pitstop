@@ -207,7 +207,7 @@ class TestSuggestions(ERPNextTestSuite):
 		).insert()
 		return customer
 
-	def create_invoice(self, customer, amount, po_no=None, posting_date=PAYMENT_DATE):
+	def create_invoice(self, customer, amount, po_no=None, posting_date=PAYMENT_DATE, due_date=None):
 		invoice = frappe.get_doc(
 			{
 				"doctype": "Sales Invoice",
@@ -216,7 +216,7 @@ class TestSuggestions(ERPNextTestSuite):
 				"company": self.company,
 				"set_posting_time": 1,
 				"posting_date": posting_date,
-				"due_date": posting_date,
+				"due_date": due_date or posting_date,
 				"debit_to": "Debtors - _TC",
 				"currency": "INR",
 				"conversion_rate": 1,
@@ -312,12 +312,30 @@ class TestSuggestions(ERPNextTestSuite):
 		self.assertNotIn(later.name, suggested, "nor for one issued weeks after the payment")
 		self.assertFalse(any(d.get("vgtSelected") for d in suggested.values()))
 
-	def test_an_old_invoice_with_its_amount_and_a_name_in_the_label_is_still_suggested(self):
+	def test_an_old_invoice_named_in_the_label_is_still_suggested_with_its_date_flagged(self):
 		old = self.create_invoice(self.customer, 4321.09, posting_date=add_days(PAYMENT_DATE, -120))
 
 		suggestions = self.suggest(4321.09, "VIR SEPA RECU /DE JOHN DOE")
 
-		self.assertIn(old.name, [d.name for d in suggestions])
+		suggested = {d.name: d for d in suggestions}
+		self.assertIn(old.name, suggested)
+		date_hints = [reason for reason in suggested[old.name].match_reasons if reason["signal"] == "date"]
+		self.assertEqual(date_hints[0]["description"], "Posted well before the payment")
+		self.assertTrue(date_hints[0]["mismatch"], "a date months away disagrees with the line")
+
+	def test_an_invoice_on_terms_is_flagged_early_only_when_paid_well_after_its_due_date(self):
+		on_time = self.create_invoice(
+			self.customer, 4321.09, posting_date=add_days(PAYMENT_DATE, -60), due_date=PAYMENT_DATE
+		)
+		overdue = self.create_invoice(
+			self.customer, 1234.5, posting_date=add_days(PAYMENT_DATE, -100), due_date=add_days(PAYMENT_DATE, -40)
+		)
+
+		for invoice, amount, flagged in ((on_time, 4321.09, False), (overdue, 1234.5, True)):
+			suggested = {d.name: d for d in self.suggest(amount, "VIR SEPA RECU /DE JOHN DOE")}
+			self.assertIn(invoice.name, suggested)
+			mismatches = [reason for reason in suggested[invoice.name].match_reasons if reason.get("mismatch")]
+			self.assertEqual(bool(mismatches), flagged, f"due {invoice.due_date}, paid {PAYMENT_DATE}")
 
 	def test_an_accountant_without_hr_roles_still_gets_suggestions(self):
 		# Expense Claims are unreadable to a plain accountant: they are skipped, not an error

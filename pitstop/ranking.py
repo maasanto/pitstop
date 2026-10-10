@@ -29,7 +29,6 @@ from pitstop.match_scoring import (
 	counterparty_account,
 	is_damped,
 	is_identifier,
-	is_posted_after_payment,
 	name_grade,
 	normalize,
 	reference_evidence,
@@ -266,7 +265,12 @@ class SuggestionRanking:
 			signals.reference = 0
 		candidate.match_score = flt(confidence(**signals), 3)
 		candidate.match_reasons = describe_signals(
-			frappe._dict(signals, same_account=party in learned.account_payers, is_near=self.is_near(candidate))
+			frappe._dict(
+				signals,
+				same_account=party in learned.account_payers,
+				is_near=self.is_near(candidate),
+				days_overdue=self.days_overdue(candidate),
+			)
 		)
 
 	def preselect(self, suggestions):
@@ -297,6 +301,14 @@ class SuggestionRanking:
 		if not self.dates or not candidate.posting_date:
 			return 0
 		return (getdate(candidate.posting_date) - max(self.dates)).days
+
+	def days_overdue(self, candidate):
+		"""How long after the document fell due the latest selected line paid it, from its posting date without a
+		due date: an invoice on 60-day terms paid on time is not early."""
+		due = candidate.get("due_date") or candidate.posting_date
+		if not self.dates or not due:
+			return 0
+		return (max(self.dates) - getdate(due)).days
 
 	def others(self, past_lines: dict) -> list:
 		"""The past lines but the ones being scored: a line teaches nothing about itself."""
@@ -501,15 +513,15 @@ def describe_signals(signals):
 				"description": _("You picked another party for similar lines"),
 			}
 		)
-	if is_posted_after_payment(signals.reference, signals.days_after):
-		reasons.append(
-			{
-				"signal": "date",
-				"exact": False,
-				"against": True,
-				"description": _("Posted well after the payment"),
-			}
-		)
-	elif signals.is_near:
+	if signals.is_near:
 		reasons.append({"signal": "date", "exact": True, "description": _("Posted near the payment")})
+	elif signals.days_after > MAX_DAYS_POSTED_AFTER_PAYMENT:
+		# A disagreement even when the score ignores it, like a different amount
+		reasons.append(date_mismatch(_("Posted well after the payment")))
+	elif signals.days_overdue > AMOUNT_ALONE_DAYS_BEFORE:
+		reasons.append(date_mismatch(_("Posted well before the payment")))
 	return reasons
+
+
+def date_mismatch(description):
+	return {"signal": "date", "exact": False, "mismatch": True, "description": description}

@@ -437,7 +437,7 @@ class TestPairings(ERPNextTestSuite):
 			p["documents"][0]["name"]: [r for r in p["documents"][0]["reasons"] if r["signal"] == "date"]
 			for p in self.pairing_of(line)["proposals"]
 		}
-		self.assertTrue(date_hints[later_invoice.name][0]["against"], "a late document says why it lost")
+		self.assertTrue(date_hints[later_invoice.name][0]["mismatch"], "a late document says why it lost")
 		self.assertEqual(date_hints[earlier_invoice.name][0]["description"], "Posted near the payment")
 
 	def test_a_correction_teaches_which_party_an_account_pays_for(self):
