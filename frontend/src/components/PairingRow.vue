@@ -1,7 +1,7 @@
 <script setup>
 import { Button, Dropdown, KeyboardShortcut, Tooltip } from "frappe-ui";
 import { computed } from "vue";
-import { descriptionText, formatMoney } from "../format";
+import { descriptionText, deskUrl, formatMoney } from "../format";
 import { __ } from "../translation";
 import DateLabel from "./DateLabel.vue";
 import DocumentCard from "./DocumentCard.vue";
@@ -200,6 +200,13 @@ function toggleUnlessSelecting() {
 				class="flex items-center gap-0.5 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
 				:class="focused ? 'opacity-100' : 'opacity-0'"
 			>
+				<Button
+					variant="ghost"
+					icon="lucide-external-link"
+					:tooltip="__('Open the bank line')"
+					:label="__('Open the bank line')"
+					:link="deskUrl('Bank Transaction', line.name)"
+				/>
 				<Button
 					v-if="chosen.documents.length === 1"
 					variant="ghost"

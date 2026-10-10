@@ -125,6 +125,9 @@ msgstr "Seulement des indices faibles. Ouvrez l'aperçu, ou recherchez le bon do
 msgid "Open in Dokos"
 msgstr "Ouvrir dans Dokos"
 
+msgid "Open the bank line"
+msgstr "Ouvrir la ligne bancaire"
+
 msgid "Open the classic page"
 msgstr "Ouvrir la page classique"
 
