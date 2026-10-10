@@ -560,7 +560,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 
 <template>
 	<FrappeUIProvider>
-		<div class="min-h-screen bg-surface-base pb-32 text-ink-gray-8">
+		<div class="min-h-screen pb-32 text-ink-gray-8">
 			<header class="border-b border-outline-gray-1">
 				<div :class="pageWidth" class="mx-auto flex flex-wrap items-center gap-3 px-4 pb-3 pt-7 sm:px-8">
 					<h1 class="mr-4 text-4xl-semibold text-ink-gray-9">{{ __("Bank reconciliation") }}</h1>
