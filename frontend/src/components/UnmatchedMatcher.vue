@@ -69,7 +69,7 @@ function choose(proposal) {
 </script>
 
 <template>
-	<div class="grid items-start gap-6 lg:grid-cols-2">
+	<div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
 		<div class="divide-y divide-outline-gray-1 border-y border-outline-gray-1">
 			<div
 				v-for="pairing in pairings"

@@ -566,7 +566,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 					<h1 class="mr-4 text-4xl-semibold text-ink-gray-9">{{ __("Bank reconciliation") }}</h1>
 					<BankAccountPicker v-model="bankAccount" :accounts="accounts.data || []" />
 					<PeriodPicker v-model="period" :company="company" />
-					<div class="ml-auto flex items-center gap-1">
+					<div class="ml-auto flex flex-wrap items-center gap-1">
 						<span v-if="streak" class="mr-2 flex items-center gap-0.5 text-sm text-ink-amber-7">
 							<span class="lucide-flame size-3.5" aria-hidden="true" />
 							{{ _n(streak, __("1 month up to date"), __("{0} months up to date", [streak])) }}
@@ -575,7 +575,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 							<template #trigger>
 								<button
 									type="button"
-									class="mr-2 flex items-center gap-4 rounded px-2 py-1 text-sm text-ink-gray-6 hover:bg-surface-gray-2"
+									class="mr-2 flex flex-wrap items-center gap-x-4 rounded px-2 py-1 text-sm text-ink-gray-6 hover:bg-surface-gray-2"
 								>
 									<span v-for="direction in DIRECTIONS" :key="direction.key" class="flex items-center gap-1.5">
 										<span :class="[direction.icon, direction.tint, 'size-3.5']" aria-hidden="true" />
@@ -656,7 +656,13 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 					</div>
 				</div>
 				<nav :class="pageWidth" class="mx-auto mt-2 flex flex-wrap items-center justify-between gap-x-3 px-4 sm:px-8">
-					<TabButtons v-model="tab" type="underline" size="md" :options="tabOptions" />
+					<TabButtons
+						v-model="tab"
+						class="max-w-full overflow-x-auto"
+						type="underline"
+						size="md"
+						:options="tabOptions"
+					/>
 					<Button
 						variant="ghost"
 						icon-left="lucide-file-search"
