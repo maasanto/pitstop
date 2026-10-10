@@ -453,6 +453,18 @@ msgstr "Rapproché sur la période"
 msgid "{0} reconciled · {1} left · {2} lines"
 msgstr "{0} rapprochés · {1} restants · {2} lignes"
 
+msgid "Reconciled on the whole account"
+msgstr "Rapproché sur tout le compte"
+
+msgid "Money in reconciled on the whole account"
+msgstr "Entrées rapprochées sur tout le compte"
+
+msgid "Money out reconciled on the whole account"
+msgstr "Sorties rapprochées sur tout le compte"
+
+msgid "{0} · {1} of {2} lines · {3} left"
+msgstr "{0} · {1} sur {2} lignes · reste {3}"
+
 msgid "1 month up to date"
 msgstr "1 mois à jour"
 
