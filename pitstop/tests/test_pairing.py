@@ -15,6 +15,7 @@ from pitstop.api import (
 	accept_rule_offer,
 	create_rule,
 	decline_rule_offer,
+	get_account_progress,
 	get_pairings,
 	get_period_totals,
 	reconcile_pairings,
@@ -270,6 +271,25 @@ class TestPairings(ERPNextTestSuite):
 
 		self.assertEqual(totals["in"], {"total": 620, "reconciled": 500, "lines": 2})
 		self.assertEqual(totals["out"], {"total": 80, "reconciled": 0, "lines": 1})
+
+	def test_account_progress_counts_lines_of_every_period_apart_by_direction(self):
+		with self.set_user(ACCOUNTANT):
+			before = get_account_progress(self.bank_account)
+		invoice = self.create_invoice(500)
+		paid = self.create_line(500, f"VIR SEPA RECU /DE JOHN DOE /MOTIF {invoice.name}")
+		self.create_line(120, "VIR SEPA RECU /DE UNKNOWN", line_date=add_days(PAYMENT_DATE, -400))
+		self.create_line(-80, "CB FICTIVE SHOP")
+		self.create_line(40, "VIR ANNONCE", status=PENDING_STATUS)
+		documents = [{"doctype": "Sales Invoice", "name": invoice.name}]
+		with self.set_user(ACCOUNTANT):
+			reconcile_pairings([{"bank_transaction": paid.name, "documents": documents}])
+			after = get_account_progress(self.bank_account)
+
+		added = {
+			direction: {count: after[direction][count] - before[direction][count] for count in after[direction]}
+			for direction in after
+		}
+		self.assertEqual(added, {"in": {"lines": 2, "reconciled": 1}, "out": {"lines": 1, "reconciled": 0}})
 
 	def test_undo_reopens_the_invoice_and_cancels_the_payment_it_created(self):
 		invoice = self.create_invoice(765.43)
