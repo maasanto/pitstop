@@ -16,8 +16,9 @@ const props = defineProps({
 });
 defineEmits(["preview"]);
 
+// A gap only helps when the amounts are close; next to an unrelated amount it is noise
 const gap = computed(() =>
-	props.lineAmount === null
+	props.lineAmount === null || !reasonsAbout("amount").length
 		? 0
 		: Math.round((Math.abs(props.lineAmount) - props.document.amount) * 100) / 100,
 );
