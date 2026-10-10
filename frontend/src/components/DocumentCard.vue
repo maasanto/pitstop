@@ -31,7 +31,7 @@ const reasonsAbout = (...signals) =>
 </script>
 
 <template>
-	<div v-if="compact" class="flex items-center gap-1.5 py-2 text-sm">
+	<div v-if="compact" class="flex flex-wrap items-center gap-1.5 py-2 text-sm">
 		<DocumentTypeIcon :doctype="document.doctype" class="mr-1" />
 		<a
 			:href="deskUrl(document.doctype, document.name)"
@@ -41,16 +41,18 @@ const reasonsAbout = (...signals) =>
 			>{{ document.name }}</a
 		>
 		<DateLabel :date="document.posting_date" />
-		<span class="truncate text-ink-gray-5">· {{ party }}</span>
-		<Button
-			variant="ghost"
-			size="sm"
-			icon="lucide-eye"
-			class="ml-auto shrink-0 opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
-			:label="__('Preview')"
-			@click.stop="$emit('preview', document)"
-		/>
-		<span class="shrink-0 tabular-nums text-ink-gray-7">{{ formatMoney(document.amount, currency) }}</span>
+		<span class="min-w-0 flex-1 truncate text-ink-gray-5">· {{ party }}</span>
+		<span class="ml-auto flex shrink-0 items-center gap-1.5">
+			<Button
+				variant="ghost"
+				size="sm"
+				icon="lucide-eye"
+				class="opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+				:label="__('Preview')"
+				@click.stop="$emit('preview', document)"
+			/>
+			<span class="tabular-nums text-ink-gray-7">{{ formatMoney(document.amount, currency) }}</span>
+		</span>
 	</div>
 	<!-- Each hint follows the value it judges, the pair kept tight and set apart from the next one -->
 	<div v-else class="flex min-w-0 items-start gap-3">
@@ -78,7 +80,7 @@ const reasonsAbout = (...signals) =>
 					</span>
 				</span>
 			</div>
-			<div class="mt-2 flex items-center gap-4 text-sm text-ink-gray-5">
+			<div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-gray-5">
 				<span class="flex shrink-0 items-center gap-1">
 					<a
 						:href="deskUrl(document.doctype, document.name)"
