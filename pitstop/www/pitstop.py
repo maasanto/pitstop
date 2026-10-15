@@ -5,8 +5,12 @@ from frappe.translate import get_translation_version
 no_cache = 1
 
 
+def has_app_permission(app_info=None) -> bool:
+	return frappe.session.user != "Guest" and frappe.has_permission("Bank Transaction", "read")
+
+
 def get_context():
-	if frappe.session.user == "Guest" or not frappe.has_permission("Bank Transaction", "read"):
+	if not has_app_permission():
 		frappe.throw(_("You need read access to Bank Transactions to reconcile them"), frappe.PermissionError)
 
 	return frappe._dict(
