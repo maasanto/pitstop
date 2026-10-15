@@ -5,7 +5,19 @@ app_description = "Bank reconciliation that starts from the pairings Dokos alrea
 app_email = "antoine.maas@gmail.com"
 app_license = "agpl-3.0"
 
+app_logo_url = "/assets/pitstop/images/pitstop-logo.svg"
+
 required_apps = ["erpnext"]
+
+add_to_apps_screen = [
+	{
+		"name": app_name,
+		"logo": app_logo_url,
+		"title": app_title,
+		"route": "/pitstop",
+		"has_permission": "pitstop.www.pitstop.has_app_permission",
+	}
+]
 
 use_json_request_body = True
 require_type_annotated_api_methods = True
