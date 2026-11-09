@@ -105,6 +105,11 @@ def words(text: str | None) -> set[str]:
 	return {word for word in normalize(text).split() if len(word) >= 3 and not word.isdigit()}
 
 
+def glued_name(name: str | None) -> str:
+	"""A name as banks often print it, its words run together: `La Coroutine` becomes `LACOROUTINE`."""
+	return normalize(name).replace(" ", "")
+
+
 def confidence(
 	reference: float = 0,
 	amount: float = 0,
@@ -366,6 +371,9 @@ def name_grade(
 	name_words = {word for word in words(party_name) if vocabulary.is_identifying(word)}
 	found = {word for word in name_words if _word_found(word, label_words)}
 	if name_words and len(found) >= min(2, len(name_words)):
+		return NAME_IN_LABEL
+	glued = glued_name(party_name)
+	if vocabulary.is_identifying(glued) and _word_found(glued, label_words):
 		return NAME_IN_LABEL
 	if (
 		bank_party_name

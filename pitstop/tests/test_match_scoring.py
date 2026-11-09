@@ -103,6 +103,17 @@ class TestSignalGrades(ERPNextTestSuite):
 		self.assertEqual(grade("VIR CUST00042 LOYER", "CUST-00042", "Acme Rentals"), 1.0)
 		self.assertEqual(grade("VIR PAULO RENT", "Loren", "Loren"), 0.0)
 
+	def test_a_name_whose_words_the_bank_ran_together_is_found(self):
+		vocabulary = Vocabulary([], ["Boulangerie Dupont", "Coroutine Lab"])
+
+		def grade(label, party_name):
+			return name_grade(
+				label, vocabulary.label_words(label), None, party_name, party_name, [], vocabulary
+			)
+
+		self.assertEqual(grade("VIR SEPA BOULANGERIEDUPONT", "Boulangerie Dupont"), 1.0)
+		self.assertEqual(grade("VIR SEPA LACOROUTINE", "Coroutine Lab"), 0.0)
+
 	def test_documents_without_a_party_never_share_one(self):
 		first = frappe._dict(doctype="Journal Entry", name="JV-1", party_type=None, party=None)
 		second = frappe._dict(doctype="Journal Entry", name="JV-2", party_type=None, party=None)
@@ -266,6 +277,26 @@ class TestSuggestions(ERPNextTestSuite):
 
 		suggested = next(d for d in suggestions if d.name == payment.name)
 		self.assertIn("reference", [reason["signal"] for reason in suggested.match_reasons])
+
+	def test_a_regular_payer_is_named_by_its_glued_name(self):
+		customer = self.get_customer("La Coroutine", contact=("Jane", "Roe"))
+		invoice = self.create_invoice(customer, 120)
+		for days_before in range(1, 6):
+			frappe.get_doc(
+				{
+					"doctype": "Bank Transaction",
+					"date": add_days(PAYMENT_DATE, -days_before),
+					"bank_account": self.bank_account,
+					"credit": 50,
+					"currency": "INR",
+					"description": "VIR SEPA LACOROUTINE",
+				}
+			).insert().submit()
+
+		suggestions = self.suggest(55, "VIR SEPA LACOROUTINE")
+
+		suggested = next(d for d in suggestions if d.name == invoice.name)
+		self.assertIn("name", [reason["signal"] for reason in suggested.match_reasons])
 
 	def test_a_journal_entry_is_found_by_its_cheque_number(self):
 		entry = frappe.get_doc(

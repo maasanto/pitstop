@@ -27,6 +27,7 @@ from pitstop.match_scoring import (
 	amount_grade,
 	confidence,
 	counterparty_account,
+	glued_name,
 	is_damped,
 	is_identifier,
 	name_grade,
@@ -401,14 +402,15 @@ def get_contacts():
 
 
 def get_party_names(contacts):
-	"""Each customer's and supplier's name, followed by its contacts' names."""
+	"""Each customer's and supplier's name, also glued as banks print it, followed by its contacts' names."""
 	names = []
 	for party_type, field in (("Customer", "customer_name"), ("Supplier", "supplier_name")):
 		for party in frappe.get_all(party_type, fields=["name", field]):
+			party_name = party.get(field) or party.name
 			contact_names = " ".join(
 				f"{first} {last}" for first, last in contacts.get((party_type, party.name), [])
 			)
-			names.append(f"{party.get(field) or party.name} {contact_names}")
+			names.append(f"{party_name} {glued_name(party_name)} {contact_names}")
 	return names
 
 
