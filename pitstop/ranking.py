@@ -65,6 +65,7 @@ class AccountContext:
 		self.since = add_days(min(dates, default=getdate()), -LOOK_BACK_DAYS)
 		self.candidates = self.get_candidates()
 		self.account_lines = self.get_account_lines()
+		self.deposits = {line.name for line in self.account_lines if line.deposit}
 		self.contacts = get_contacts()
 		self.vocabulary = Vocabulary(
 			[line.label for line in self.account_lines], get_party_names(self.contacts)
@@ -107,6 +108,7 @@ class AccountContext:
 				"bank_party_iban",
 				"bank_party_account_number",
 				"allocated_amount",
+				"deposit",
 			],
 		)
 		for line in lines:
@@ -299,8 +301,14 @@ class SuggestionRanking:
 		return (getdate(candidate.posting_date) - max(self.dates)).days
 
 	def others(self, past_lines: dict) -> list:
-		"""The past lines but the ones being scored: a line teaches nothing about itself."""
-		return [past for name, past in past_lines.items() if name not in self.selected]
+		"""The past lines going the same way, but the ones being scored: a line teaches nothing about itself,
+		and a party paying in a monthly `LOYER` says nothing about whom the rent going out is paid to."""
+		is_deposit = self.amount > 0
+		return [
+			past
+			for name, past in past_lines.items()
+			if name not in self.selected and (name in self.context.deposits) == is_deposit
+		]
 
 
 def get_corrections(parties_by_line):
