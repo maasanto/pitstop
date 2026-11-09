@@ -44,6 +44,9 @@ msgstr "Tout désélectionner"
 msgid "Consecutive payments"
 msgstr "Paiements consécutifs"
 
+msgid "Create a journal entry"
+msgstr "Créer une écriture comptable"
+
 msgid "Create a payment"
 msgstr "Créer un paiement"
 

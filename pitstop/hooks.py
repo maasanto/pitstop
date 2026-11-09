@@ -32,6 +32,7 @@ doctype_js = {
 	"Sales Invoice": "public/js/find_bank_line.js",
 	"Purchase Invoice": "public/js/find_bank_line.js",
 	"Payment Entry": "public/js/find_bank_line.js",
+	"Journal Entry": "public/js/journal_entry_from_bank_line.js",
 }
 
 after_install = "pitstop.install.create_custom_fields_for_pitstop"

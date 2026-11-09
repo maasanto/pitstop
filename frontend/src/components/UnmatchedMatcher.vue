@@ -11,7 +11,7 @@ import ProposalOption from "./ProposalOption.vue";
 
 const props = defineProps({
 	pairings: { type: Array, required: true },
-	// The ⋯ menu of a line: record a rule, create a payment
+	// The ⋯ menu of a line: record a rule, create a payment or a journal entry
 	actionsFor: { type: Function, required: true },
 });
 const emit = defineEmits(["choose", "preview", "restore"]);

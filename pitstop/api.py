@@ -208,6 +208,29 @@ def get_bookable_accounts(bank_transaction: str) -> list[dict]:
 
 
 @frappe.whitelist()
+def get_journal_entry_values(bank_transaction: str) -> dict:
+	"""What a journal entry for the line starts from: its open amount on its bank account. The user books the
+	other side."""
+	line = get_line(bank_transaction, "read")
+	frappe.has_permission("Journal Entry", "create", throw=True)
+	# Money in raises the bank account: a debit
+	side = "debit_in_account_currency" if line.amount > 0 else "credit_in_account_currency"
+	return {
+		"company": line.company,
+		"voucher_type": "Bank Entry",
+		"posting_date": line.date,
+		"cheque_no": line.reference_number or line.name,
+		"cheque_date": line.date,
+		"user_remark": line.description,
+		"bank_row": {
+			"account": frappe.db.get_value("Bank Account", line.bank_account, "account"),
+			"bank_account": line.bank_account,
+			side: abs(line.amount),
+		},
+	}
+
+
+@frappe.whitelist()
 def get_progress(bank_account: str, months: int = 12) -> list[dict]:
 	"""Lines and reconciled lines per month, latest first: the page's progress and its streak."""
 	frappe.has_permission("Bank Account", "read", bank_account, throw=True)

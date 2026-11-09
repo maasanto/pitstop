@@ -505,7 +505,18 @@ function unmatchedActions(pairing) {
 			icon: "lucide-plus",
 			onClick: () => window.open(newPaymentUrl(pairing.line), "_blank"),
 		},
+		{
+			label: __("Create a journal entry"),
+			icon: "lucide-notebook-pen",
+			onClick: () => openNewJournalEntry(pairing.line),
+		},
 	];
+}
+
+// The desk's Journal Entry form fills itself from the line (pitstop/public/js/journal_entry_from_bank_line.js)
+function openNewJournalEntry(line) {
+	localStorage.setItem("pitstop:journal-entry-line", line.name);
+	window.open("/app/journal-entry/new", "_blank");
 }
 
 function leadLabel(proposal) {

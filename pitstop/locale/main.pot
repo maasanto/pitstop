@@ -78,6 +78,10 @@ msgstr ""
 msgid "Consecutive payments"
 msgstr ""
 
+#: frontend/src/App.vue:509
+msgid "Create a journal entry"
+msgstr ""
+
 #: frontend/src/App.vue:378
 msgid "Create a payment"
 msgstr ""
