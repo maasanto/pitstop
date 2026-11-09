@@ -425,27 +425,21 @@ const DIRECTIONS = [
 	{ key: "in", label: () => __("Money in"), icon: "lucide-arrow-down-left", tint: "text-ink-green-6" },
 	{ key: "out", label: () => __("Money out"), icon: "lucide-arrow-up-right", tint: "text-ink-red-5" },
 ];
-const accountProgress = useCall({
-	url: "/api/v2/method/pitstop.api.get_account_progress",
-	immediate: false,
-	params: () => ({ bank_account: bankAccount.value }),
-});
-watch(bankAccount, (account) => account && accountProgress.reload());
-// The whole account, every period: of the filters, only the direction narrows it
+// Of the filters, only the period and the direction narrow it
 const globalProgress = computed(() => {
-	const directions = accountProgress.data;
+	const directions = periodTotals.data;
 	if (!directions) return null;
 	const counted = filters.direction === "all" ? [directions.in, directions.out] : [directions[filters.direction]];
 	const lines = counted.reduce((sum, direction) => sum + direction.lines, 0);
-	const reconciled = counted.reduce((sum, direction) => sum + direction.reconciled, 0);
+	const reconciled = counted.reduce((sum, direction) => sum + direction.reconciled_lines, 0);
 	// Rounded down: one line left out of thousands must not read as 100 %
 	return { lines, reconciled, share: lines ? Math.floor((100 * reconciled) / lines) / 100 : 1 };
 });
 // The direction filter hides on some tabs but still narrows the bar, so the label names it
 const GLOBAL_PROGRESS_LABELS = {
-	all: () => __("Reconciled on the whole account"),
-	in: () => __("Money in reconciled on the whole account"),
-	out: () => __("Money out reconciled on the whole account"),
+	all: () => __("Reconciled over the period"),
+	in: () => __("Money in reconciled over the period"),
+	out: () => __("Money out reconciled over the period"),
 };
 const reconciledShare = (direction) => (direction.total ? direction.reconciled / direction.total : 1);
 const isComplete = (month) => month.lines && month.reconciled === month.lines;
@@ -461,7 +455,6 @@ function refresh() {
 	loadPairings();
 	monthlyProgress.reload();
 	periodTotals.reload();
-	accountProgress.reload();
 }
 
 const preview = reactive({ open: false, document: null });
