@@ -448,6 +448,20 @@ class TestPairings(ERPNextTestSuite):
 		self.assertIn("corrected", hints[acme_invoice.name], "a demoted lead says why")
 		self.assertNotIn("corrected", hints[next_globex_invoice.name])
 
+	def test_money_going_out_to_another_party_does_not_dilute_who_pays_in(self):
+		globex = self.get_customer("Globex Leasing", contact=("Jane", "Roe"))
+		label = "VIR SEPA RENTALS 0042"
+		for amount, party in ((612.4, self.customer), (612.4, self.customer), (-90, globex), (-90, globex)):
+			line = self.create_line(amount, label)
+			with self.set_user(ACCOUNTANT):
+				create_bulk_payment_entry_and_reconcile([line.name], "Customer", party, "Debtors - _TC")
+		invoice = self.create_invoice(612.4)
+		line = self.create_line(612.4, label)
+
+		[proposal] = self.pairing_of(line)["proposals"]
+		self.assertEqual(proposal["documents"][0]["name"], invoice.name)
+		self.assertEqual(proposal["level"], "high", "Globex's refunds must not halve Acme's history")
+
 	def test_a_card_batch_is_proposed_as_one_settlement_less_its_fee(self):
 		receipts = [self.create_receipt(amount, f"TPE-{amount}") for amount in (130, 150, 120)]
 		line = self.create_line(388, "REMISE CB 0000123")
