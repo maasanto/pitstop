@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2026-11-09 17:30:00",
+ "modified": "2026-11-10 10:00:00",
  "modified_by": "Administrator",
  "module": "Pitstop",
  "name": "pitstop",
@@ -24,6 +24,6 @@
  "script": null,
  "standard": "Yes",
  "style": null,
- "system_page": 0,
+ "system_page": 1,
  "title": "Pitstop"
 }
