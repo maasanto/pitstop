@@ -25,13 +25,13 @@ from pitstop.match_scoring import (
 	Vocabulary,
 	account_parties,
 	amount_grade,
+	compact,
 	confidence,
 	counterparty_account,
 	glued_name,
 	is_damped,
 	is_identifier,
 	name_grade,
-	normalize,
 	reference_evidence,
 	shared_accounts,
 	similar_line_parties,
@@ -115,7 +115,7 @@ class AccountContext:
 			line.label = " ".join(
 				filter(None, (line.description, line.reference_number, line.bank_party_name))
 			)
-			line.compact_label = normalize(line.label).replace(" ", "")
+			line.compact_label = compact(line.label)
 			line.account = counterparty_account(line.bank_party_iban, line.bank_party_account_number)
 		return lines
 

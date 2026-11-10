@@ -105,9 +105,16 @@ def words(text: str | None) -> set[str]:
 	return {word for word in normalize(text).split() if len(word) >= 3 and not word.isdigit()}
 
 
+def compact(text: str | None) -> str:
+	return normalize(text).replace(" ", "")
+
+
 def glued_name(name: str | None) -> str:
-	"""A name as banks often print it, its words run together: `La Coroutine` becomes `LACOROUTINE`."""
-	return normalize(name).replace(" ", "")
+	"""A name as banks often print it, its words run together: `Boulangerie Dupont` becomes `BOULANGERIEDUPONT`.
+
+	Only names of two real words: initials like `T.P.E.` would glue into `TPE`, found in every card label.
+	"""
+	return compact(name) if len(words(name)) >= 2 else ""
 
 
 def confidence(
@@ -254,7 +261,7 @@ class SearchedLabel:
 
 	def __init__(self, label: str, runs: list[str]):
 		self.text = label
-		self.compact = label.replace(" ", "")
+		self.compact = compact(label)
 		self.runs = runs
 		self.word_edges = {0}
 		position = 0
@@ -372,8 +379,8 @@ def name_grade(
 	found = {word for word in name_words if _word_found(word, label_words)}
 	if name_words and len(found) >= min(2, len(name_words)):
 		return NAME_IN_LABEL
-	glued = glued_name(party_name)
-	if vocabulary.is_identifying(glued) and _word_found(glued, label_words):
+	# Exactly, without typo tolerance: `JEANDUPONT` is one letter away from `JEANNEDUPONT`, another person
+	if glued_name(party_name) in label_words:
 		return NAME_IN_LABEL
 	if (
 		bank_party_name
@@ -422,7 +429,7 @@ class PastLine:
 
 
 def counterparty_account(iban: str | None, account_number: str | None) -> str:
-	return normalize(iban or account_number).replace(" ", "")
+	return compact(iban or account_number)
 
 
 def shared_accounts(past_lines: list[PastLine]) -> set[str]:

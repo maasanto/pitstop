@@ -104,7 +104,7 @@ class TestSignalGrades(ERPNextTestSuite):
 		self.assertEqual(grade("VIR PAULO RENT", "Loren", "Loren"), 0.0)
 
 	def test_a_name_whose_words_the_bank_ran_together_is_found(self):
-		vocabulary = Vocabulary([], ["Boulangerie Dupont", "Coroutine Lab"])
+		vocabulary = Vocabulary([], ["Boulangerie Dupont", "Coroutine Lab", "Jean Dupont", "T.P.E."])
 
 		def grade(label, party_name):
 			return name_grade(
@@ -113,6 +113,8 @@ class TestSignalGrades(ERPNextTestSuite):
 
 		self.assertEqual(grade("VIR SEPA BOULANGERIEDUPONT", "Boulangerie Dupont"), 1.0)
 		self.assertEqual(grade("VIR SEPA LACOROUTINE", "Coroutine Lab"), 0.0)
+		self.assertEqual(grade("VIR SEPA JEANNEDUPONT", "Jean Dupont"), 0.0, "another person, one letter away")
+		self.assertEqual(grade("REMISE TPE 0412", "T.P.E."), 0.0, "initials glued are a card label word")
 
 	def test_documents_without_a_party_never_share_one(self):
 		first = frappe._dict(doctype="Journal Entry", name="JV-1", party_type=None, party=None)
@@ -279,7 +281,7 @@ class TestSuggestions(ERPNextTestSuite):
 		self.assertIn("reference", [reason["signal"] for reason in suggested.match_reasons])
 
 	def test_a_regular_payer_is_named_by_its_glued_name(self):
-		customer = self.get_customer("La Coroutine", contact=("Jane", "Roe"))
+		customer = self.get_customer("Boulangerie Dupont", contact=("Jane", "Roe"))
 		invoice = self.create_invoice(customer, 120)
 		for days_before in range(1, 6):
 			frappe.get_doc(
@@ -289,11 +291,11 @@ class TestSuggestions(ERPNextTestSuite):
 					"bank_account": self.bank_account,
 					"credit": 50,
 					"currency": "INR",
-					"description": "VIR SEPA LACOROUTINE",
+					"description": "VIR SEPA BOULANGERIEDUPONT",
 				}
 			).insert().submit()
 
-		suggestions = self.suggest(55, "VIR SEPA LACOROUTINE")
+		suggestions = self.suggest(55, "VIR SEPA BOULANGERIEDUPONT")
 
 		suggested = next(d for d in suggestions if d.name == invoice.name)
 		self.assertIn("name", [reason["signal"] for reason in suggested.match_reasons])
