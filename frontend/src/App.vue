@@ -500,6 +500,13 @@ function unmatchedActions(pairing) {
 			icon: "lucide-plus",
 			onClick: () => window.open(newPaymentUrl(pairing.line), "_blank"),
 		},
+		{
+			label: __("Create a journal entry"),
+			icon: "lucide-notebook-pen",
+			// The desk's form fills itself from the line (pitstop/public/js/journal_entry_from_bank_line.js)
+			onClick: () =>
+				window.open(`/app/journal-entry/new?${new URLSearchParams({ pitstop_line: pairing.line.name })}`, "_blank"),
+		},
 	];
 }
 

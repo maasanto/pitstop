@@ -17,6 +17,12 @@ msgstr "Une ligne bancaire se rapproche avec des documents d'un seul type, reçu
 msgid "Already reconciled"
 msgstr "Déjà rapprochées"
 
+msgid "Bank Account {0} has no Company Account: set one to book its lines"
+msgstr "Le compte bancaire {0} n'a pas de compte de la société : renseignez-le pour comptabiliser ses lignes"
+
+msgid "Bank Transaction {0} is already reconciled: nothing is left to book"
+msgstr "La transaction bancaire {0} est déjà rapprochée : il ne reste rien à comptabiliser"
+
 msgid "Bank Transaction {0} cleared {1}, which this page cannot undo"
 msgstr "La transaction bancaire {0} a soldé {1}, ce que cette page ne peut pas annuler"
 
@@ -43,6 +49,9 @@ msgstr "Tout désélectionner"
 
 msgid "Consecutive payments"
 msgstr "Paiements consécutifs"
+
+msgid "Create a journal entry"
+msgstr "Créer une écriture de journal"
 
 msgid "Create a payment"
 msgstr "Créer un paiement"
@@ -181,6 +190,9 @@ msgstr "Voir les lignes sans proposition"
 
 msgid "Several signals agree and no other party comes close. A glance is enough."
 msgstr "Plusieurs indices concordent et aucun autre tiers n'approche. Un coup d'œil suffit."
+
+msgid "The journal entry could not be filled from bank line {0}"
+msgstr "L'écriture de journal n'a pas pu être remplie à partir de la ligne bancaire {0}"
 
 msgid "The bank line goes back to the lines to reconcile. {0} itself is kept."
 msgstr "La ligne bancaire retourne parmi les lignes à rapprocher. {0} est conservé."

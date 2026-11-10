@@ -53,6 +53,14 @@ msgstr ""
 msgid "Bank Transaction {0} is not submitted"
 msgstr ""
 
+#: pitstop/api.py:218
+msgid "Bank Transaction {0} is already reconciled: nothing is left to book"
+msgstr ""
+
+#: pitstop/api.py:222
+msgid "Bank Account {0} has no Company Account: set one to book its lines"
+msgstr ""
+
 #: frontend/src/App.vue:252
 msgid "Bank account"
 msgstr ""
@@ -76,6 +84,10 @@ msgstr ""
 
 #: pitstop/pairing.py:141
 msgid "Consecutive payments"
+msgstr ""
+
+#: frontend/src/App.vue:509
+msgid "Create a journal entry"
 msgstr ""
 
 #: frontend/src/App.vue:378
@@ -245,6 +257,10 @@ msgstr ""
 
 #: frontend/src/App.vue:208
 msgid "Show the other leads"
+msgstr ""
+
+#: pitstop/public/js/journal_entry_from_bank_line.js:14
+msgid "The journal entry could not be filled from bank line {0}"
 msgstr ""
 
 #: frontend/src/components/ReconciledTab.vue:40

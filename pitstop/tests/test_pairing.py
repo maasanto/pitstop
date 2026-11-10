@@ -15,6 +15,8 @@ from pitstop.api import (
 	accept_rule_offer,
 	create_rule,
 	decline_rule_offer,
+	get_account_progress,
+	get_journal_entry_values,
 	get_pairings,
 	get_period_totals,
 	reconcile_pairings,
@@ -316,6 +318,30 @@ class TestPairings(ERPNextTestSuite):
 			undo_pairings([{"bank_transaction": line.name, "created": result["created"]}])
 		self.assertEqual(frappe.db.get_value("Bank Transaction", line.name, "unallocated_amount"), 12.5)
 		self.assertEqual(frappe.db.get_value("Journal Entry", entry["name"], "docstatus"), 2)
+
+	def test_a_journal_entry_started_from_a_line_balances_it_and_is_proposed_for_it(self):
+		line = self.create_line(-86.4, "PRLV SEPA ASSURANCE FICTIVE CONTRAT 0042")
+		with self.set_user(ACCOUNTANT):
+			values = get_journal_entry_values(line.name)
+		bank_row = values.pop("bank_row")
+		# The user books the other side
+		other_side = {"account": self.expense_accounts()[0], "debit_in_account_currency": 86.4}
+		entry = frappe.get_doc({"doctype": "Journal Entry", **values, "accounts": [bank_row, other_side]})
+		entry.insert()
+		entry.submit()
+
+		self.assertEqual(entry.posting_date, str(PAYMENT_DATE))
+		self.assertEqual(entry.user_remark, line.description)
+		self.assertIn(entry.name, self.by_document(line, "level"))
+
+	def test_a_reconciled_line_starts_no_journal_entry(self):
+		rule = self.create_bank_fees_rule()
+		line = self.create_line(-12.5, "FRAIS TENUE DE COMPTE OCTOBRE")
+		with self.set_user(ACCOUNTANT):
+			reconcile_pairings([{"bank_transaction": line.name, "rule": rule}])
+			# Its bank row would be 0, inviting the user to book the line a second time
+			with self.assertRaises(frappe.ValidationError):
+				get_journal_entry_values(line.name)
 
 	def test_one_line_pays_several_invoices(self):
 		invoices = [self.create_invoice(amount) for amount in (111.11, 222.22)]
