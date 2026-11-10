@@ -17,6 +17,9 @@ msgstr "Une ligne bancaire se rapproche avec des documents d'un seul type, reçu
 msgid "Already reconciled"
 msgstr "Déjà rapprochées"
 
+msgid "Bank Account {0} has no Company Account: set one to book its lines"
+msgstr "Le compte bancaire {0} n'a pas de compte de la société : renseignez-le pour comptabiliser ses lignes"
+
 msgid "Bank Transaction {0} is already reconciled: nothing is left to book"
 msgstr "La transaction bancaire {0} est déjà rapprochée : il ne reste rien à comptabiliser"
 

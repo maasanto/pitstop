@@ -57,6 +57,10 @@ msgstr ""
 msgid "Bank Transaction {0} is already reconciled: nothing is left to book"
 msgstr ""
 
+#: pitstop/api.py:222
+msgid "Bank Account {0} has no Company Account: set one to book its lines"
+msgstr ""
+
 #: frontend/src/App.vue:252
 msgid "Bank account"
 msgstr ""

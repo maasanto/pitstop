@@ -217,6 +217,10 @@ def get_journal_entry_values(bank_transaction: str) -> dict:
 	if not line.unallocated_amount:
 		frappe.throw(_("Bank Transaction {0} is already reconciled: nothing is left to book").format(line.name))
 	account = frappe.db.get_value("Bank Account", line.bank_account, "account")
+	if not account:
+		frappe.throw(
+			_("Bank Account {0} has no Company Account: set one to book its lines").format(line.bank_account)
+		)
 	account_currency = frappe.get_cached_value("Account", account, "account_currency")
 	# Money in raises the bank account: a debit
 	side = "debit_in_account_currency" if line.amount > 0 else "credit_in_account_currency"
