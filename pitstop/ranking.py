@@ -25,12 +25,13 @@ from pitstop.match_scoring import (
 	Vocabulary,
 	account_parties,
 	amount_grade,
+	compact,
 	confidence,
 	counterparty_account,
+	glued_name,
 	is_damped,
 	is_identifier,
 	name_grade,
-	normalize,
 	reference_evidence,
 	shared_accounts,
 	similar_line_parties,
@@ -114,7 +115,7 @@ class AccountContext:
 			line.label = " ".join(
 				filter(None, (line.description, line.reference_number, line.bank_party_name))
 			)
-			line.compact_label = normalize(line.label).replace(" ", "")
+			line.compact_label = compact(line.label)
 			line.account = counterparty_account(line.bank_party_iban, line.bank_party_account_number)
 		return lines
 
@@ -401,14 +402,15 @@ def get_contacts():
 
 
 def get_party_names(contacts):
-	"""Each customer's and supplier's name, followed by its contacts' names."""
+	"""Each customer's and supplier's name, also glued as banks print it, followed by its contacts' names."""
 	names = []
 	for party_type, field in (("Customer", "customer_name"), ("Supplier", "supplier_name")):
 		for party in frappe.get_all(party_type, fields=["name", field]):
+			party_name = party.get(field) or party.name
 			contact_names = " ".join(
 				f"{first} {last}" for first, last in contacts.get((party_type, party.name), [])
 			)
-			names.append(f"{party.get(field) or party.name} {contact_names}")
+			names.append(f"{party_name} {glued_name(party_name)} {contact_names}")
 	return names
 
 
