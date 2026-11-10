@@ -137,6 +137,9 @@ msgstr "Ouvrir Pitstop"
 msgid "Open in Dokos"
 msgstr "Ouvrir dans Dokos"
 
+msgid "Open the bank line"
+msgstr "Ouvrir la ligne bancaire"
+
 msgid "Open the classic page"
 msgstr "Ouvrir la page classique"
 
