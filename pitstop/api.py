@@ -1,3 +1,4 @@
+import erpnext
 import frappe
 from erpnext.accounts.doctype.bank_transaction.bank_transaction import (
 	PENDING_STATUS,
@@ -213,20 +214,21 @@ def get_journal_entry_values(bank_transaction: str) -> dict:
 	other side."""
 	line = get_line(bank_transaction, "read")
 	frappe.has_permission("Journal Entry", "create", throw=True)
+	if not line.unallocated_amount:
+		frappe.throw(_("Bank Transaction {0} is already reconciled: nothing is left to book").format(line.name))
+	account = frappe.db.get_value("Bank Account", line.bank_account, "account")
+	account_currency = frappe.get_cached_value("Account", account, "account_currency")
 	# Money in raises the bank account: a debit
 	side = "debit_in_account_currency" if line.amount > 0 else "credit_in_account_currency"
 	return {
 		"company": line.company,
 		"voucher_type": "Bank Entry",
 		"posting_date": line.date,
+		"multi_currency": int(account_currency != erpnext.get_company_currency(line.company)),
 		"cheque_no": line.reference_number or line.name,
 		"cheque_date": line.date,
 		"user_remark": line.description,
-		"bank_row": {
-			"account": frappe.db.get_value("Bank Account", line.bank_account, "account"),
-			"bank_account": line.bank_account,
-			side: abs(line.amount),
-		},
+		"bank_row": {"account": account, "bank_account": line.bank_account, side: abs(line.amount)},
 	}
 
 

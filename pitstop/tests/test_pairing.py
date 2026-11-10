@@ -340,6 +340,15 @@ class TestPairings(ERPNextTestSuite):
 		self.assertEqual(entry.user_remark, line.description)
 		self.assertIn(entry.name, self.by_document(line, "level"))
 
+	def test_a_reconciled_line_starts_no_journal_entry(self):
+		rule = self.create_bank_fees_rule()
+		line = self.create_line(-12.5, "FRAIS TENUE DE COMPTE OCTOBRE")
+		with self.set_user(ACCOUNTANT):
+			reconcile_pairings([{"bank_transaction": line.name, "rule": rule}])
+			# Its bank row would be 0, inviting the user to book the line a second time
+			with self.assertRaises(frappe.ValidationError):
+				get_journal_entry_values(line.name)
+
 	def test_one_line_pays_several_invoices(self):
 		invoices = [self.create_invoice(amount) for amount in (111.11, 222.22)]
 		line = self.create_line(333.33, "VIR SEPA RECU /DE JOHN DOE")
