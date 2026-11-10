@@ -231,37 +231,19 @@ def get_progress(bank_account: str, months: int = 12) -> list[dict]:
 
 
 @frappe.whitelist()
-def get_account_progress(bank_account: str) -> dict:
-	"""Lines and reconciled lines over the whole account, money in and money out apart: the global progress
-	follows the direction on screen and ignores the period."""
-	frappe.has_permission("Bank Account", "read", bank_account, throw=True)
-	return {
-		direction: {
-			"lines": count_lines(bank_account, filters),
-			"reconciled": count_lines(bank_account, {**filters, "unallocated_amount": 0}),
-		}
-		for direction, filters in {"in": {"credit": (">", 0)}, "out": {"credit": ("<=", 0)}}.items()
-	}
-
-
-def count_lines(bank_account: str, filters: dict) -> int:
-	return frappe.get_list(
-		"Bank Transaction",
-		filters={"bank_account": bank_account, **BOOKED_LINES, **filters},
-		fields=[{"COUNT": "*", "as": "count"}],
-	)[0].count
-
-
-@frappe.whitelist()
 def get_period_totals(bank_account: str, from_date: str, to_date: str) -> dict:
-	"""Money in and money out over the period, each with the amount already reconciled."""
+	"""Money in and money out over the period, each with the amount and the lines already reconciled."""
 	lines = get_lines(bank_account, from_date, to_date, {})
-	totals = {direction: {"total": 0.0, "reconciled": 0.0, "lines": 0} for direction in ("in", "out")}
+	totals = {
+		direction: {"total": 0.0, "reconciled": 0.0, "lines": 0, "reconciled_lines": 0} for direction in ("in", "out")
+	}
 	for line in lines:
-		direction = totals["in" if flt(line.credit) else "out"]
-		direction["total"] += flt(line.credit) or flt(line.debit)
+		direction = totals["in" if flt(line.credit) > 0 else "out"]
+		direction["total"] += abs(flt(line.credit) - flt(line.debit))
 		direction["reconciled"] += flt(line.allocated_amount)
 		direction["lines"] += 1
+		if not flt(line.unallocated_amount):
+			direction["reconciled_lines"] += 1
 	return {**totals, "currency": lines[0].currency if lines else None}
 
 
