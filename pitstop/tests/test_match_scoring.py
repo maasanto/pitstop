@@ -281,24 +281,29 @@ class TestSuggestions(ERPNextTestSuite):
 		self.assertIn("reference", [reason["signal"] for reason in suggested.match_reasons])
 
 	def test_a_regular_payer_is_named_by_its_glued_name(self):
-		customer = self.get_customer("Boulangerie Dupont", contact=("Jane", "Roe"))
-		invoice = self.create_invoice(customer, 120)
-		for days_before in range(1, 6):
-			frappe.get_doc(
-				{
-					"doctype": "Bank Transaction",
-					"date": add_days(PAYMENT_DATE, -days_before),
-					"bank_account": self.bank_account,
-					"credit": 50,
-					"currency": "INR",
-					"description": "VIR SEPA BOULANGERIEDUPONT",
-				}
-			).insert().submit()
+		for customer_name, label in (
+			("Boulangerie Dupont", "VIR SEPA BOULANGERIEDUPONT"),
+			("La Coroutine", "VIR SEPA LACOROUTINE"),
+		):
+			with self.subTest(customer_name):
+				customer = self.get_customer(customer_name, contact=("Jane", "Roe"))
+				invoice = self.create_invoice(customer, 120)
+				for days_before in range(1, 6):
+					frappe.get_doc(
+						{
+							"doctype": "Bank Transaction",
+							"date": add_days(PAYMENT_DATE, -days_before),
+							"bank_account": self.bank_account,
+							"credit": 50,
+							"currency": "INR",
+							"description": label,
+						}
+					).insert().submit()
 
-		suggestions = self.suggest(55, "VIR SEPA BOULANGERIEDUPONT")
+				suggestions = self.suggest(55, label)
 
-		suggested = next(d for d in suggestions if d.name == invoice.name)
-		self.assertIn("name", [reason["signal"] for reason in suggested.match_reasons])
+				suggested = next(d for d in suggestions if d.name == invoice.name)
+				self.assertIn("name", [reason["signal"] for reason in suggested.match_reasons])
 
 	def test_a_journal_entry_is_found_by_its_cheque_number(self):
 		entry = frappe.get_doc(

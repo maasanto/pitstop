@@ -110,11 +110,11 @@ def compact(text: str | None) -> str:
 
 
 def glued_name(name: str | None) -> str:
-	"""A name as banks often print it, its words run together: `Boulangerie Dupont` becomes `BOULANGERIEDUPONT`.
+	"""A name as banks often print it, its words run together: `La Coroutine` becomes `LACOROUTINE`.
 
-	Only names of two real words: initials like `T.P.E.` would glue into `TPE`, found in every card label.
+	Only names holding a real word: initials like `T.P.E.` would glue into `TPE`, found in every card label.
 	"""
-	return compact(name) if len(words(name)) >= 2 else ""
+	return compact(name) if len(normalize(name).split()) >= 2 and words(name) else ""
 
 
 def confidence(
