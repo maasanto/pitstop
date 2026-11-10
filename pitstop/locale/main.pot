@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Pitstop VERSION\n"
 "Report-Msgid-Bugs-To: antoine.maas@gmail.com\n"
-"POT-Creation-Date: 2026-10-05 11:58+0009\n"
-"PO-Revision-Date: 2026-10-05 11:58+0009\n"
+"POT-Creation-Date: 2026-11-10 13:23+0009\n"
+"PO-Revision-Date: 2026-11-10 13:23+0009\n"
 "Last-Translator: antoine.maas@gmail.com\n"
 "Language-Team: antoine.maas@gmail.com\n"
 "MIME-Version: 1.0\n"
@@ -16,352 +16,989 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
-#: frontend/src/App.vue:160
+#: frontend/src/components/SearchDialog.vue:141
+#: frontend/src/components/UnmatchedMatcher.vue:177
+msgid "1 document"
+msgstr ""
+
+#: frontend/src/App.vue:408
+msgid "1 line put back"
+msgstr ""
+
+#: frontend/src/App.vue:375
 msgid "1 line reconciled"
 msgstr ""
 
-#: frontend/src/App.vue:308
-msgid "1 line still needs a document of your choice."
+#: frontend/src/App.vue:598
+msgid "1 month up to date"
 msgstr ""
 
-#: frontend/src/App.vue:410
+#: frontend/src/App.vue:820
+msgid "1 month up to date in a row"
+msgstr ""
+
+#: frontend/src/App.vue:917
+msgid "1 of {0} pre-approved"
+msgstr ""
+
+#: frontend/src/App.vue:927
 msgid "1 payment will be created"
 msgstr ""
 
-#: frontend/src/App.vue:407
-msgid "1 pre-approved"
-msgstr ""
-
-#: frontend/src/App.vue:287
+#: frontend/src/App.vue:749
 msgid "1. Check each pairing: the icons say what matched. 2. Click a line to pre-approve it. 3. Validate them all at once; invoices get their payment created."
 msgstr ""
 
-#: pitstop/pairing.py:213
+#: pitstop/pairing.py:332
 msgid "A bank line is reconciled with documents of a single type, got {0}"
 msgstr ""
 
-#: frontend/src/App.vue:85
+#. Description of a DocType
+#: pitstop/pitstop/doctype/bank_match_refusal/bank_match_refusal.json
+msgid "A lead the user refused for a bank line on the Pitstop page"
+msgstr ""
+
+#: frontend/src/App.vue:376
+msgid "About {0} min of manual matching saved"
+msgstr ""
+
+#. Name of a role
+#: pitstop/pitstop/doctype/bank_match_refusal/bank_match_refusal.json
+msgid "Accounts Manager"
+msgstr ""
+
+#. Name of a role
+#: pitstop/pitstop/doctype/bank_match_refusal/bank_match_refusal.json
+msgid "Accounts User"
+msgstr ""
+
+#: frontend/src/App.vue:111
+msgid "All"
+msgstr ""
+
+#: frontend/src/App.vue:209
 msgid "Already reconciled"
 msgstr ""
 
-#: frontend/src/components/ReconciledTab.vue:42
-#: frontend/src/components/ReconciledTab.vue:60
+#: frontend/src/components/AutoReconciliationSettings.vue:50
+msgid "Also in the Accounts Settings"
+msgstr ""
+
+#: frontend/src/components/RuleDialog.vue:58
+msgid "Always book such lines"
+msgstr ""
+
+#: frontend/src/App.vue:494 frontend/src/components/PairingRow.vue:33
+msgid "Always book such lines…"
+msgstr ""
+
+#: frontend/src/components/RuleOffers.vue:16
+msgid "Always book “{0}” lines on the account {1}?"
+msgstr ""
+
+#: frontend/src/components/RuleOffers.vue:18
+msgid "Always record “{0}” lines as payments from {1}?"
+msgstr ""
+
+#: frontend/src/components/RuleOffers.vue:19
+msgid "Always record “{0}” lines as payments to {1}?"
+msgstr ""
+
+#: frontend/src/App.vue:775 frontend/src/App.vue:776
+msgid "Amount"
+msgstr ""
+
+#: frontend/src/components/DocumentLookupDialog.vue:110
+#: frontend/src/components/ReconciledTab.vue:68
+#: frontend/src/components/ReconciledTab.vue:90
 msgid "Back"
-msgstr ""
-
-#: pitstop/api.py:116
-msgid "Bank Transaction {0} is not submitted"
-msgstr ""
-
-#: pitstop/api.py:218
-msgid "Bank Transaction {0} is already reconciled: nothing is left to book"
 msgstr ""
 
 #: pitstop/api.py:222
 msgid "Bank Account {0} has no Company Account: set one to book its lines"
 msgstr ""
 
-#: frontend/src/App.vue:252
-msgid "Bank account"
+#. Name of a DocType
+#: pitstop/pitstop/doctype/bank_match_refusal/bank_match_refusal.json
+msgid "Bank Match Refusal"
 msgstr ""
 
-#: frontend/src/App.vue:251
+#. Label of the bank_transaction (Link) field in DocType 'Bank Match Refusal'
+#: pitstop/pitstop/doctype/bank_match_refusal/bank_match_refusal.json
+msgid "Bank Transaction"
+msgstr ""
+
+#: pitstop/api.py:154
+msgid "Bank Transaction {0} cleared {1}, which this page cannot undo"
+msgstr ""
+
+#: pitstop/api.py:218
+msgid "Bank Transaction {0} is already reconciled: nothing is left to book"
+msgstr ""
+
+#: pitstop/api.py:365
+msgid "Bank Transaction {0} is not submitted"
+msgstr ""
+
+#: pitstop/api.py:368
+msgid "Bank Transaction {0} is only announced by the bank: reconcile it once the bank books it"
+msgstr ""
+
+#: frontend/src/components/BankAccountPicker.vue:12
+msgid "Bank accounts"
+msgstr ""
+
+#: pitstop/lookup.py:110
+msgid "Bank lines can be looked up for {0} only, not for {1}"
+msgstr ""
+
+#: pitstop/public/js/find_bank_line.js:25
+msgid "Bank lines for {0}"
+msgstr ""
+
+#: frontend/src/App.vue:592
 msgid "Bank reconciliation"
 msgstr ""
 
-#: frontend/src/components/ReconciledTab.vue:59
-#: frontend/src/components/ReconciledTab.vue:117
+#: frontend/src/components/RuleDialog.vue:68
+msgid "Book it on the account"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:47
+msgid "Cancel the entry"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:47
 msgid "Cancel the payment"
 msgstr ""
 
-#: frontend/src/components/ReconciledTab.vue:57
+#: frontend/src/components/ReconciledTab.vue:83
 msgid "Cancel {0}?"
 msgstr ""
 
-#: frontend/src/App.vue:413
+#: frontend/src/components/BankAccountPicker.vue:29
+msgid "Choose a bank account"
+msgstr ""
+
+#: frontend/src/components/ConfidencePill.vue:22
+#: frontend/src/components/PairingRow.vue:196
+#: frontend/src/components/PairingRow.vue:197
+msgid "Chosen by you"
+msgstr ""
+
+#: frontend/src/components/SearchDialog.vue:149
+#: frontend/src/components/UnmatchedMatcher.vue:185
+msgid "Clear"
+msgstr ""
+
+#: frontend/src/App.vue:781 frontend/src/App.vue:809
+msgid "Clear filters"
+msgstr ""
+
+#: frontend/src/App.vue:935
 msgid "Clear selection"
 msgstr ""
 
-#: pitstop/pairing.py:141
+#: pitstop/ranking.py:485
+msgid "Close amount"
+msgstr ""
+
+#: pitstop/pairing.py:253
 msgid "Consecutive payments"
 msgstr ""
 
-#: frontend/src/App.vue:509
+#: pitstop/ranking.py:503
+msgid "Contact in the label"
+msgstr ""
+
+#: frontend/src/App.vue:504
 msgid "Create a journal entry"
 msgstr ""
 
-#: frontend/src/App.vue:378
+#: frontend/src/App.vue:499
 msgid "Create a payment"
 msgstr ""
 
-#: frontend/src/App.vue:286
+#: frontend/src/components/RuleDialog.vue:85
+#: frontend/src/components/RuleOffers.vue:70
+msgid "Create the rule"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:145
+#: frontend/src/components/ReconciledTab.vue:149
+msgid "Created by the reconciliation"
+msgstr ""
+
+#: frontend/src/components/PairingRow.vue:115
+#: frontend/src/components/ProposalOption.vue:59
+msgid "Creates a bank entry on {0}"
+msgstr ""
+
+#: frontend/src/components/PairingRow.vue:114
+#: frontend/src/components/ProposalOption.vue:58
+msgid "Creates a payment to {0}"
+msgstr ""
+
+#: frontend/src/components/PeriodPicker.vue:171
+msgid "Custom period"
+msgstr ""
+
+#: frontend/src/components/DocumentCard.vue:79
+#: frontend/src/components/DocumentLookupDialog.vue:150
+msgid "Different amount"
+msgstr ""
+
+#: frontend/src/App.vue:787
+msgid "Document types"
+msgstr ""
+
+#: frontend/src/components/UnmatchedMatcher.vue:125
+#: frontend/src/components/UnmatchedMatcher.vue:126
+msgid "Documents to show"
+msgstr ""
+
+#: frontend/src/App.vue:747
 msgid "Dokos already paired your bank lines"
 msgstr ""
 
-#: frontend/src/App.vue:368
-msgid "Dokos found nothing convincing for these lines. Search a document, or record what the money is."
+#: pitstop/rules.py:328
+msgid "Dokos no longer offers a rule for {0}: reload the page"
 msgstr ""
 
-#: frontend/src/App.vue:382
-msgid "Every line has a proposal"
+#: frontend/src/components/RuleDialog.vue:74
+msgid "Dokos then proposes a bank entry for every such line; validating creates it. The rule is a Bank Transaction Rule you can refine in the desk."
 msgstr ""
 
-#: frontend/src/components/DocumentCard.vue:57
+#: frontend/src/components/RuleOffers.vue:65
+msgid "Dokos will not offer this rule again"
+msgstr ""
+
+#: frontend/src/App.vue:847
+msgid "Every line here is pre-approved."
+msgstr ""
+
+#: frontend/src/App.vue:816
+msgid "Everything is reconciled over this period"
+msgstr ""
+
+#: frontend/src/components/PeriodPicker.vue:75
+msgid "FY {0}"
+msgstr ""
+
+#: pitstop/public/js/find_bank_line.js:20
+msgid "Find the bank line"
+msgstr ""
+
+#: frontend/src/App.vue:722 frontend/src/components/DocumentLookupDialog.vue:71
+msgid "Find the line of a document"
+msgstr ""
+
+#: frontend/src/components/ConfidencePill.vue:23
+msgid "From your bank rule {0}"
+msgstr ""
+
+#: frontend/src/components/AutoReconciliationSettings.vue:33
+msgid "Full width"
+msgstr ""
+
+#: frontend/src/components/DocumentCard.vue:100
 msgid "Gap between the bank line and the document"
 msgstr ""
 
-#: frontend/src/components/LevelBadge.vue:9
+#: pitstop/rules.py:102
+msgid "Give the part of the label that identifies these lines"
+msgstr ""
+
+#: frontend/src/components/ConfidencePill.vue:24
+msgid "Grouped payments: no score of their own"
+msgstr ""
+
+#: frontend/src/components/ConfidencePill.vue:10
+#: pitstop/public/js/find_bank_line.js:11
 msgctxt "Confidence"
 msgid "High"
 msgstr ""
 
-#: frontend/src/App.vue:257
+#: frontend/src/components/AutoReconciliationSettings.vue:18
+msgid "Hourly reconciliation stopped"
+msgstr ""
+
+#: frontend/src/components/DocumentLookupDialog.vue:76
+msgid "Invoice or payment number, party or amount"
+msgstr ""
+
+#: frontend/src/App.vue:656 frontend/src/App.vue:657
 msgid "Keyboard shortcuts"
 msgstr ""
 
-#: frontend/src/App.vue:67
+#: frontend/src/App.vue:771
+msgid "Label, party, number or amount"
+msgstr ""
+
+#: frontend/src/components/PeriodPicker.vue:56
+msgid "Last fiscal year"
+msgstr ""
+
+#: frontend/src/components/PeriodPicker.vue:95
+msgid "Last month"
+msgstr ""
+
+#: frontend/src/components/PeriodPicker.vue:100
+msgid "Last quarter"
+msgstr ""
+
+#: frontend/src/components/PeriodPicker.vue:98
+msgid "Last week"
+msgstr ""
+
+#: frontend/src/components/PeriodPicker.vue:102
+msgid "Last year"
+msgstr ""
+
+#: frontend/src/components/PeriodPicker.vue:92
+msgid "Last {0} days"
+msgstr ""
+
+#: frontend/src/App.vue:232
+msgid "Lead refused: {0}"
+msgstr ""
+
+#: frontend/src/components/SearchDialog.vue:92
+msgid "Leads from Dokos"
+msgstr ""
+
+#: frontend/src/components/UnmatchedMatcher.vue:92
+msgid "Leads refused"
+msgstr ""
+
+#: frontend/src/App.vue:164
 msgid "Likely right, but not certain. Compare with the other leads before approving."
 msgstr ""
 
-#: frontend/src/components/LevelBadge.vue:11
+#: frontend/src/components/AutoReconciliationSettings.vue:18
+msgid "Lines are now reconciled every hour"
+msgstr ""
+
+#: frontend/src/App.vue:442
+msgid "Lines reconciled over the period"
+msgstr ""
+
+#: pitstop/public/js/find_bank_line.js:30
+msgid "Looking for matching bank lines…"
+msgstr ""
+
+#: frontend/src/components/ConfidencePill.vue:12
+#: pitstop/public/js/find_bank_line.js:13
 msgctxt "Confidence"
 msgid "Low"
 msgstr ""
 
-#: frontend/src/components/LevelBadge.vue:10
+#: frontend/src/components/PeriodPicker.vue:190
+msgid "Matched date"
+msgstr ""
+
+#: frontend/src/App.vue:779
+msgid "Max"
+msgstr ""
+
+#: frontend/src/components/ConfidencePill.vue:11
+#: pitstop/public/js/find_bank_line.js:12
 msgctxt "Confidence"
 msgid "Medium"
 msgstr ""
 
-#: frontend/src/App.vue:204
-msgid "Next line"
+#: frontend/src/App.vue:777
+msgid "Min"
 msgstr ""
 
-#: frontend/src/components/SearchDialog.vue:43
-msgid "No open document matches"
+#: frontend/src/App.vue:112 frontend/src/App.vue:426
+msgid "Money in"
 msgstr ""
 
-#: frontend/src/components/ReconciledTab.vue:83
-msgid "No reconciled line over this period"
+#: frontend/src/App.vue:443
+msgid "Money in lines reconciled over the period"
 msgstr ""
 
-#: frontend/src/components/PairingRow.vue:118
-msgid "Not this one? Search another document"
+#: frontend/src/App.vue:113 frontend/src/App.vue:427
+msgid "Money out"
 msgstr ""
 
-#: frontend/src/App.vue:303
-msgid "Nothing left to review over this period"
+#: frontend/src/App.vue:444
+msgid "Money out lines reconciled over the period"
 msgstr ""
 
-#: frontend/src/components/SearchDialog.vue:35
-msgid "Number, party or amount"
+#: frontend/src/components/PairingRow.vue:227
+#: frontend/src/components/ReconciledTab.vue:157
+#: frontend/src/components/UnmatchedMatcher.vue:108
+msgid "More actions"
 msgstr ""
 
-#: frontend/src/App.vue:278
-msgid "Only the latest lines of the period are shown: narrow the period to see the others."
-msgstr ""
-
-#: frontend/src/App.vue:72
-msgid "Only weak signals. Open the preview, or search the right document."
-msgstr ""
-
-#: frontend/src/components/PreviewDialog.vue:24
-msgid "Open in Dokos"
-msgstr ""
-
-#: frontend/src/App.vue:267
-msgid "Open the classic page"
-msgstr ""
-
-#: frontend/src/components/PairingRow.vue:110
-msgid "Other leads ({0})"
-msgstr ""
-
-#: frontend/src/components/PairingRow.vue:96
-msgid "Payment created on validation"
-msgstr ""
-
-#: frontend/src/components/PairingRow.vue:35
-msgid "Pre-approve"
-msgstr ""
-
-#: frontend/src/App.vue:206
-msgid "Pre-approve or release"
-msgstr ""
-
-#: frontend/src/App.vue:341
-msgid "Pre-approve these {0}"
-msgstr ""
-
-#: frontend/src/components/PairingRow.vue:35
-msgid "Pre-approved"
-msgstr ""
-
-#: frontend/src/App.vue:404
-msgid "Pre-approved pairings"
-msgstr ""
-
-#: frontend/src/App.vue:322
-msgid "Pre-approved: {0} of {1}"
-msgstr ""
-
-#: frontend/src/components/DocumentCard.vue:36
-#: frontend/src/components/DocumentCard.vue:76
-#: frontend/src/components/DocumentCard.vue:77
-msgid "Preview"
-msgstr ""
-
-#: frontend/src/App.vue:207
-msgid "Preview the document"
-msgstr ""
-
-#: frontend/src/App.vue:205
-msgid "Previous line"
-msgstr ""
-
-#: frontend/src/App.vue:83
-msgid "Proposals"
-msgstr ""
-
-#: frontend/src/App.vue:61
-msgid "Ready to validate"
-msgstr ""
-
-#: frontend/src/App.vue:260
-msgid "Review without the mouse"
-msgstr ""
-
-#: pitstop/pairing.py:141
-msgid "Same days, same mode of payment"
-msgstr ""
-
-#: frontend/src/App.vue:377 frontend/src/components/SearchDialog.vue:28
-msgid "Search a document"
-msgstr ""
-
-#: frontend/src/components/ReconciledTab.vue:78
-msgid "Search a label, document or party"
-msgstr ""
-
-#: frontend/src/App.vue:209
-msgid "Search another document"
-msgstr ""
-
-#: frontend/src/App.vue:313
-msgid "See the lines without proposal"
-msgstr ""
-
-#: frontend/src/App.vue:62
-msgid "Several signals agree and no other party comes close. A glance is enough."
-msgstr ""
-
-#: frontend/src/App.vue:208
-msgid "Show the other leads"
-msgstr ""
-
-#: pitstop/public/js/journal_entry_from_bank_line.js:14
-msgid "The journal entry could not be filled from bank line {0}"
-msgstr ""
-
-#: frontend/src/components/ReconciledTab.vue:40
-msgid "The bank line goes back to the lines to reconcile. {0} itself is kept."
-msgstr ""
-
-#: frontend/src/components/ReconciledTab.vue:58
-msgid "The payment is cancelled, the invoices it paid are open again and the bank line goes back to the lines to reconcile."
-msgstr ""
-
-#: frontend/src/App.vue:66
-msgid "To check"
-msgstr ""
-
-#: pitstop/pairing.py:136
-msgid "Total less card fees"
-msgstr ""
-
-#: pitstop/pairing.py:136
-msgid "Total of the payments"
-msgstr ""
-
-#: frontend/src/App.vue:71
-msgid "Uncertain"
-msgstr ""
-
-#: frontend/src/components/ReconciledTab.vue:41
-#: frontend/src/components/ReconciledTab.vue:111
-msgid "Unlink"
-msgstr ""
-
-#: frontend/src/components/ReconciledTab.vue:39
-msgid "Unlink {0}?"
-msgstr ""
-
-#: frontend/src/components/PairingRow.vue:135
-#: frontend/src/components/SearchDialog.vue:52
-msgid "Use this one"
-msgstr ""
-
-#: frontend/src/App.vue:418
-msgid "Validate 1 reconciliation"
-msgstr ""
-
-#: frontend/src/App.vue:210
-msgid "Validate the pre-approved"
-msgstr ""
-
-#: frontend/src/App.vue:418
-msgid "Validate {0} reconciliations"
-msgstr ""
-
-#: frontend/src/App.vue:84
-msgid "Without proposal"
-msgstr ""
-
-#: pitstop/www/pitstop.py:10
-msgid "You need read access to Bank Transactions to reconcile them"
-msgstr ""
-
-#: frontend/src/components/ReconciledTab.vue:108
-msgid "created by the reconciliation"
+#: pitstop/ranking.py:503
+msgid "Name in the label"
 msgstr ""
 
 #: frontend/src/components/DocumentCard.vue:68
-msgid "due {0}"
+#: frontend/src/components/DocumentLookupDialog.vue:142
+msgid "Name not in the label"
 msgstr ""
 
-#: frontend/src/components/ReconciledTab.vue:64
+#: frontend/src/App.vue:544
+msgid "Next line"
+msgstr ""
+
+#: frontend/src/App.vue:856
+msgid "Next: {0}"
+msgstr ""
+
+#: frontend/src/components/SearchDialog.vue:94
+msgid "No lead: search the document above."
+msgstr ""
+
+#: frontend/src/components/DocumentLookupDialog.vue:124
+msgid "No open bank line matches this document"
+msgstr ""
+
+#: pitstop/public/js/find_bank_line.js:49
+msgid "No open bank line matches this document."
+msgstr ""
+
+#: frontend/src/components/SearchDialog.vue:120
+#: frontend/src/components/UnmatchedMatcher.vue:158
+msgid "No open document matches"
+msgstr ""
+
+#: frontend/src/components/DocumentLookupDialog.vue:84
+msgid "No open invoice or payment matches"
+msgstr ""
+
+#: frontend/src/components/PeriodPicker.vue:226
+msgid "No period matches: pick the dates on the calendar"
+msgstr ""
+
+#: frontend/src/App.vue:808
+msgid "No proposal matches these filters"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:115
+msgid "No reconciled line over this period"
+msgstr ""
+
+#: frontend/src/components/RuleOffers.vue:63
+msgid "No, never"
+msgstr ""
+
+#: frontend/src/components/PairingRow.vue:32
+#: frontend/src/components/PairingRow.vue:221
+#: frontend/src/components/PairingRow.vue:222
+msgid "Not this one"
+msgstr ""
+
+#: frontend/src/App.vue:848
+msgid "Nothing left here."
+msgstr ""
+
+#: pitstop/pairing.py:124 pitstop/ranking.py:494
+msgid "Number in the label"
+msgstr ""
+
+#: frontend/src/components/DocumentCard.vue:93
+#: frontend/src/components/DocumentLookupDialog.vue:138
+msgid "Number not in the label"
+msgstr ""
+
+#: frontend/src/components/SearchDialog.vue:73
+#: frontend/src/components/UnmatchedMatcher.vue:116
+msgid "Number, party or amount"
+msgstr ""
+
+#: pitstop/rules.py:311
+msgid "Offered after {0} lines booked on {1}"
+msgstr ""
+
+#: pitstop/rules.py:309
+msgid "Offered after {0} payments of {1}"
+msgstr ""
+
+#: frontend/src/components/ProposalOption.vue:37
+msgid "Only documents of the same type can be paid together"
+msgstr ""
+
+#: frontend/src/App.vue:740
+msgid "Only the latest lines of the period are shown: narrow the period to see the others."
+msgstr ""
+
+#: frontend/src/components/AutoReconciliationSettings.vue:47
+msgid "Only users who can edit the Accounts Settings can change this."
+msgstr ""
+
+#: frontend/src/App.vue:170
+msgid "Only weak signals. Open the preview, or search the right document."
+msgstr ""
+
+#: pitstop/pitstop/page/pitstop/pitstop.js:11
+msgid "Open Pitstop"
+msgstr ""
+
+#: frontend/src/components/PreviewDialog.vue:28
+msgid "Open in Dokos"
+msgstr ""
+
+#: frontend/src/components/PairingRow.vue:206
+#: frontend/src/components/PairingRow.vue:207
+msgid "Open the bank line"
+msgstr ""
+
+#: frontend/src/App.vue:678 frontend/src/App.vue:679
+msgid "Open the classic page"
+msgstr ""
+
+#: pitstop/public/js/find_bank_line.js:45
+msgid "Open the reconciliation page"
+msgstr ""
+
+#: frontend/src/components/PairingRow.vue:27
+msgid "Other leads ({0})"
+msgstr ""
+
+#: frontend/src/App.vue:549
+msgid "Other leads, or another document"
+msgstr ""
+
+#: frontend/src/components/SearchDialog.vue:116
+msgid "Other open documents"
+msgstr ""
+
+#: frontend/src/App.vue:735
+msgid "Pairing your bank lines: {0} of {1}"
+msgstr ""
+
+#: frontend/src/App.vue:736
+msgid "Pairing your bank lines…"
+msgstr ""
+
+#. Label of the party (Dynamic Link) field in DocType 'Bank Match Refusal'
+#: pitstop/pitstop/doctype/bank_match_refusal/bank_match_refusal.json
+msgid "Party"
+msgstr ""
+
+#. Label of the party_type (Link) field in DocType 'Bank Match Refusal'
+#: pitstop/pitstop/doctype/bank_match_refusal/bank_match_refusal.json
+msgid "Party Type"
+msgstr ""
+
+#: frontend/src/components/PairingRow.vue:180
+#: frontend/src/components/PairingRow.vue:184
+msgid "Payment created on validation"
+msgstr ""
+
+#: frontend/src/components/PeriodPicker.vue:183
+msgid "Periods"
+msgstr ""
+
+#: frontend/src/App.vue:176
+msgid "Pick a line, then the document it pays. Or record what the money is from its menu."
+msgstr ""
+
+#: frontend/src/components/SearchDialog.vue:69
+msgid "Pick the right document"
+msgstr ""
+
+#: pitstop/pitstop/page/pitstop/pitstop.js:10
+msgid "Pitstop"
+msgstr ""
+
+#: pitstop/ranking.py:527
+msgid "Posted near the payment"
+msgstr ""
+
+#: pitstop/ranking.py:530
+msgid "Posted well after the payment"
+msgstr ""
+
+#: pitstop/ranking.py:532
+msgid "Posted well before the payment"
+msgstr ""
+
+#: frontend/src/components/PairingRow.vue:57
+msgid "Pre-approve"
+msgstr ""
+
+#: frontend/src/App.vue:546
+msgid "Pre-approve or release"
+msgstr ""
+
+#: frontend/src/App.vue:834
+msgid "Pre-approve these {0}"
+msgstr ""
+
+#: frontend/src/components/PairingRow.vue:57
+msgid "Pre-approved"
+msgstr ""
+
+#: frontend/src/App.vue:908
+msgid "Pre-approved pairings"
+msgstr ""
+
+#: frontend/src/components/DocumentCard.vue:52
+#: frontend/src/components/PairingRow.vue:214
+#: frontend/src/components/PairingRow.vue:215
+#: frontend/src/components/ProposalOption.vue:89
+#: frontend/src/components/ProposalOption.vue:90
+msgid "Preview"
+msgstr ""
+
+#: frontend/src/App.vue:547
+msgid "Preview the document"
+msgstr ""
+
+#: frontend/src/App.vue:545
+msgid "Previous line"
+msgstr ""
+
+#. Label of the proposal (Small Text) field in DocType 'Bank Match Refusal'
+#: pitstop/pitstop/doctype/bank_match_refusal/bank_match_refusal.json
+msgid "Proposal"
+msgstr ""
+
+#: frontend/src/components/SearchDialog.vue:58
+msgid "Proposed"
+msgstr ""
+
+#: frontend/src/components/PeriodPicker.vue:69
+msgid "Q{0} {1}"
+msgstr ""
+
+#: frontend/src/App.vue:157
+msgid "Ready to validate"
+msgstr ""
+
+#: pitstop/ranking.py:513
+msgid "Recognized from past payments"
+msgstr ""
+
+#: frontend/src/components/DocumentLookupDialog.vue:155
+#: pitstop/public/js/find_bank_line.js:71
+msgid "Reconcile"
+msgstr ""
+
+#: frontend/src/components/AutoReconciliationSettings.vue:38
+msgid "Reconcile automatically every hour"
+msgstr ""
+
+#: frontend/src/App.vue:619
+msgid "Reconciled over the period"
+msgstr ""
+
+#: pitstop/public/js/find_bank_line.js:85
+msgid "Reconciled with {0}"
+msgstr ""
+
+#: frontend/src/App.vue:548
+msgid "Refuse the lead"
+msgstr ""
+
+#: frontend/src/components/SearchDialog.vue:59
+#: frontend/src/components/UnmatchedMatcher.vue:97
+msgid "Restore"
+msgstr ""
+
+#: frontend/src/App.vue:661
+msgid "Review without the mouse"
+msgstr ""
+
+#: frontend/src/components/ConfidencePill.vue:17
+msgid "Rule"
+msgstr ""
+
+#: frontend/src/components/RuleOffers.vue:72
+msgid "Rule created: these lines are now proposed for validation"
+msgstr ""
+
+#: frontend/src/components/RuleDialog.vue:64
+msgid "Rule name"
+msgstr ""
+
+#: frontend/src/components/RuleDialog.vue:51
+msgid "Rule {0} created"
+msgstr ""
+
+#: pitstop/rules.py:91
+msgid "Rule {0} no longer applies to {1}: reload the page"
+msgstr ""
+
+#: frontend/src/components/RuleOffers.vue:41
+msgid "Rules to create"
+msgstr ""
+
+#: frontend/src/components/AutoReconciliationSettings.vue:40
+msgid "Runs the automatic reconciliation of the classic page on the open lines of the last 90 days: a line whose label names an invoice or a payment is reconciled with it."
+msgstr ""
+
+#: pitstop/ranking.py:511
+msgid "Same account as past payments"
+msgstr ""
+
+#: pitstop/pairing.py:122 pitstop/ranking.py:485
+msgid "Same amount"
+msgstr ""
+
+#: pitstop/pairing.py:253
+msgid "Same days, same mode of payment"
+msgstr ""
+
+#: frontend/src/components/ConfidencePill.vue:25
+#: pitstop/public/js/find_bank_line.js:56
+msgid "Score: {0}"
+msgstr ""
+
+#: frontend/src/components/DocumentLookupDialog.vue:122
+msgid "Scoring the open bank lines…"
+msgstr ""
+
+#: frontend/src/components/PairingRow.vue:27
+msgid "Search a document"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:108
+msgid "Search a label, document or party"
+msgstr ""
+
+#: frontend/src/components/RuleDialog.vue:70
+msgid "Search an account"
+msgstr ""
+
+#: frontend/src/components/SearchDialog.vue:116
+msgid "Search results"
+msgstr ""
+
+#: frontend/src/components/SearchDialog.vue:77
+msgid "Select one document, or several when this line pays them together."
+msgstr ""
+
+#: frontend/src/components/AutoReconciliationSettings.vue:30
+msgid "Settings"
+msgstr ""
+
+#: frontend/src/App.vue:158
+msgid "Several signals agree and no other party comes close. A glance is enough."
+msgstr ""
+
+#: frontend/src/components/SearchDialog.vue:80
+#: frontend/src/components/UnmatchedMatcher.vue:132
+msgid "Show only exact amount"
+msgstr ""
+
+#: pitstop/ranking.py:494
+msgid "Similar number in the label"
+msgstr ""
+
+#. Name of a role
+#: pitstop/pitstop/doctype/bank_match_refusal/bank_match_refusal.json
+msgid "System Manager"
+msgstr ""
+
+#: frontend/src/components/DocumentCard.vue:108
+msgid "The date gives no hint"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:88
+msgid "The entry is cancelled and the bank line goes back to the lines to reconcile."
+msgstr ""
+
+#: pitstop/public/js/journal_entry_from_bank_line.js:22
+msgid "The journal entry could not be filled from bank line {0}"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:85
+msgid "The payment is cancelled, the invoices it paid are open again and the bank line goes back to the lines to reconcile."
+msgstr ""
+
+#. Description of the 'Proposal' (Small Text) field in DocType 'Bank Match
+#. Refusal'
+#: pitstop/pitstop/doctype/bank_match_refusal/bank_match_refusal.json
+msgid "The refused lead: a document, a settlement of several payments or a rule"
+msgstr ""
+
+#: frontend/src/components/PeriodPicker.vue:55
+msgid "This fiscal year"
+msgstr ""
+
+#: frontend/src/components/PeriodPicker.vue:94
+msgid "This month"
+msgstr ""
+
+#: frontend/src/components/PeriodPicker.vue:99
+msgid "This quarter"
+msgstr ""
+
+#: frontend/src/components/PeriodPicker.vue:97
+msgid "This week"
+msgstr ""
+
+#: frontend/src/components/PeriodPicker.vue:101
+msgid "This year"
+msgstr ""
+
+#: frontend/src/App.vue:163
+msgid "To check"
+msgstr ""
+
+#: pitstop/pairing.py:248
+msgid "Total less card fees"
+msgstr ""
+
+#: pitstop/pairing.py:248
+msgid "Total of the payments"
+msgstr ""
+
+#: frontend/src/components/UnmatchedMatcher.vue:154
+msgid "Turn on a document type to see its open documents"
+msgstr ""
+
+#: frontend/src/App.vue:169
+msgid "Uncertain"
+msgstr ""
+
+#: frontend/src/App.vue:234 frontend/src/App.vue:378
+msgid "Undo"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:51
+#: frontend/src/components/ReconciledTab.vue:67
+msgid "Unlink"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:63
+msgid "Unlink {0}?"
+msgstr ""
+
+#: frontend/src/components/AutoReconciliationSettings.vue:33
+msgid "Use the whole width of the screen."
+msgstr ""
+
+#: frontend/src/components/SearchDialog.vue:152
+#: frontend/src/components/UnmatchedMatcher.vue:188
+msgid "Use these {0} documents"
+msgstr ""
+
+#: frontend/src/components/SearchDialog.vue:152
+#: frontend/src/components/UnmatchedMatcher.vue:188
+msgid "Use this document"
+msgstr ""
+
+#: frontend/src/components/SearchDialog.vue:59
+#: frontend/src/components/SearchDialog.vue:128
+#: frontend/src/components/UnmatchedMatcher.vue:166
+msgid "Use this one"
+msgstr ""
+
+#: frontend/src/App.vue:948
+msgid "Validate 1 reconciliation"
+msgstr ""
+
+#: frontend/src/App.vue:550
+msgid "Validate the pre-approved"
+msgstr ""
+
+#: frontend/src/App.vue:949
+msgid "Validate {0} reconciliations"
+msgstr ""
+
+#: frontend/src/components/RuleDialog.vue:63
+msgid "When the label contains"
+msgstr ""
+
+#: frontend/src/App.vue:175
+msgid "Without proposal"
+msgstr ""
+
+#: frontend/src/components/RuleOffers.vue:51
+msgid "You booked them that way the last {0} times"
+msgstr ""
+
+#: pitstop/www/pitstop.py:14
+msgid "You need read access to Bank Transactions to reconcile them"
+msgstr ""
+
+#: pitstop/ranking.py:523
+msgid "You picked another party for similar lines"
+msgstr ""
+
+#: frontend/src/components/ConfidencePill.vue:16
+msgid "Your pick"
+msgstr ""
+
+#: frontend/src/components/PeriodPicker.vue:178
+msgid "e.g. Last 3 weeks, Q1, May 2025"
+msgstr ""
+
+#: frontend/src/components/RuleOffers.vue:55
+msgid "the rule books 1 open line"
+msgstr ""
+
+#: frontend/src/components/RuleOffers.vue:56
+msgid "the rule books {0} open lines"
+msgstr ""
+
+#: frontend/src/components/ReconciledTab.vue:94
 msgid "{0} cancelled"
 msgstr ""
 
-#: pitstop/pairing.py:223
+#: frontend/src/components/SearchDialog.vue:141
+#: frontend/src/components/UnmatchedMatcher.vue:177
+msgid "{0} documents"
+msgstr ""
+
+#: frontend/src/components/PairingRow.vue:155
+msgid "{0} documents paid at once"
+msgstr ""
+
+#: pitstop/pairing.py:347
 msgid "{0} is no longer open for reconciliation: reload the page"
 msgstr ""
 
-#: frontend/src/components/PairingRow.vue:101
-msgid "{0} less than the payments, likely card fees: it stays open on the last payment"
+#: frontend/src/App.vue:408
+msgid "{0} lines put back"
 msgstr ""
 
-#: frontend/src/App.vue:160
+#: frontend/src/App.vue:375
 msgid "{0} lines reconciled"
 msgstr ""
 
-#: frontend/src/App.vue:309
-msgid "{0} lines still need a document of your choice."
+#: frontend/src/App.vue:598
+msgid "{0} months up to date"
 msgstr ""
 
-#: frontend/src/components/PairingRow.vue:66
+#: frontend/src/App.vue:820
+msgid "{0} months up to date in a row"
+msgstr ""
+
+#: frontend/src/App.vue:918
+msgid "{0} of {1} pre-approved"
+msgstr ""
+
+#: frontend/src/App.vue:515 frontend/src/components/PairingRow.vue:123
+#: frontend/src/components/ProposalOption.vue:66
 msgid "{0} payments settled at once"
 msgstr ""
 
-#: frontend/src/App.vue:410
+#: frontend/src/App.vue:928
 msgid "{0} payments will be created"
 msgstr ""
 
-#: frontend/src/App.vue:407
-msgid "{0} pre-approved"
+#: frontend/src/components/DocumentLookupDialog.vue:64
+msgid "{0} reconciled with {1}"
 msgstr ""
 
-#: frontend/src/components/ReconciledTab.vue:50
+#: frontend/src/components/ReconciledTab.vue:76
 msgid "{0} unlinked"
+msgstr ""
+
+#: pitstop/lookup.py:117
+msgid "{0} {1} has nothing left to reconcile with a bank line"
+msgstr ""
+
+#: pitstop/pairing.py:148
+msgid "{0} {1} no longer matches this line exactly: reload the page"
 msgstr ""
 
