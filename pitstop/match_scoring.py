@@ -13,6 +13,8 @@ import unicodedata
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import date
+from functools import lru_cache
+from pathlib import Path
 
 from rapidfuzz import fuzz
 from rapidfuzz.distance import DamerauLevenshtein
@@ -62,20 +64,21 @@ MAX_IDENTIFIER_WORDS = 3
 COMMON_LABEL_WORD_SHARE = 0.02
 MIN_COMMON_LABEL_WORD_COUNT = 3
 MAX_PARTIES_SHARING_A_NAME_WORD = 2
-LEGAL_FORMS_AND_TITLES = {
-	"SAS",
-	"SARL",
-	"SASU",
-	"EURL",
-	"SCI",
-	"THE",
-	"LES",
-	"DES",
-	"MME",
-	"MR",
-	"MONSIEUR",
-	"MADAME",
-}
+# Legal forms, titles and articles: one file per language, all of them loaded since a French company also pays
+# `Google Ireland Limited`
+GENERIC_NAME_WORDS_DIRECTORY = Path(__file__).parent / "generic_name_words"
+GENERIC_NAME_WORDS = frozenset(
+	word
+	for path in GENERIC_NAME_WORDS_DIRECTORY.glob("*.txt")
+	for line in path.read_text(encoding="utf-8").splitlines()
+	if (word := line.split("#")[0].strip())
+)
+if not GENERIC_NAME_WORDS:
+	raise ImportError(
+		f"No word list in {GENERIC_NAME_WORDS_DIRECTORY}: reinstall pitstop, its .txt files are gone"
+	)
+# Party names are scored for every open document of every line: glue each once, within a worker's memory
+GLUED_NAMES_CACHE_SIZE = 10_000
 SIMILAR_LABEL = 0.5
 # An account seen paying for more parties than this is a platform, a family or CAF: it identifies none
 MAX_PARTIES_SHARING_AN_ACCOUNT = 2
@@ -109,12 +112,31 @@ def compact(text: str | None) -> str:
 	return normalize(text).replace(" ", "")
 
 
-def glued_name(name: str | None) -> str:
-	"""A name as banks often print it, its words run together: `La Coroutine` becomes `LACOROUTINE`.
+def _generic_bounds(tokens: list[str]) -> tuple[list[int], list[int]]:
+	"""Where a name can start and end once legal forms, titles and articles leave its ends, `S.A.R.L.` counting
+	as one: `SCI Les Roses SARL` can start at its first, second or third word and end after its third or fourth."""
+	starts, ends = [0], [len(tokens)]
+	for position in range(1, len(tokens)):
+		if any("".join(tokens[start:position]) in GENERIC_NAME_WORDS for start in starts):
+			starts.append(position)
+	for position in range(len(tokens) - 1, 0, -1):
+		if any("".join(tokens[position:end]) in GENERIC_NAME_WORDS for end in ends):
+			ends.append(position)
+	return starts, ends
 
-	Only names holding a real word: initials like `T.P.E.` would glue into `TPE`, found in every card label.
+
+@lru_cache(maxsize=GLUED_NAMES_CACHE_SIZE)
+def glued_names(name: str | None) -> frozenset[str]:
+	"""A name as banks often print it, its words run together, with or without its generic ends:
+	`The Green Grocer Ltd` becomes `THEGREENGROCERLTD`, `THEGREENGROCER`, `GREENGROCERLTD` or `GREENGROCER`.
+
+	Only runs of two words or more holding a real word: initials like `T.P.E.` would glue into `TPE`, found in
+	every card label.
 	"""
-	return compact(name) if len(normalize(name).split()) >= 2 and words(name) else ""
+	tokens = normalize(name).split()
+	starts, ends = _generic_bounds(tokens)
+	runs = [tokens[start:end] for start in starts for end in ends if end - start >= 2]
+	return frozenset("".join(run) for run in runs if words(" ".join(run)) - GENERIC_NAME_WORDS)
 
 
 def confidence(
@@ -354,7 +376,7 @@ class Vocabulary:
 		self.name_owners = Counter(word for name in party_names for word in words(name))
 
 	def is_identifying(self, word: str) -> bool:
-		if word in LEGAL_FORMS_AND_TITLES:
+		if word in GENERIC_NAME_WORDS:
 			return False
 		return (
 			self.label_frequency[word] <= self.common_threshold
@@ -380,7 +402,7 @@ def name_grade(
 	if name_words and len(found) >= min(2, len(name_words)):
 		return NAME_IN_LABEL
 	# Exactly, without typo tolerance: `JEANDUPONT` is one letter away from `JEANNEDUPONT`, another person
-	if glued_name(party_name) in label_words:
+	if glued_names(party_name) & label_words:
 		return NAME_IN_LABEL
 	if (
 		bank_party_name

@@ -1,0 +1,25 @@
+# Words of an English party's name that identify nobody, written as `normalize` and `compact` leave them:
+# uppercase, without dots or spaces (L.L.C. is LLC).
+
+# Legal forms
+LTD
+LIMITED
+PLC
+LLP
+LP
+LLC
+INC
+INCORPORATED
+CORP
+CORPORATION
+CO
+
+# Titles
+MR
+MRS
+MS
+MISS
+DR
+
+# Articles
+THE

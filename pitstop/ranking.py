@@ -28,7 +28,7 @@ from pitstop.match_scoring import (
 	compact,
 	confidence,
 	counterparty_account,
-	glued_name,
+	glued_names,
 	is_damped,
 	is_identifier,
 	name_grade,
@@ -410,7 +410,7 @@ def get_party_names(contacts):
 			contact_names = " ".join(
 				f"{first} {last}" for first, last in contacts.get((party_type, party.name), [])
 			)
-			names.append(f"{party_name} {glued_name(party_name)} {contact_names}")
+			names.append(f"{party_name} {' '.join(glued_names(party_name))} {contact_names}")
 	return names
 
 
