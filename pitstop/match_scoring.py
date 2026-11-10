@@ -76,6 +76,8 @@ LEGAL_FORMS_AND_TITLES = {
 	"MONSIEUR",
 	"MADAME",
 }
+# Banks drop a legal form or title when they glue a name, but keep its article: `LESJARDINSDUPONT`
+DROPPED_WHEN_GLUED = LEGAL_FORMS_AND_TITLES - {"THE", "LES", "DES"}
 SIMILAR_LABEL = 0.5
 # An account seen paying for more parties than this is a platform, a family or CAF: it identifies none
 MAX_PARTIES_SHARING_AN_ACCOUNT = 2
@@ -115,7 +117,7 @@ def glued_name(name: str | None) -> str:
 	Legal forms and titles stay out, banks rarely print them. So do names without a real word: initials like
 	`T.P.E.` would glue into `TPE`, found in every card label.
 	"""
-	tokens = [token for token in normalize(name).split() if token not in LEGAL_FORMS_AND_TITLES]
+	tokens = [token for token in normalize(name).split() if token not in DROPPED_WHEN_GLUED]
 	has_a_real_word = any(len(token) >= 3 and not token.isdigit() for token in tokens)
 	return "".join(tokens) if len(tokens) >= 2 and has_a_real_word else ""
 
