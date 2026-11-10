@@ -260,16 +260,26 @@ class TestPairings(ERPNextTestSuite):
 	def test_period_totals_split_money_in_and_out_with_what_is_reconciled(self):
 		invoice = self.create_invoice(500)
 		paid = self.create_line(500, f"VIR SEPA RECU /DE JOHN DOE /MOTIF {invoice.name}")
+		smaller_invoice = self.create_invoice(150)
+		partly_paid = self.create_line(200, f"VIR SEPA RECU /DE JOHN DOE /MOTIF {smaller_invoice.name}")
 		self.create_line(120, "VIR SEPA RECU /DE UNKNOWN")
 		self.create_line(300, "VIR SEPA RECU /DE OUTSIDE THE PERIOD", line_date=add_days(PAYMENT_DATE, -400))
 		self.create_line(-80, "CB FICTIVE SHOP")
+		self.create_line(-60, "CB FICTIVE SHOP LAST YEAR", line_date=add_days(PAYMENT_DATE, -400))
 		self.create_line(40, "VIR ANNONCE", status=PENDING_STATUS)
-		documents = [{"doctype": "Sales Invoice", "name": invoice.name}]
 		with self.set_user(ACCOUNTANT):
-			reconcile_pairings([{"bank_transaction": paid.name, "documents": documents}])
+			reconcile_pairings(
+				[
+					{"bank_transaction": paid.name, "documents": [{"doctype": "Sales Invoice", "name": invoice.name}]},
+					{
+						"bank_transaction": partly_paid.name,
+						"documents": [{"doctype": "Sales Invoice", "name": smaller_invoice.name}],
+					},
+				]
+			)
 			totals = get_period_totals(self.bank_account, str(PAYMENT_DATE), str(PAYMENT_DATE))
 
-		self.assertEqual(totals["in"], {"total": 620, "reconciled": 500, "lines": 2, "reconciled_lines": 1})
+		self.assertEqual(totals["in"], {"total": 820, "reconciled": 650, "lines": 3, "reconciled_lines": 1})
 		self.assertEqual(totals["out"], {"total": 80, "reconciled": 0, "lines": 1, "reconciled_lines": 0})
 
 	def test_undo_reopens_the_invoice_and_cancels_the_payment_it_created(self):

@@ -426,20 +426,21 @@ const DIRECTIONS = [
 	{ key: "out", label: () => __("Money out"), icon: "lucide-arrow-up-right", tint: "text-ink-red-5" },
 ];
 // Of the filters, only the period and the direction narrow it
-const globalProgress = computed(() => {
+const periodProgress = computed(() => {
 	const directions = periodTotals.data;
-	if (!directions) return null;
+	if (!directions || periodTotals.error) return null;
 	const counted = filters.direction === "all" ? [directions.in, directions.out] : [directions[filters.direction]];
 	const lines = counted.reduce((sum, direction) => sum + direction.lines, 0);
+	if (!lines) return null;
 	const reconciled = counted.reduce((sum, direction) => sum + direction.reconciled_lines, 0);
 	// Rounded down: one line left out of thousands must not read as 100 %
-	return { lines, reconciled, share: lines ? Math.floor((100 * reconciled) / lines) / 100 : 1 };
+	return { lines, reconciled, share: Math.floor((100 * reconciled) / lines) / 100 };
 });
 // The direction filter hides on some tabs but still narrows the bar, so the label names it
-const GLOBAL_PROGRESS_LABELS = {
-	all: () => __("Reconciled over the period"),
-	in: () => __("Money in reconciled over the period"),
-	out: () => __("Money out reconciled over the period"),
+const PERIOD_PROGRESS_LABELS = {
+	all: () => __("Lines reconciled over the period"),
+	in: () => __("Money in lines reconciled over the period"),
+	out: () => __("Money out lines reconciled over the period"),
 };
 const reconciledShare = (direction) => (direction.total ? direction.reconciled / direction.total : 1);
 const isComplete = (month) => month.lines && month.reconciled === month.lines;
@@ -672,21 +673,27 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 						/>
 					</div>
 				</div>
-				<div v-if="globalProgress" :class="pageWidth" class="mx-auto mb-3 mt-4 px-4 sm:px-8">
+				<!-- Dimmed rather than hidden while reloading, so the page does not jump after each validation -->
+				<div
+					v-if="periodProgress"
+					:class="[pageWidth, periodTotals.loading && 'opacity-50']"
+					:aria-busy="periodTotals.loading"
+					class="mx-auto mb-3 mt-4 px-4 transition-opacity sm:px-8"
+				>
 					<Progress
-						:value="100 * globalProgress.share"
+						:value="100 * periodProgress.share"
 						size="md"
-						:label="GLOBAL_PROGRESS_LABELS[filters.direction]()"
+						:label="PERIOD_PROGRESS_LABELS[filters.direction]()"
 						hint
 					>
 						<template #hint>
 							<span class="text-base tabular-nums text-ink-gray-6">
 								{{
 									__("{0} · {1} of {2} lines · {3} left", [
-										formatPercent(globalProgress.share),
-										globalProgress.reconciled,
-										globalProgress.lines,
-										globalProgress.lines - globalProgress.reconciled,
+										formatPercent(periodProgress.share),
+										periodProgress.reconciled,
+										periodProgress.lines,
+										periodProgress.lines - periodProgress.reconciled,
 									])
 								}}
 							</span>
