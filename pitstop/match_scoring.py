@@ -76,8 +76,6 @@ LEGAL_FORMS_AND_TITLES = {
 	"MONSIEUR",
 	"MADAME",
 }
-# Banks drop a legal form or title when they glue a name, but keep its article: `LESJARDINSDUPONT`
-DROPPED_WHEN_GLUED = LEGAL_FORMS_AND_TITLES - {"THE", "LES", "DES"}
 SIMILAR_LABEL = 0.5
 # An account seen paying for more parties than this is a platform, a family or CAF: it identifies none
 MAX_PARTIES_SHARING_AN_ACCOUNT = 2
@@ -114,12 +112,9 @@ def compact(text: str | None) -> str:
 def glued_name(name: str | None) -> str:
 	"""A name as banks often print it, its words run together: `La Coroutine` becomes `LACOROUTINE`.
 
-	Legal forms and titles stay out, banks rarely print them. So do names without a real word: initials like
-	`T.P.E.` would glue into `TPE`, found in every card label.
+	Only names holding a real word: initials like `T.P.E.` would glue into `TPE`, found in every card label.
 	"""
-	tokens = [token for token in normalize(name).split() if token not in DROPPED_WHEN_GLUED]
-	has_a_real_word = any(len(token) >= 3 and not token.isdigit() for token in tokens)
-	return "".join(tokens) if len(tokens) >= 2 and has_a_real_word else ""
+	return compact(name) if len(normalize(name).split()) >= 2 and words(name) else ""
 
 
 def confidence(
@@ -246,10 +241,10 @@ def is_identifier(number: str, compact_labels: list[str]) -> bool:
 	not which document is paid, and would match every month's label.
 	"""
 	number_words = normalize(number).split()
-	compact = "".join(number_words)
-	if not 0 < len(number_words) <= MAX_IDENTIFIER_WORDS or sum(char.isdigit() for char in compact) < 3:
+	compact_number = "".join(number_words)
+	if not 0 < len(number_words) <= MAX_IDENTIFIER_WORDS or sum(char.isdigit() for char in compact_number) < 3:
 		return False
-	labels_containing = sum(compact in label for label in compact_labels)
+	labels_containing = sum(compact_number in label for label in compact_labels)
 	return labels_containing <= max(3, COMMON_LABEL_WORD_SHARE * len(compact_labels))
 
 
