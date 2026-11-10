@@ -420,7 +420,8 @@ const periodTotals = useCall({
 	immediate: false,
 	params: () => ({ bank_account: bankAccount.value, from_date: period.value[0], to_date: period.value[1] }),
 });
-watch([bankAccount, period], () => bankAccount.value && period.value.length === 2 && periodTotals.reload());
+const reloadPeriodTotals = () => bankAccount.value && period.value.length === 2 && periodTotals.reload();
+watch([bankAccount, period], reloadPeriodTotals);
 const DIRECTIONS = [
 	{ key: "in", label: () => __("Money in"), icon: "lucide-arrow-down-left", tint: "text-ink-green-6" },
 	{ key: "out", label: () => __("Money out"), icon: "lucide-arrow-up-right", tint: "text-ink-red-5" },
@@ -455,7 +456,7 @@ const streak = computed(() => {
 function refresh() {
 	loadPairings();
 	monthlyProgress.reload();
-	periodTotals.reload();
+	reloadPeriodTotals();
 }
 
 const preview = reactive({ open: false, document: null });

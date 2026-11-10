@@ -239,7 +239,7 @@ def get_period_totals(bank_account: str, from_date: str, to_date: str) -> dict:
 	}
 	for line in lines:
 		direction = totals["in" if flt(line.credit) > 0 else "out"]
-		direction["total"] += flt(line.credit) or flt(line.debit)
+		direction["total"] += abs(flt(line.credit) - flt(line.debit))
 		direction["reconciled"] += flt(line.allocated_amount)
 		direction["lines"] += 1
 		if not flt(line.unallocated_amount):

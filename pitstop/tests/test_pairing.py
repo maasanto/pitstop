@@ -267,6 +267,8 @@ class TestPairings(ERPNextTestSuite):
 		self.create_line(-80, "CB FICTIVE SHOP")
 		self.create_line(-60, "CB FICTIVE SHOP LAST YEAR", line_date=add_days(PAYMENT_DATE, -400))
 		self.create_line(40, "VIR ANNONCE", status=PENDING_STATUS)
+		negative_credit = self.create_line(30, "CB FICTIVE SHOP CORRECTION")
+		frappe.db.set_value("Bank Transaction", negative_credit.name, "credit", -30)
 		with self.set_user(ACCOUNTANT):
 			reconcile_pairings(
 				[
@@ -280,7 +282,7 @@ class TestPairings(ERPNextTestSuite):
 			totals = get_period_totals(self.bank_account, str(PAYMENT_DATE), str(PAYMENT_DATE))
 
 		self.assertEqual(totals["in"], {"total": 820, "reconciled": 650, "lines": 3, "reconciled_lines": 1})
-		self.assertEqual(totals["out"], {"total": 80, "reconciled": 0, "lines": 1, "reconciled_lines": 0})
+		self.assertEqual(totals["out"], {"total": 110, "reconciled": 0, "lines": 2, "reconciled_lines": 0})
 
 	def test_undo_reopens_the_invoice_and_cancels_the_payment_it_created(self):
 		invoice = self.create_invoice(765.43)
