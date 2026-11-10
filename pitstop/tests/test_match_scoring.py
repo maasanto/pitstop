@@ -112,6 +112,8 @@ class TestSignalGrades(ERPNextTestSuite):
 			)
 
 		self.assertEqual(grade("VIR SEPA BOULANGERIEDUPONT", "Boulangerie Dupont"), 1.0)
+		self.assertEqual(grade("VIR SEPA BOULANGERIEDUPONT", "Boulangerie Dupont SARL"), 1.0)
+		self.assertEqual(grade("VIR SEPA JEANNEMARTIN", "Mme Jeanne Martin"), 1.0)
 		self.assertEqual(grade("VIR SEPA LACOROUTINE", "Coroutine Lab"), 0.0)
 		self.assertEqual(grade("VIR SEPA JEANNEDUPONT", "Jean Dupont"), 0.0, "another person, one letter away")
 		self.assertEqual(grade("REMISE TPE 0412", "T.P.E."), 0.0, "initials glued are a card label word")

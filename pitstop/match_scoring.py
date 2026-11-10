@@ -112,9 +112,12 @@ def compact(text: str | None) -> str:
 def glued_name(name: str | None) -> str:
 	"""A name as banks often print it, its words run together: `La Coroutine` becomes `LACOROUTINE`.
 
-	Only names holding a real word: initials like `T.P.E.` would glue into `TPE`, found in every card label.
+	Legal forms and titles stay out, banks rarely print them. So do names without a real word: initials like
+	`T.P.E.` would glue into `TPE`, found in every card label.
 	"""
-	return compact(name) if len(normalize(name).split()) >= 2 and words(name) else ""
+	tokens = [token for token in normalize(name).split() if token not in LEGAL_FORMS_AND_TITLES]
+	has_a_real_word = any(len(token) >= 3 and not token.isdigit() for token in tokens)
+	return "".join(tokens) if len(tokens) >= 2 and has_a_real_word else ""
 
 
 def confidence(
