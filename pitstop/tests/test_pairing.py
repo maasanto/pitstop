@@ -15,7 +15,6 @@ from pitstop.api import (
 	accept_rule_offer,
 	create_rule,
 	decline_rule_offer,
-	get_account_progress,
 	get_journal_entry_values,
 	get_pairings,
 	get_period_totals,
