@@ -1,0 +1,42 @@
+# Words of a French party's name that identify nobody, written as `normalize` and `compact` leave them:
+# uppercase, without accents, dots or spaces (S.A.R.L. is SARL). Every language's list applies to every site:
+# leave out any word that is also a name elsewhere (EARL, the farm form, is an English first name).
+
+# Legal forms
+SA
+SAS
+SASU
+SARL
+EURL
+SCI
+SNC
+SCS
+SCA
+SCOP
+SCIC
+SCEA
+SELARL
+SELAS
+SELAFA
+SELCA
+GAEC
+GIE
+EI
+EIRL
+
+# Titles
+M
+MR
+MME
+MLLE
+MONSIEUR
+MADAME
+MADEMOISELLE
+ME
+DR
+
+# Articles
+LE
+LA
+LES
+DES

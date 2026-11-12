@@ -7,6 +7,7 @@ from erpnext.tests.utils import ERPNextTestSuite
 from frappe.utils import add_days
 
 from pitstop.match_scoring import (
+	GENERIC_NAME_WORDS,
 	ONE_TYPO,
 	YEAR_AND_COUNTER,
 	PastLine,
@@ -14,6 +15,7 @@ from pitstop.match_scoring import (
 	Reference,
 	Vocabulary,
 	amount_grade,
+	compact,
 	confidence,
 	is_identifier,
 	name_grade,
@@ -117,6 +119,35 @@ class TestSignalGrades(ERPNextTestSuite):
 		self.assertEqual(grade("VIR SEPA LACOROUTINE", "Coroutine Lab"), 0.0)
 		self.assertEqual(grade("VIR SEPA JEANNEDUPONT", "Jean Dupont"), 0.0, "another person, one letter away")
 		self.assertEqual(grade("REMISE TPE 0412", "T.P.E."), 0.0, "initials glued are a card label word")
+
+	def test_legal_forms_titles_and_articles_name_nobody_in_french_and_english(self):
+		vocabulary = Vocabulary(
+			[],
+			["Initech Ltd", "Globex Inc", "Boulangerie Dupont SARL", "Acme Rentals S.A.R.L.", "Mrs Jane Roe"]
+			+ ["SCI Les Roses Bleues", "The Green Grocer Ltd", "Les Jardins Dupont SARL", "T.P.E. SARL"]
+			+ ["Sam Carter", "Earl Smith"],
+		)
+
+		def grade(label, party_name):
+			return name_grade(
+				label, vocabulary.label_words(label), None, party_name, party_name, [], vocabulary
+			)
+
+		self.assertEqual(grade("VIR SEPA INITECH", "Initech Ltd"), 1.0)
+		self.assertEqual(grade("CARD PAYMENT GLOBEX", "Globex Inc"), 1.0)
+		self.assertEqual(grade("VIR SEPA BOULANGERIEDUPONT", "Boulangerie Dupont SARL"), 1.0)
+		self.assertEqual(grade("VIR SEPA ACMERENTALS", "Acme Rentals S.A.R.L."), 1.0)
+		self.assertEqual(grade("PRLV SCI ROSESBLEUES", "SCI Les Roses Bleues"), 1.0)
+		self.assertEqual(grade("TRANSFER JANEROE", "Mrs Jane Roe"), 1.0)
+		self.assertEqual(grade("CARD PAYMENT THEGREENGROCER", "The Green Grocer Ltd"), 1.0, "form left out")
+		self.assertEqual(grade("VIR SEPA LESJARDINSDUPONT", "Les Jardins Dupont SARL"), 1.0)
+		self.assertEqual(grade("REMISE TPESARL 0412", "T.P.E. SARL"), 0.0, "initials and a form glue to nothing")
+		self.assertEqual(grade("VIR CARTER", "Sam Carter"), 0.0, "a first name is no title")
+		self.assertEqual(grade("VIR JOHN SMITH", "Earl Smith"), 0.0, "a first name in any language")
+
+	def test_generic_name_words_are_written_as_names_are_compared(self):
+		self.assertTrue({"SARL", "SCI", "MME", "LES", "LTD", "INC", "MRS", "THE"} <= GENERIC_NAME_WORDS)
+		self.assertEqual([word for word in GENERIC_NAME_WORDS if compact(word) != word], [])
 
 	def test_documents_without_a_party_never_share_one(self):
 		first = frappe._dict(doctype="Journal Entry", name="JV-1", party_type=None, party=None)
@@ -287,6 +318,7 @@ class TestSuggestions(ERPNextTestSuite):
 			("Boulangerie Dupont", "VIR SEPA BOULANGERIEDUPONT"),
 			("La Coroutine", "VIR SEPA LACOROUTINE"),
 			("The Green Grocer", "CARD PAYMENT THEGREENGROCER"),
+			("Studio Lumen Ltd", "TRANSFER STUDIOLUMEN"),
 		):
 			with self.subTest(customer_name):
 				customer = self.get_customer(customer_name, contact=("Jane", "Roe"))
