@@ -4,6 +4,7 @@ import { computed, ref } from "vue";
 import { deskUrl, descriptionText, formatDate, formatMoney } from "../format";
 import { __ } from "../translation";
 import DocumentTypeIcon from "./DocumentTypeIcon.vue";
+import DocumentTypeLegend from "./DocumentTypeLegend.vue";
 
 const props = defineProps({
 	bankAccount: { type: String, required: true },
@@ -105,13 +106,19 @@ function done(message) {
 
 <template>
 	<div>
-		<TextInput v-model="query" class="mb-6 max-w-sm" :placeholder="__('Search a label, document or party')">
-			<template #prefix><span class="lucide-search size-4" aria-hidden="true" /></template>
-		</TextInput>
+		<div class="mb-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+			<TextInput v-model="query" class="w-full sm:w-96" :placeholder="__('Search a label, document or party')">
+				<template #prefix><span class="lucide-search size-4" aria-hidden="true" /></template>
+			</TextInput>
+			<DocumentTypeLegend
+				class="ml-auto"
+				:doctypes="shown.flatMap(({ documents }) => documents.map((document) => document.payment_document))"
+			/>
+		</div>
 		<div v-if="lines.loading && !lines.data" class="space-y-3">
 			<Skeleton v-for="index in 4" :key="index" class="h-12 w-full rounded-4" />
 		</div>
-		<p v-else-if="!shown.length" class="py-16 text-center text-p-sm text-ink-gray-4">
+		<p v-else-if="!shown.length" class="py-16 text-center text-p-sm text-ink-gray-6">
 			{{ __("No reconciled line over this period") }}
 		</p>
 		<div v-else class="divide-y divide-outline-gray-1 border-y border-outline-gray-1">

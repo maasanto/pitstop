@@ -47,7 +47,7 @@ function toggleUnlessSelecting() {
 			approved
 				? 'border-outline-green-3 bg-surface-green-1'
 				: 'border-outline-gray-1 bg-surface-base hover:border-outline-gray-3',
-			focused && 'ring-2 ring-outline-gray-4 ring-offset-1',
+			focused && 'ring-2 ring-outline-gray-4',
 		]"
 		@click="toggleUnlessSelecting"
 	>

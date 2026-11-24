@@ -7,7 +7,6 @@ import {
 	KeyboardShortcut,
 	LoadingText,
 	Popover,
-	Progress,
 	Skeleton,
 	TabButtons,
 	TextInput,
@@ -20,7 +19,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } 
 import AutoReconciliationSettings from "./components/AutoReconciliationSettings.vue";
 import BankAccountPicker from "./components/BankAccountPicker.vue";
 import DocumentLookupDialog from "./components/DocumentLookupDialog.vue";
-import DocumentTypeIcon from "./components/DocumentTypeIcon.vue";
+import DocumentTypeLegend from "./components/DocumentTypeLegend.vue";
 import PairingRow from "./components/PairingRow.vue";
 import PeriodPicker from "./components/PeriodPicker.vue";
 import PreviewDialog from "./components/PreviewDialog.vue";
@@ -29,7 +28,7 @@ import RuleDialog from "./components/RuleDialog.vue";
 import RuleOffers from "./components/RuleOffers.vue";
 import SearchDialog from "./components/SearchDialog.vue";
 import UnmatchedMatcher from "./components/UnmatchedMatcher.vue";
-import { DOCUMENT_TYPES, descriptionText, formatMoney, formatPercent } from "./format";
+import { descriptionText, formatMoney, formatPercent } from "./format";
 import { readStored, writeStored } from "./storage";
 import { __, _n } from "./translation";
 
@@ -186,6 +185,11 @@ const sections = computed(() =>
 	})),
 );
 const currentSection = computed(() => sections.value.find((section) => section.level === tab.value));
+const shownDoctypes = computed(() =>
+	(currentSection.value?.pairings || []).flatMap((pairing) =>
+		(chosenFor(pairing)?.documents || []).map((document) => document.doctype),
+	),
+);
 // A line without proposal leaves its tab once a document is picked for it; the others once pre-approved
 const isDone = (section) =>
 	section.level === "unmatched"
@@ -423,8 +427,8 @@ const periodTotals = useCall({
 const reloadPeriodTotals = () => bankAccount.value && period.value.length === 2 && periodTotals.reload();
 watch([bankAccount, period], reloadPeriodTotals);
 const DIRECTIONS = [
-	{ key: "in", label: () => __("Money in"), icon: "lucide-arrow-down-left", tint: "text-ink-green-6" },
-	{ key: "out", label: () => __("Money out"), icon: "lucide-arrow-up-right", tint: "text-ink-red-5" },
+	{ key: "in", label: () => __("Money in"), icon: "lucide-arrow-down-left", tint: "text-ink-green-7" },
+	{ key: "out", label: () => __("Money out"), icon: "lucide-arrow-up-right", tint: "text-ink-red-6" },
 ];
 // Of the filters, only the period and the direction narrow it
 const periodProgress = computed(() => {
@@ -597,57 +601,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 							<span class="lucide-flame size-3.5" aria-hidden="true" />
 							{{ _n(streak, __("1 month up to date"), __("{0} months up to date", [streak])) }}
 						</span>
-						<Popover v-if="periodTotals.data" align="end">
-							<template #trigger>
-								<button
-									type="button"
-									class="mr-2 flex flex-wrap items-center gap-x-4 rounded px-2 py-1 text-sm text-ink-gray-6 hover:bg-surface-gray-2"
-								>
-									<span v-for="direction in DIRECTIONS" :key="direction.key" class="flex items-center gap-1.5">
-										<span :class="[direction.icon, direction.tint, 'size-3.5']" aria-hidden="true" />
-										{{ direction.label() }}
-										<span class="tabular-nums text-ink-gray-8">
-											{{ formatMoney(periodTotals.data[direction.key].total, periodTotals.data.currency) }}
-										</span>
-										<span class="tabular-nums">
-											· {{ formatPercent(reconciledShare(periodTotals.data[direction.key])) }}
-										</span>
-									</span>
-								</button>
-							</template>
-							<div class="w-80 space-y-3 p-3">
-								<p class="text-sm-medium text-ink-gray-9">{{ __("Reconciled over the period") }}</p>
-								<div v-for="direction in DIRECTIONS" :key="direction.key" class="space-y-1.5">
-									<div class="flex items-center justify-between text-sm text-ink-gray-7">
-										<span class="flex items-center gap-1.5">
-											<span :class="[direction.icon, direction.tint, 'size-3.5']" aria-hidden="true" />
-											{{ direction.label() }}
-										</span>
-										<span class="tabular-nums text-ink-gray-9">
-											{{ formatMoney(periodTotals.data[direction.key].total, periodTotals.data.currency) }}
-										</span>
-									</div>
-									<div class="h-1.5 overflow-hidden rounded-full bg-surface-gray-3">
-										<div
-											class="h-full rounded-full bg-surface-green-6"
-											:style="{ width: `${100 * reconciledShare(periodTotals.data[direction.key])}%` }"
-										/>
-									</div>
-									<p class="text-xs text-ink-gray-6 tabular-nums">
-										{{
-											__("{0} reconciled · {1} left · {2} lines", [
-												formatMoney(periodTotals.data[direction.key].reconciled, periodTotals.data.currency),
-												formatMoney(
-													periodTotals.data[direction.key].total - periodTotals.data[direction.key].reconciled,
-													periodTotals.data.currency,
-												),
-												periodTotals.data[direction.key].lines,
-											])
-										}}
-									</p>
-								</div>
-							</div>
-						</Popover>
 						<Popover align="end">
 							<template #trigger>
 								<Button
@@ -683,43 +636,114 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 				</div>
 				<!-- Dimmed rather than hidden while reloading, so the page does not jump after each validation -->
 				<div
-					v-if="periodProgress"
+					v-if="periodTotals.data && !periodTotals.error"
 					:class="[pageWidth, periodTotals.loading && 'opacity-50']"
 					:aria-busy="periodTotals.loading"
-					class="mx-auto mb-3 mt-4 px-4 transition-opacity sm:px-8"
+					class="mx-auto mb-5 mt-3 px-4 transition-opacity sm:px-8"
 				>
-					<Progress
-						:value="100 * periodProgress.share"
-						size="md"
-						:label="PERIOD_PROGRESS_LABELS[filters.direction]()"
-						hint
-					>
-						<template #hint>
-							<span class="text-base tabular-nums text-ink-gray-6">
-								{{
-									__("{0} · {1} of {2} lines · {3} left", [
-										formatPercent(periodProgress.share),
-										periodProgress.reconciled,
-										periodProgress.lines,
-										periodProgress.lines - periodProgress.reconciled,
-									])
-								}}
+					<div class="flex flex-wrap items-center gap-x-6 gap-y-1">
+						<p v-if="periodProgress" class="text-base tabular-nums text-ink-gray-6">
+							<span class="mr-2 text-base-medium text-ink-gray-9">
+								{{ PERIOD_PROGRESS_LABELS[filters.direction]() }}
 							</span>
-						</template>
-					</Progress>
+							{{
+								__("{0} · {1} of {2} lines · {3} left", [
+									formatPercent(periodProgress.share),
+									periodProgress.reconciled,
+									periodProgress.lines,
+									periodProgress.lines - periodProgress.reconciled,
+								])
+							}}
+						</p>
+						<div class="-mr-2 ml-auto">
+							<Popover align="end">
+								<template #trigger>
+									<button
+										type="button"
+										class="flex flex-wrap items-center gap-x-5 rounded px-2 py-1 text-base text-ink-gray-6 hover:bg-surface-gray-2"
+									>
+										<span v-for="direction in DIRECTIONS" :key="direction.key" class="flex items-center gap-1.5">
+											<span :class="[direction.icon, direction.tint, 'size-4']" aria-hidden="true" />
+											{{ direction.label() }}
+											<span class="tabular-nums text-ink-gray-9">
+												{{ formatMoney(periodTotals.data[direction.key].total, periodTotals.data.currency) }}
+											</span>
+											<span class="tabular-nums">
+												· {{ formatPercent(reconciledShare(periodTotals.data[direction.key])) }}
+											</span>
+										</span>
+									</button>
+								</template>
+								<div class="w-80 space-y-3 p-3">
+									<p class="text-sm-medium text-ink-gray-9">{{ __("Reconciled over the period") }}</p>
+									<div v-for="direction in DIRECTIONS" :key="direction.key" class="space-y-1.5">
+										<div class="flex items-center justify-between text-sm text-ink-gray-7">
+											<span class="flex items-center gap-1.5">
+												<span :class="[direction.icon, direction.tint, 'size-3.5']" aria-hidden="true" />
+												{{ direction.label() }}
+											</span>
+											<span class="tabular-nums text-ink-gray-9">
+												{{ formatMoney(periodTotals.data[direction.key].total, periodTotals.data.currency) }}
+											</span>
+										</div>
+										<div class="h-1.5 overflow-hidden rounded-full bg-surface-gray-3">
+											<div
+												class="h-full rounded-full bg-surface-green-6"
+												:style="{ width: `${100 * reconciledShare(periodTotals.data[direction.key])}%` }"
+											/>
+										</div>
+										<p class="text-xs text-ink-gray-6 tabular-nums">
+											{{
+												__("{0} reconciled · {1} left · {2} lines", [
+													formatMoney(periodTotals.data[direction.key].reconciled, periodTotals.data.currency),
+													formatMoney(
+														periodTotals.data[direction.key].total - periodTotals.data[direction.key].reconciled,
+														periodTotals.data.currency,
+													),
+													periodTotals.data[direction.key].lines,
+												])
+											}}
+										</p>
+									</div>
+								</div>
+							</Popover>
+						</div>
+					</div>
+					<div
+						v-if="periodProgress"
+						role="progressbar"
+						:aria-label="PERIOD_PROGRESS_LABELS[filters.direction]()"
+						:aria-valuenow="Math.round(100 * periodProgress.share)"
+						class="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-gray-3"
+					>
+						<div
+							class="h-full rounded-full bg-surface-green-6 transition-all"
+							:style="{ width: `${100 * periodProgress.share}%` }"
+						/>
+					</div>
 				</div>
-				<nav :class="pageWidth" class="mx-auto mt-2 flex flex-wrap items-center justify-between gap-x-3 px-4 sm:px-8">
+				<nav :class="pageWidth" class="mx-auto mt-2 flex items-center justify-between gap-x-3 px-4 sm:px-8">
 					<TabButtons
 						v-model="tab"
-						class="max-w-full overflow-x-auto"
+						class="min-w-0 overflow-x-auto"
 						type="underline"
 						size="md"
 						:options="tabOptions"
 					/>
+					<!-- Beside the tabs at any width: the label gives way before the button wraps under them -->
 					<Button
+						class="max-xl:hidden"
 						variant="ghost"
 						icon-left="lucide-file-search"
 						:label="__('Find the line of a document')"
+						@click="lookup.open = true"
+					/>
+					<Button
+						class="xl:hidden"
+						variant="ghost"
+						icon="lucide-file-search"
+						:label="__('Find the line of a document')"
+						:tooltip="__('Find the line of a document')"
 						@click="lookup.open = true"
 					/>
 				</nav>
@@ -754,43 +778,35 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 					@dismiss="dismissGuide"
 				/>
 
-				<div v-if="tab !== 'reconciled' && lines.length" class="mb-8 flex flex-wrap items-center gap-2">
-					<TabButtons v-model="filters.direction" :options="directionOptions">
-						<template #prefix="{ button }">
-							<span
-								v-if="DIRECTION_ICONS[button.modelValue]"
-								:class="['size-4', DIRECTION_ICONS[button.modelValue]]"
-								aria-hidden="true"
-							/>
-						</template>
-					</TabButtons>
-					<TextInput
-						v-model="filters.text"
-						class="w-64"
-						:debounce="200"
-						:placeholder="__('Label, party, number or amount')"
-					>
-						<template #prefix><span class="lucide-search size-4" aria-hidden="true" /></template>
-					</TextInput>
-					<div class="flex items-center gap-1.5" role="group" :aria-label="__('Amount')">
-						<span class="pl-2 pr-0.5 text-sm text-ink-gray-5">{{ __("Amount") }}</span>
-						<TextInput v-model="filters.min" class="w-24" type="number" min="0" :placeholder="__('Min')" />
-						<span class="text-ink-gray-4" aria-hidden="true">–</span>
-						<TextInput v-model="filters.max" class="w-24" type="number" min="0" :placeholder="__('Max')" />
+				<div v-if="tab !== 'reconciled' && lines.length" class="mb-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+					<div class="flex flex-wrap items-center gap-2">
+						<TabButtons v-model="filters.direction" :options="directionOptions">
+							<template #prefix="{ button }">
+								<span
+									v-if="DIRECTION_ICONS[button.modelValue]"
+									:class="['size-4', DIRECTION_ICONS[button.modelValue]]"
+									aria-hidden="true"
+								/>
+							</template>
+						</TabButtons>
+						<TextInput
+							v-model="filters.text"
+							class="w-64"
+							:debounce="200"
+							:placeholder="__('Label, party, number or amount')"
+						>
+							<template #prefix><span class="lucide-search size-4" aria-hidden="true" /></template>
+						</TextInput>
+						<div class="flex items-center gap-1.5" role="group" :aria-label="__('Amount')">
+							<span class="pl-2 pr-0.5 text-sm text-ink-gray-5">{{ __("Amount") }}</span>
+							<TextInput v-model="filters.min" class="w-24" type="number" min="0" :placeholder="__('Min')" />
+							<span class="text-ink-gray-4" aria-hidden="true">–</span>
+							<TextInput v-model="filters.max" class="w-24" type="number" min="0" :placeholder="__('Max')" />
+						</div>
+						<Button v-if="isFiltered" variant="ghost" :label="__('Clear filters')" @click="clearFilters" />
 					</div>
-					<Button v-if="isFiltered" variant="ghost" :label="__('Clear filters')" @click="clearFilters" />
+					<DocumentTypeLegend class="ml-auto" :doctypes="shownDoctypes" />
 				</div>
-
-				<ul
-					v-if="tab !== 'unmatched'"
-					class="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-gray-6"
-					:aria-label="__('Document types')"
-				>
-					<li v-for="doctype in Object.keys(DOCUMENT_TYPES)" :key="doctype" class="flex items-center gap-1.5">
-						<DocumentTypeIcon :doctype="doctype" />
-						{{ __(doctype) }}
-					</li>
-				</ul>
 
 				<template v-if="currentSection">
 					<RuleOffers
@@ -824,7 +840,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 
 					<section v-else class="mb-14">
 						<div class="mb-4 flex flex-wrap items-end gap-3">
-							<p class="text-p-base text-ink-gray-5">{{ currentSection.hint() }}</p>
+							<p class="text-p-base text-ink-gray-6">{{ currentSection.hint() }}</p>
 							<Button
 								v-if="currentSection.level === 'high' && currentSection.pairings.length"
 								class="ml-auto"
@@ -903,14 +919,17 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 			>
 				<div
 					v-if="tab !== 'reconciled' && toValidate.length"
-					class="fixed inset-x-0 bottom-5 z-10 mx-auto flex w-fit max-w-[calc(100%-2.5rem)] items-center gap-4 rounded-7 border border-outline-gray-2 bg-surface-elevation-2 py-2 pl-5 pr-2 shadow-2xl"
+					class="fixed inset-x-0 bottom-5 z-10 mx-auto flex w-fit max-w-[calc(100%-1.5rem)] items-center gap-x-4 max-sm:flex-wrap gap-y-2 rounded-7 border border-outline-gray-2 bg-surface-elevation-2 py-2 pl-5 pr-2 shadow-2xl max-sm:px-4 max-sm:py-3"
 					role="region"
 					:aria-label="__('Pre-approved pairings')"
 				>
-					<div class="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-surface-gray-3" aria-hidden="true">
+					<div
+						class="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-surface-gray-3 max-sm:hidden"
+						aria-hidden="true"
+					>
 						<div class="h-full rounded-full bg-surface-green-6 transition-all" :style="{ width: `${progress}%` }" />
 					</div>
-					<span class="text-base tabular-nums text-ink-gray-8">
+					<span class="min-w-0 text-base tabular-nums text-ink-gray-8 max-sm:flex-1 max-sm:basis-40">
 						<b class="text-ink-gray-9">{{
 							_n(
 								toValidate.length,
@@ -939,6 +958,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 						"
 					/>
 					<Button
+						class="shrink-0 max-sm:w-full"
 						variant="solid"
 						size="md"
 						icon-left="lucide-check-check"
@@ -952,7 +972,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 						:loading="reconcile.loading"
 						@click="validate"
 					/>
-					<KeyboardShortcut combo="Mod+Enter" class="mr-2" />
+					<KeyboardShortcut combo="Mod+Enter" class="mr-2 max-sm:hidden" />
 				</div>
 			</Transition>
 		</div>

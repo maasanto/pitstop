@@ -80,7 +80,7 @@ async function reconcileWith(match) {
 			</TextInput>
 			<div class="mt-3 max-h-[55vh] divide-y divide-outline-gray-1 overflow-y-auto">
 				<LoadingText v-if="documents.loading && !documents.data" />
-				<p v-else-if="documents.data && !documents.data.length" class="py-8 text-center text-p-sm text-ink-gray-4">
+				<p v-else-if="documents.data && !documents.data.length" class="py-8 text-center text-p-sm text-ink-gray-6">
 					{{ __("No open invoice or payment matches") }}
 				</p>
 				<button
@@ -120,7 +120,7 @@ async function reconcileWith(match) {
 			</div>
 			<ErrorMessage v-if="lines.error" :message="lines.error" />
 			<LoadingText v-else-if="lines.loading" :text="__('Scoring the open bank lines…')" />
-			<p v-else-if="lines.data && !lines.data.lines.length" class="py-8 text-center text-p-sm text-ink-gray-4">
+			<p v-else-if="lines.data && !lines.data.lines.length" class="py-8 text-center text-p-sm text-ink-gray-6">
 				{{ __("No open bank line matches this document") }}
 			</p>
 			<div v-else-if="lines.data" class="max-h-[55vh] space-y-2 overflow-y-auto">
