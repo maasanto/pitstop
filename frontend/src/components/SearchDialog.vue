@@ -90,7 +90,7 @@ function choose(proposal) {
 		<div v-if="line" class="mt-4 max-h-[55vh] space-y-5 overflow-y-auto">
 			<section v-if="showLeads">
 				<h3 class="mb-2 text-sm-medium text-ink-gray-6">{{ __("Leads from Dokos") }}</h3>
-				<p v-if="!leads.length" class="text-p-sm text-ink-gray-5">
+				<p v-if="!leads.length" class="text-p-sm text-ink-gray-6">
 					{{ __("No lead: search the document above.") }}
 				</p>
 				<div class="space-y-2">
@@ -116,7 +116,7 @@ function choose(proposal) {
 					{{ showLeads ? __("Other open documents") : __("Search results") }}
 				</h3>
 				<LoadingText v-if="results.loading && !results.data" />
-				<p v-else-if="results.data && !otherDocuments.length" class="py-6 text-center text-p-sm text-ink-gray-4">
+				<p v-else-if="results.data && !otherDocuments.length" class="py-6 text-center text-p-sm text-ink-gray-6">
 					{{ __("No open document matches") }}
 				</p>
 				<div class="space-y-2">

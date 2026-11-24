@@ -150,11 +150,11 @@ function choose(proposal) {
 				</Popover>
 			</div>
 			<div class="max-h-[60vh] space-y-2 overflow-y-auto">
-				<p v-if="!filters.doctypes.length" class="py-6 text-center text-p-sm text-ink-gray-4">
+				<p v-if="!filters.doctypes.length" class="py-6 text-center text-p-sm text-ink-gray-6">
 					{{ __("Turn on a document type to see its open documents") }}
 				</p>
 				<LoadingText v-else-if="results.loading && !results.data" />
-				<p v-else-if="results.data && !results.data.length" class="py-6 text-center text-p-sm text-ink-gray-4">
+				<p v-else-if="results.data && !results.data.length" class="py-6 text-center text-p-sm text-ink-gray-6">
 					{{ __("No open document matches") }}
 				</p>
 				<template v-else>
